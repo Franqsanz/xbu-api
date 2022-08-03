@@ -1,0 +1,19 @@
+import mongoose from "mongoose";
+
+export default function connect() {
+  const uri = process.env.MONGODB_URI || '';
+  const options = { autoIndex: true };
+
+  mongoose.connect(uri, options, (err) => {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log('Connected to MongoDB');
+    }
+  });
+
+  process.on('uncaughtException', error => {
+    console.error(error)
+    mongoose.disconnect();
+  });
+}
