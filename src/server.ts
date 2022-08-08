@@ -1,4 +1,4 @@
-import express from "express";
+import express, { application } from "express";
 import cors from 'cors';
 import compression from 'compression';
 import { config } from 'dotenv';
@@ -65,3 +65,5 @@ app.use('/api', books);
 // app.use(passport.initialize());
 
 app.listen(PORT, () => console.log('Server Ready'));
+
+export { app };
