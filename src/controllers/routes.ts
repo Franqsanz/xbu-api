@@ -6,6 +6,7 @@ function getBooks(req: Request, res: Response) {
   model.find((err, users) => {
     res.json(users);
     // connection.close();
+    if (err) res.status(404).send('no encontrado')
   });
 }
 
