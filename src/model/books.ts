@@ -1,7 +1,6 @@
 import pkg from 'mongoose';
 const { Schema, model } = pkg;
 
-
 export interface BooksDocument extends pkg.Document {
   title: string;
   description: string;

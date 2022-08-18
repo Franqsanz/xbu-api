@@ -2,38 +2,33 @@ import { Request, Response } from 'express';
 import { connection } from 'mongoose';
 import model from "../model/books";
 
-function getBooks(req: Request, res: Response) {
-  model.find((err, users) => {
-    res.json(users);
-    // connection.close();
-    if (err) res.status(404).send('no encontrado')
-  });
+async function getBooks(req: Request, res: Response) {
+  const books = await model.find().sort({ _id: -1 });
+  if (!books) res.status(404).send('No encontrado');
+
+  return res.status(200).json(books);
 }
 
-function postBooks(req: Request, res: Response) {
+async function postBooks(req: Request, res: Response) {
   const { body } = req;
   const newBook = new model(body);
 
-  newBook.save()
-    .then((result: Object) => {
-      res.json(result);
-      // connection.close();
-    })
-    .catch((err) => res.send(err));
+  const saveBook = await newBook.save()
+  if (!saveBook) return res.status(500).send('Error al Publicar');
+
+  return res.status(200).json(saveBook);
 }
 
-function getOnetBooks(req: Request, res: Response) {
+async function getOnetBooks(req: Request, res: Response) {
   const { id } = req.params;
 
-  model.findById(id)
-    .then(book => {
-      if (book) return res.json(book);
-      res.status(404).send('Not Found');
-    });
-  // connection.close();
+  const book = await model.findById(id);
+  if (!book) return res.status(404).send('Not Found');
+
+  return res.status(200).json(book);
 }
 
-function putBooks(req: Request, res: Response) {
+async function putBooks(req: Request, res: Response) {
   const { id } = req.params;
   const { body } = req;
 
@@ -46,10 +41,10 @@ function putBooks(req: Request, res: Response) {
     numberPages: body.numberPages,
   }
 
-  model.findByIdAndUpdate(id, editBook, { new: true })
-    .then(result => {
-      res.json(result);
-    });
+  const update = await model.findByIdAndUpdate(id, editBook, { new: true });
+  if (!update) return res.status(500).send('No se pudo actualizar');
+
+  return res.status(200).json(update);
   // connection.close();
 }
 
@@ -57,7 +52,7 @@ async function deleteBooks(req: Request, res: Response) {
   const { id } = req.params;
 
   const result = await model.findByIdAndDelete(id);
-  if (result === null) return res.status(404);
+  if (!result) return res.status(404);
 
   res.status(204).send('ELIMINADO');
   // connection.close();
