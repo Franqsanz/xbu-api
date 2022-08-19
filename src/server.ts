@@ -43,12 +43,12 @@ const PORT = process.env.PORT || 9090;
 app.get('/', (req, res) => {
   res.send(`
     <section>
-      <h1>API REST de XBooks</h1>
+      <h1>API REST de XBU</h1>
       <h2>
-        Todos los Libros: 
+        Todos los Libros:
         <a href="https://xb-api.vercel.app/api">
           https://xb-api.vercel.app/api
-        </a> 
+        </a>
       </h2>
     </section>
   `);
