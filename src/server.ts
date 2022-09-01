@@ -8,7 +8,7 @@ import logger from 'morgan';
 // import passport from "passport";
 
 import db from "./db";
-import books from './routes/books'
+import books from './routes/books';
 
 const app = express();
 

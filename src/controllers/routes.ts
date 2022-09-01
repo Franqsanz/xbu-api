@@ -13,7 +13,7 @@ async function postBooks(req: Request, res: Response) {
   const { body } = req;
   const newBook = new model(body);
 
-  const saveBook = await newBook.save()
+  const saveBook = await newBook.save();
   if (!saveBook) return res.status(500).send('Error al Publicar');
 
   return res.status(200).json(saveBook);
@@ -38,8 +38,9 @@ async function putBooks(req: Request, res: Response) {
     autor: body.autor,
     category: body.category,
     publicationDate: body.publicationDate,
+    sourceLink: body.sourceLink,
     numberPages: body.numberPages,
-  }
+  };
 
   const update = await model.findByIdAndUpdate(id, editBook, { new: true });
   if (!update) return res.status(500).send('No se pudo actualizar');
@@ -63,5 +64,5 @@ export {
   getOnetBooks,
   postBooks,
   putBooks,
-  deleteBooks
-}
+  deleteBooks,
+};
