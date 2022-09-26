@@ -6,7 +6,8 @@ export interface BooksDocument extends pkg.Document {
   description: string;
   author: string;
   category: string;
-  publicationDate: string;
+  year: number;
+  language: number;
   sourceLink: string;
   numberPages: string;
 }
@@ -32,8 +33,12 @@ const booksSchema = new Schema({
     type: String,
     required: true
   },
-  publicationDate: {
+  language: {
     type: String,
+    required: true
+  },
+  year: {
+    type: Number,
     required: true
   },
   numberPages: {

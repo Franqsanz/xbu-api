@@ -23,7 +23,7 @@ async function getOnetBooks(req: Request, res: Response) {
   const { id } = req.params;
 
   const book = await model.findById(id);
-  if (!book) return res.status(404).send('Not Found');
+  if (!book) return res.status(404).json({ error: 'Not Found' });
 
   return res.status(200).json(book);
 }
@@ -37,7 +37,7 @@ async function putBooks(req: Request, res: Response) {
     description: body.description,
     autor: body.autor,
     category: body.category,
-    publicationDate: body.publicationDate,
+    year: body.year,
     sourceLink: body.sourceLink,
     numberPages: body.numberPages,
   };
