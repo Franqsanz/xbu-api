@@ -1,9 +1,11 @@
-import express from "express";
+import express, { ErrorRequestHandler, Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import compression from 'compression';
 import { config } from 'dotenv';
 import helmet from 'helmet';
 import logger from 'morgan';
+import * as Sentry from "@sentry/node";
+import * as Tracing from "@sentry/tracing";
 // import cookieSession from "cookie-session";
 // import passport from "passport";
 
@@ -11,34 +13,48 @@ import db from "./db";
 import books from './routes/books';
 
 const app = express();
+const PORT = process.env.PORT || 9090;
 
 config();
 db();
 
+Sentry.init({
+  dsn: "https://7838fe347d5842f6900daa6a822df8f0@o4504136634269696.ingest.sentry.io/4504136636170240",
+  integrations: [
+    new Sentry.Integrations.Http({ tracing: true }),
+    new Tracing.Integrations.Express({ app }),
+  ],
+  tracesSampleRate: 1.0,
+});
+
+app.use(Sentry.Handlers.requestHandler());
+app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(compression());
 app.use(cors());
 app.use(logger('dev'));
-app.use(helmet({
-  contentSecurityPolicy: true,
-  crossOriginEmbedderPolicy: true,
-  crossOriginOpenerPolicy: true,
-  crossOriginResourcePolicy: true,
-  dnsPrefetchControl: true,
-  expectCt: true,
-  frameguard: true,
-  hidePoweredBy: true,
-  hsts: true,
-  ieNoOpen: true,
-  noSniff: true,
-  originAgentCluster: true,
-  permittedCrossDomainPolicies: true,
-  referrerPolicy: true,
-  xssFilter: true,
-}));
-
-const PORT = process.env.PORT || 9090;
+app.use(
+  helmet(
+    {
+      contentSecurityPolicy: true,
+      crossOriginEmbedderPolicy: true,
+      crossOriginOpenerPolicy: true,
+      crossOriginResourcePolicy: true,
+      dnsPrefetchControl: true,
+      expectCt: true,
+      frameguard: true,
+      hidePoweredBy: true,
+      hsts: true,
+      ieNoOpen: true,
+      noSniff: true,
+      originAgentCluster: true,
+      permittedCrossDomainPolicies: true,
+      referrerPolicy: true,
+      xssFilter: true,
+    }
+  )
+);
 
 app.get('/', (req, res) => {
   res.send(`
@@ -54,6 +70,11 @@ app.get('/', (req, res) => {
   `);
 });
 app.use('/api', books);
+app.use(Sentry.Handlers.errorHandler());
+app.use(function onError(err: ErrorRequestHandler, req: Request, res: any, next: NextFunction) {
+  res.statusCode = 500;
+  res.end(res.sentry + "\n");
+});
 
 // app.use(cookieSession({
 //   name: 'session',

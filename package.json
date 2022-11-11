@@ -13,6 +13,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@sentry/node": "^7.19.0",
+    "@sentry/tracing": "^7.19.0",
     "compression": "1.7.4",
     "cookie-session": "2.0.0",
     "cors": "2.8.5",

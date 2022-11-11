@@ -22,8 +22,8 @@ async function postBooks(req: Request, res: Response) {
 async function getOnetBooks(req: Request, res: Response) {
   const { id } = req.params;
 
-  const book = await model.findById(id);
-  if (!book) return res.status(404).json({ error: 'Not Found' });
+  const book = await model.findById(id).catch((err) => console.log(err));
+  if (!book) return res.status(404).json({ error: 'Not found or not exist' });
 
   return res.status(200).json(book);
 }
