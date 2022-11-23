@@ -12,8 +12,8 @@ export default function connect() {
     }
   });
 
-  process.on('uncaughtException', error => {
-    console.error(error)
+  process.on('exit', error => {
+    console.error(error);
     mongoose.disconnect();
   });
 }
