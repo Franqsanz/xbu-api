@@ -3,8 +3,9 @@ const { Schema, model } = pkg;
 
 export interface BooksDocument extends pkg.Document {
   title: string;
-  description: string;
   author: string;
+  synopsis: string;
+  description: string;
   category: string;
   year: number;
   language: number;
@@ -17,13 +18,16 @@ const booksSchema = new Schema({
     type: String,
     required: true,
   },
-  description: {
-    type: String,
-    required: true,
-  },
   author: {
     type: String,
     required: true
+  },
+  synopsis: {
+    type: String,
+    required: true,
+  },
+  description: {
+    type: String,
   },
   category: {
     type: String,

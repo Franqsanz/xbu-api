@@ -42,8 +42,9 @@ function putBooks(req: Request, res: Response) {
 
   const editBook = {
     title: body.title,
-    description: body.description,
     author: body.author,
+    synopsis: body.synopsis,
+    description: body.description,
     category: body.category,
     year: body.year,
     sourceLink: body.sourceLink,
