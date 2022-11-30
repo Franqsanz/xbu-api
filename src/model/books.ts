@@ -35,7 +35,6 @@ const booksSchema = new Schema({
   },
   sourceLink: {
     type: String,
-    required: true
   },
   language: {
     type: String,
