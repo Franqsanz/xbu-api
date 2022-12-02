@@ -49,6 +49,7 @@ function putBooks(req: Request, res: Response) {
     year: body.year,
     sourceLink: body.sourceLink,
     numberPages: body.numberPages,
+    format: body.format,
   };
 
   model.findByIdAndUpdate(id, editBook, { new: true }).then((result) => {
