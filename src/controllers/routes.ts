@@ -4,7 +4,9 @@ import { connection } from 'mongoose';
 import model from "../model/books";
 
 function getBooks(req: Request, res: Response) {
-  model.find().sort({ _id: -1 }).then((result) => {
+  const lit = parseInt(req.query.limit as string);
+
+  model.find().limit(lit).sort({ _id: -1 }).then((result) => {
     return res.status(200).json(result);
     // connection.close();
   }).catch((err) => console.log(err));
