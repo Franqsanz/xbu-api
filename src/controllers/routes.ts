@@ -12,6 +12,16 @@ function getBooks(req: Request, res: Response) {
   }).catch((err) => console.log(err));
 }
 
+function getBooksRandom(req: Request, res: Response) {
+  model.find().sort({ _id: -1 }).then((result) => {
+    const random = result.sort(() => { return Math.random() - 0.5; });
+    const resRandom = random.splice(0, 3);
+
+    return res.status(200).json(resRandom);
+    // connection.close();
+  }).catch((err) => console.log(err));
+}
+
 function postBooks(req: Request, res: Response) {
   const { body } = req;
   const newBook = new model(body);
@@ -77,6 +87,7 @@ function deleteBooks(req: Request, res: Response) {
 
 export {
   getBooks,
+  getBooksRandom,
   getOnetBooks,
   postBooks,
   putBooks,
