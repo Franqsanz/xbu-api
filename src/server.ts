@@ -4,7 +4,6 @@ import compression from 'compression';
 import { config } from 'dotenv';
 import helmet from 'helmet';
 import logger from 'morgan';
-import apicache from 'apicache';
 import * as Sentry from "@sentry/node";
 import * as Tracing from "@sentry/tracing";
 // import cookieSession from "cookie-session";
@@ -15,7 +14,6 @@ import books from './routes/books';
 
 const app = express();
 const PORT = process.env.PORT || 9090;
-const cache = apicache.middleware;
 
 config();
 db();
@@ -36,7 +34,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(compression());
 app.use(cors());
 app.use(logger('dev'));
-app.use(cache('5 minutes'));
 app.use(
   helmet(
     {
