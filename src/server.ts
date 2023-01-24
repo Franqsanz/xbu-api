@@ -27,15 +27,17 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
-const urls = ['https://xbu.netlify.app/', 'http://localhost:1010/'];
+const allowedOrigins = ['https://xbu.netlify.app/', 'http://localhost:1010/'];
 
 const corsOptions = {
-  origin: function (origin: any, callback: any) {
-    if (urls.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
     }
+    return callback(null, true);
   }
 };
 
