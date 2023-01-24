@@ -27,7 +27,7 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
-const allowedOrigins = ['https://xbu.netlify.app/*', 'http://localhost:1010/*'];
+const allowedOrigins = ['https://xbu.netlify.app', 'http://localhost:1010'];
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
