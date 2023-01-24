@@ -27,12 +27,24 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
+const urls = ['https://xbu.netlify.app/', 'http://localhost:1010/'];
+
+const corsOptions = {
+  origin: function (origin: any, callback: any) {
+    if (urls.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  }
+};
+
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false }));
 app.use(compression());
-app.use(cors({ origin: ['https://xbu.netlify.app/', 'http://localhost:1010/'] }));
+app.use(cors(corsOptions));
 app.use(logger('dev'));
 app.use(
   helmet(
