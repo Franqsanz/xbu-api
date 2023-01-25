@@ -12,6 +12,7 @@ export interface BooksDocument extends pkg.Document {
   sourceLink: string;
   numberPages: string;
   format: string;
+  image: string;
 }
 
 const booksSchema = new Schema({
@@ -52,10 +53,10 @@ const booksSchema = new Schema({
   format: {
     type: String,
     require: true
-  }
-  // imgUrl: {
-  //   type: Buffer,
-  // },
+  },
+  image: {
+    type: String,
+  },
 }, { versionKey: false });
 
 booksSchema.set('toJSON', {
