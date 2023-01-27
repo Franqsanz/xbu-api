@@ -11,6 +11,7 @@ import * as Tracing from "@sentry/tracing";
 
 import db from "./db";
 import books from './routes/books';
+// import { Cors } from './types';
 
 const app = express();
 const PORT = process.env.PORT || 9090;

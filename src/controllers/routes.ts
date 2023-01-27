@@ -56,7 +56,6 @@ function putBooks(req: Request, res: Response) {
     title: body.title,
     author: body.author,
     synopsis: body.synopsis,
-    description: body.description,
     category: body.category,
     year: body.year,
     sourceLink: body.sourceLink,

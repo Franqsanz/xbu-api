@@ -1,19 +1,7 @@
 import pkg from 'mongoose';
 const { Schema, model } = pkg;
 
-export interface BooksDocument extends pkg.Document {
-  title: string;
-  author: string;
-  synopsis: string;
-  description: string;
-  category: string;
-  year: number;
-  language: number;
-  sourceLink: string;
-  numberPages: string;
-  format: string;
-  image: string;
-}
+import { BooksDocument } from '../types';
 
 const booksSchema = new Schema({
   title: {
@@ -27,9 +15,6 @@ const booksSchema = new Schema({
   synopsis: {
     type: String,
     required: true,
-  },
-  description: {
-    type: String,
   },
   category: {
     type: String,
@@ -56,6 +41,7 @@ const booksSchema = new Schema({
   },
   image: {
     type: String,
+    requiere: true
   },
 }, { versionKey: false });
 
