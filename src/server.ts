@@ -20,7 +20,7 @@ config();
 db();
 
 Sentry.init({
-  dsn: "https://7838fe347d5842f6900daa6a822df8f0@o4504136634269696.ingest.sentry.io/4504136636170240",
+  dsn: process.env.SENTRY_DNS,
   integrations: [
     new Sentry.Integrations.Http({ tracing: true }),
     new Tracing.Integrations.Express({ app }),
