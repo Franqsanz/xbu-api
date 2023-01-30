@@ -71,7 +71,7 @@ app.use(
   )
 );
 
-app.get('/', (req, res) => {
+app.get('/', (req, res: Response) => {
   res.send(`
     <section>
       <h1>API REST de XBU</h1>
@@ -85,6 +85,7 @@ app.get('/', (req, res) => {
   `);
 });
 app.use('/api', books);
+app.all('*', (req, res: Response) => res.status(404).json({ error: 'Not found' }));
 app.use(Sentry.Handlers.errorHandler());
 app.use(function onError(err: ErrorRequestHandler, req: Request, res: any, next: NextFunction) {
   res.statusCode = 500;
