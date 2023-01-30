@@ -85,7 +85,7 @@ app.get('/', (req, res: Response) => {
   `);
 });
 app.use('/api', books);
-app.all('*', (req, res: Response) => res.status(404).json({ error: 'Not found' }));
+// app.all('*', (req, res: Response) => res.status(404).json({ error: 'Not found' }));
 app.use(Sentry.Handlers.errorHandler());
 app.use(function onError(err: ErrorRequestHandler, req: Request, res: any, next: NextFunction) {
   res.statusCode = 500;
