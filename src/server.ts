@@ -39,7 +39,8 @@ const corsOptions = {
       return callback(new Error(msg), false);
     }
     return callback(null, true);
-  }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
 };
 
 app.use(Sentry.Handlers.requestHandler());
