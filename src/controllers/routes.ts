@@ -1,7 +1,17 @@
 import { Request, Response } from 'express';
+import { v2 as cloudinary } from 'cloudinary';
+import { config } from 'dotenv';
 import { connection } from 'mongoose';
 
 import model from "../model/books";
+
+config();
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 function getBooks(req: Request, res: Response) {
   const lit = parseInt(req.query.limit as string);
@@ -22,8 +32,16 @@ function getBooksRandom(req: Request, res: Response) {
   }).catch((err) => console.log(err));
 }
 
-function postBooks(req: Request, res: Response) {
+async function postBooks(req: Request, res: Response) {
   const { body } = req;
+
+  const image = body.image;
+  const result = await cloudinary.uploader.upload(image, {
+    upload_preset: 'xbu-uploads',
+  });
+
+  body.image = result.url;
+
   const newBook = new model(body);
 
   newBook.save().then((result) => {
