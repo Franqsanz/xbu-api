@@ -10,7 +10,10 @@ interface BooksDocument extends pkg.Document {
   sourceLink: string;
   numberPages: string;
   format: string;
-  image: string;
+  image: {
+    url: string;
+    public_id: string;
+  };
 }
 
 // interface Cors {

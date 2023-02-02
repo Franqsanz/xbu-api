@@ -35,18 +35,19 @@ function getBooksRandom(req: Request, res: Response) {
 async function postBooks(req: Request, res: Response) {
   const { body } = req;
 
-  const image = body.image;
-  const result = await cloudinary.uploader.upload(image, {
+  let { url } = body.image;
+  const result = await cloudinary.uploader.upload(url, {
     upload_preset: 'xbu-uploads',
   });
 
-  body.image = result.url;
+  body.image.url = result.url;
+  body.image.public_id = result.public_id;
 
   const newBook = new model(body);
 
   newBook.save().then((result) => {
     if (!result) {
-      return res.status(500).send('Error al Publicar');
+      return res.status(500).json({ error: { message: 'Error al Publicar' } });
     } else {
       return res.status(200).json(result);
       // connection.close();
@@ -59,7 +60,7 @@ function getOnetBooks(req: Request, res: Response) {
 
   model.findById(id).then((result) => {
     if (!result) {
-      return res.status(404).json({ error: 'Not found or not exist' });
+      return res.status(404).json({ error: { message: 'Not found or not exist' } });
     } else {
       return res.status(200).json(result);
     }
@@ -84,23 +85,34 @@ function putBooks(req: Request, res: Response) {
 
   model.findByIdAndUpdate(id, editBook, { new: true }).then((result) => {
     if (!result) {
-      return res.status(500).send('No se pudo actualizar');
+      return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
     } else {
       return res.status(200).json(result);
     }
   }).catch((err) => console.log(err));
 }
 
-function deleteBooks(req: Request, res: Response) {
+async function deleteBooks(req: Request, res: Response) {
   const { id } = req.params;
 
-  model.findByIdAndDelete(id).then((result) => {
-    if (!result) {
-      return res.status(404);
-    } else {
-      res.status(200).json('ELIMINADO');
+  try {
+    const book = await model.findById(id);
+
+    if (!book) {
+      return res.status(404).json({ error: { message: 'Libro no encontrado' } });
     }
-  }).catch((err) => console.log(err));
+
+    if (book) {
+      const public_id = book.image.public_id;
+      await cloudinary.uploader.destroy(public_id);
+    }
+
+    await book?.delete();
+
+    res.status(200).json({ success: { message: 'Libro eliminado' } });
+  } catch (error) {
+    res.status(500).json({ error: { message: 'Error al eliminar libro' } });
+  }
 }
 
 export {

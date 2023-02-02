@@ -40,8 +40,13 @@ const booksSchema = new Schema({
     require: true
   },
   image: {
-    type: String,
-    requiere: true
+    url: {
+      type: String,
+      required: true
+    },
+    public_id: {
+      type: String,
+    }
   },
 }, { versionKey: false });
 
