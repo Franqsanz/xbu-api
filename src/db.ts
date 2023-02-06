@@ -4,6 +4,7 @@ export default function connect() {
   const uri = process.env.MONGODB_URI || '';
   const options = { autoIndex: true };
 
+  mongoose.set("strictQuery", false);
   mongoose.connect(uri, options, (err) => {
     if (err) {
       console.log(err);
