@@ -1,11 +1,17 @@
 import { Request, Response } from 'express';
+import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
 import { config } from 'dotenv';
 import { connection } from 'mongoose';
 
 import model from "../model/books";
-
 config();
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST,
+  port: parseInt(process.env.REDIS_PORT as string),
+  password: process.env.REDIS_PASS,
+});
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
@@ -13,13 +19,23 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-function getBooks(req: Request, res: Response) {
+async function getBooks(req: Request, res: Response) {
+  const { body } = req;
+  const key = `books_${body}`;
   const lit = parseInt(req.query.limit as string);
 
-  model.find().limit(lit).sort({ _id: -1 }).then((result) => {
-    return res.status(200).json(result);
-    // connection.close();
-  }).catch((err) => console.log(err));
+  const cachedData = await redis.get(key);
+
+  if (cachedData) {
+    return res.status(200).json(JSON.parse(cachedData));
+  } else {
+    model.find().limit(lit).sort({ _id: -1 }).then((result) => {
+      redis.set(key, JSON.stringify(result));
+      redis.expire(key, 300);
+      return res.status(200).json(result);
+      // connection.close();
+    }).catch((err) => console.log(err));
+  }
 }
 
 function getBooksRandom(req: Request, res: Response) {
@@ -67,7 +83,7 @@ function getOnetBooks(req: Request, res: Response) {
   }).catch((err) => console.log(err));
 }
 
-function putBooks(req: Request, res: Response) {
+async function putBooks(req: Request, res: Response) {
   const { id } = req.params;
   const { body } = req;
 
@@ -83,7 +99,13 @@ function putBooks(req: Request, res: Response) {
     image: body.image,
   };
 
-  model.findByIdAndUpdate(id, editBook, { new: true }).then((result) => {
+  let { url, public_id } = body.image;
+  const result = await cloudinary.uploader.upload(url, { public_id: public_id });
+
+  const imageUrl = result.url;
+  // console.log(result.url);
+
+  model.findByIdAndUpdate(id, { ...body, image: imageUrl }, { new: true }).then((result) => {
     if (!result) {
       return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
     } else {
