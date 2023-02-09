@@ -46,7 +46,7 @@ const corsOptions = {
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(compression());
 app.use(cors(corsOptions));
 app.use(logger('dev'));
@@ -72,7 +72,13 @@ app.use(
   )
 );
 
-app.get('/', (req, res: Response) => {
+app.use((req, res, next) => {
+  const clientIp = req.ip;
+  console.log(`Client IP: ${clientIp}`);
+  next();
+});
+
+app.get('/', (req: Request, res: Response) => {
   res.send(`
     <section>
       <h1>API REST de XBU</h1>
