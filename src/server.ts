@@ -72,12 +72,6 @@ app.use(
   )
 );
 
-app.use((req, res, next) => {
-  const clientIp = req.ip;
-  console.log(`Client IP: ${clientIp}`);
-  next();
-});
-
 app.get('/', (req: Request, res: Response) => {
   res.send(`
     <section>

@@ -31,7 +31,7 @@ async function getBooks(req: Request, res: Response) {
   } else {
     model.find().limit(lit).sort({ _id: -1 }).then((result) => {
       redis.set(key, JSON.stringify(result));
-      redis.expire(key, 300);
+      redis.expire(key, 120);
       return res.status(200).json(result);
       // connection.close();
     }).catch((err) => console.log(err));
@@ -56,7 +56,7 @@ async function postBooks(req: Request, res: Response) {
     upload_preset: 'xbu-uploads',
   });
 
-  body.image.url = result.url;
+  body.image.url = result.secure_url;
   body.image.public_id = result.public_id;
 
   const newBook = new model(body);
@@ -65,6 +65,7 @@ async function postBooks(req: Request, res: Response) {
     if (!result) {
       return res.status(500).json({ error: { message: 'Error al Publicar' } });
     } else {
+      redis.expire(`books_${req.body}`, 0);
       return res.status(200).json(result);
       // connection.close();
     }
@@ -102,7 +103,7 @@ async function putBooks(req: Request, res: Response) {
   let { url, public_id } = body.image;
   const result = await cloudinary.uploader.upload(url, { public_id: public_id });
 
-  const imageUrl = result.url;
+  const imageUrl = result.secure_url;
   // console.log(result.url);
 
   model.findByIdAndUpdate(id, { ...body, image: imageUrl }, { new: true }).then((result) => {
