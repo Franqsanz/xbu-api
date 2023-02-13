@@ -2,13 +2,29 @@ import { Request, Response, NextFunction } from 'express';
 import model from "../model/books";
 
 export async function query(req: Request, res: Response, next: NextFunction) {
-  const query = req.query.category as any;
+  const { category, year, language } = req.query;
 
-  if (query) {
-    const category = await model.find({ category: { $regex: query, $options: 'i' } });
+  let query = {};
 
-    if (category.length < 1) return res.status(404).json({ error: 'Is category does not exist' });
-    return res.status(200).send(category);
+  if (category) {
+    query = { ...query, category: { $regex: category, $options: 'i' } };
+  }
+
+  if (year) {
+    query = { ...query, year: year };
+  }
+
+  if (language) {
+    query = {
+      ...query, language: { $regex: language, $options: 'i' }
+    };
+  }
+
+  if (Object.keys(query).length > 0) {
+    const results = await model.find(query);
+
+    if (results.length < 1) return res.status(404).json({ error: { message: 'La información no ha sido encontrada.' } });
+    return res.status(200).json(results);
   }
 
   next();

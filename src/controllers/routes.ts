@@ -77,7 +77,7 @@ function getOnetBooks(req: Request, res: Response) {
 
   model.findById(id).then((result) => {
     if (!result) {
-      return res.status(404).json({ error: { message: 'Not found or not exist' } });
+      return res.status(404).json({ error: { message: 'No se encuentra o no existe' } });
     } else {
       return res.status(200).json(result);
     }
