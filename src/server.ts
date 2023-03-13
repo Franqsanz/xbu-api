@@ -1,6 +1,7 @@
 import express, { ErrorRequestHandler, Request, Response, NextFunction } from "express";
 import cors from 'cors';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 import { config } from 'dotenv';
 import helmet from 'helmet';
 import logger from 'morgan';
@@ -49,6 +50,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(compression());
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(logger('dev'));
 app.use(
   helmet(
@@ -71,6 +73,11 @@ app.use(
     }
   )
 );
+
+app.use((req, res, next) => {
+  res.header('Set-Cookie', `SameSite=None; Secure`);
+  next();
+});
 
 app.get('/', (req: Request, res: Response) => {
   res.send(`
