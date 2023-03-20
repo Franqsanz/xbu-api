@@ -22,21 +22,27 @@ cloudinary.config({
 async function getBooks(req: Request, res: Response) {
   const { body } = req;
   const key = `books_${body}`;
-  const lit = parseInt(req.query.limit as string);
+  const limit = parseInt(req.query.limit as string);
+  const offset = parseInt(req.query.offset as string);
+  const shouldCache = req.query.cache === 'true';
 
-  const cachedData = await redis.get(key);
+  if (shouldCache) {
+    const cachedData = await redis.get(key);
+    if (cachedData) {
+      return res.status(200).json(JSON.parse(cachedData));
+    }
+  }
 
-  if (cachedData) {
-    return res.status(200).json(JSON.parse(cachedData));
-  } else {
-    model.find().limit(lit).sort({ _id: -1 }).then((result) => {
+  model.find().skip(offset).limit(limit).sort({ _id: -1 }).then((result) => {
+    if (shouldCache) {
       redis.set(key, JSON.stringify(result));
       redis.expire(key, 120);
-      return res.status(200).json(result);
-      // connection.close();
-    }).catch((err) => console.log(err));
-  }
+    }
+    return res.status(200).json(result);
+  })
+    .catch((err) => console.log(err));
 }
+
 
 function getBooksRandom(req: Request, res: Response) {
   model.find().sort({ _id: -1 }).then((result) => {
