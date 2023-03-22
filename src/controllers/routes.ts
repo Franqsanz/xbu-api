@@ -93,6 +93,7 @@ async function postBooks(req: Request, res: Response) {
   let { url } = body.image;
   const result = await cloudinary.uploader.upload(url, {
     upload_preset: 'xbu-uploads',
+    format: 'webp'
   });
 
   body.image.url = result.secure_url;
