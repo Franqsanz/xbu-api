@@ -23,28 +23,57 @@ async function getBooks(req: Request, res: Response) {
   const { body } = req;
   const key = `books_${body}`;
   const limit = parseInt(req.query.limit as string);
-  const page = parseInt(req.query.page as string);
+  const page = parseInt(req.query.page as string) || 1;
   const shouldCache = req.query.cache === 'true';
 
   const offset = (page - 1) * limit;
 
-  if (shouldCache) {
-    const cachedData = await redis.get(key);
-    if (cachedData) {
-      return res.status(200).json(JSON.parse(cachedData));
-    }
-  }
+  // Aquí obtenemos el número total de libros en la base de datos
+  const totalBooks = await model.countDocuments();
 
-  model.find().skip(offset).limit(limit).sort({ _id: -1 }).then((result) => {
-    if (shouldCache) {
-      redis.set(key, JSON.stringify(result));
-      redis.expire(key, 120);
+  // if (shouldCache) {
+  //   const cachedData = await redis.get(key);
+  //   if (cachedData) {
+  //     return res.status(200).json(JSON.parse(cachedData));
+  //   }
+  // }
+
+  // Aquí obtenemos los libros de la base de datos usando el método skip y limit
+  model.find().skip(offset).limit(limit).sort({ _id: -1 }).exec().then((result) => {
+    // if (shouldCache === false) {
+    //   redis.set(key, JSON.stringify(result));
+    //   redis.expire(key, 120);
+    // }
+
+    // Aquí calculamos el número total de páginas
+    const totalPages = Math.ceil(totalBooks / limit);
+    const nextPage = page < totalPages ? page + 1 : null;
+    const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}${req.path}api?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
+
+    // Aquí construimos el objeto de paginación para incluir en la respuesta
+    const info = {
+      totalBooks,
+      totalPages,
+      currentPage: page,
+      nextPage: nextPage,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPageLink: nextPageLink,
+      prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}${req.path}api?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
+    };
+
+    // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
+    const response = {
+      info,
+      results: result,
+    };
+
+    if (result.length < 1) {
+      return res.status(404).json({ error: { message: 'No se encontraron más libros' } });
     }
 
-    if (result.length < 1) return res.status(404).json({ error: { message: 'No se encontrarón más libros' } });
-    return res.status(200).json(result);
-  })
-    .catch((err) => console.log(err));
+    return res.status(200).json(response);
+
+  }).catch((err) => console.log(err));
 }
 
 
