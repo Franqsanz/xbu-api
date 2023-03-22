@@ -23,8 +23,10 @@ async function getBooks(req: Request, res: Response) {
   const { body } = req;
   const key = `books_${body}`;
   const limit = parseInt(req.query.limit as string);
-  const offset = parseInt(req.query.offset as string);
+  const page = parseInt(req.query.page as string);
   const shouldCache = req.query.cache === 'true';
+
+  const offset = (page - 1) * limit;
 
   if (shouldCache) {
     const cachedData = await redis.get(key);
@@ -38,6 +40,8 @@ async function getBooks(req: Request, res: Response) {
       redis.set(key, JSON.stringify(result));
       redis.expire(key, 120);
     }
+
+    if (result.length < 1) return res.status(404).json({ error: { message: 'No se encontrarón más libros' } });
     return res.status(200).json(result);
   })
     .catch((err) => console.log(err));
