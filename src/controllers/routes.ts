@@ -19,63 +19,88 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// async function cacheData(req, res, next) {
+//   const { body } = req;
+//   const key = `books_${body}`;
+//   let results;
+
+//   try {
+//     const cacheResults = await redis.get(key);
+//     if (cacheResults) {
+//       results = JSON.parse(cacheResults);
+//       res.send({
+//         fromCache: true,
+//         data: results,
+//       });
+//     } else {
+//       next();
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     res.status(404);
+//   }
+// }
+
 async function getBooks(req: Request, res: Response) {
   const { body } = req;
   const key = `books_${body}`;
   const limit = parseInt(req.query.limit as string);
   const page = parseInt(req.query.page as string) || 1;
-  const shouldCache = req.query.cache === 'true';
 
   const offset = (page - 1) * limit;
+
+  // Aquí obtenemos los libros de la base de datos usando el método skip y limit
+  const results = await model.find().skip(offset).limit(limit).sort({ _id: -1 }).exec();
 
   // Aquí obtenemos el número total de libros en la base de datos
   const totalBooks = await model.countDocuments();
 
-  // if (shouldCache) {
-  //   const cachedData = await redis.get(key);
-  //   if (cachedData) {
-  //     return res.status(200).json(JSON.parse(cachedData));
-  //   }
-  // }
+  // Aquí calculamos el número total de páginas
+  const totalPages = Math.ceil(totalBooks / limit);
+  const nextPage = page < totalPages ? page + 1 : null;
+  const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}${req.path}api?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
 
-  // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-  model.find().skip(offset).limit(limit).sort({ _id: -1 }).exec().then((result) => {
-    // if (shouldCache === false) {
-    //   redis.set(key, JSON.stringify(result));
-    //   redis.expire(key, 120);
-    // }
+  // Aquí construimos el objeto de paginación para incluir en la respuesta
+  const info = {
+    totalBooks,
+    totalPages,
+    currentPage: page,
+    nextPage: nextPage,
+    prevPage: page > 1 ? page - 1 : null,
+    nextPageLink: nextPageLink,
+    prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}${req.path}api?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
+  };
 
-    // Aquí calculamos el número total de páginas
-    const totalPages = Math.ceil(totalBooks / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}${req.path}api?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
+  // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
+  const response = {
+    info,
+    results,
+  };
 
-    // Aquí construimos el objeto de paginación para incluir en la respuesta
-    const info = {
-      totalBooks,
-      totalPages,
-      currentPage: page,
-      nextPage: nextPage,
-      prevPage: page > 1 ? page - 1 : null,
-      nextPageLink: nextPageLink,
-      prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}${req.path}api?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
-    };
+  // Se elimina la cache cuando se busca por paginación
+  if (limit && page) await redis.del(key);
 
-    // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
-    const response = {
-      info,
-      results: result,
-    };
+  // Se leen los datos almacenados en cache
+  const cachedData = await redis.get(key);
 
-    if (result.length < 1) {
-      return res.status(404).json({ error: { message: 'No se encontraron más libros' } });
-    }
+  // Si hay datos en la cache se envian al cliente
+  if (cachedData) {
+    const cachedResponse = JSON.parse(cachedData);
+    return res.status(200).json(cachedResponse);
+  }
 
-    return res.status(200).json(response);
+  // Si no hay datos en la cache, se envian a redis los datos de la base
+  await redis.set(key, JSON.stringify(response));
 
-  }).catch((err) => console.log(err));
+  // Expiramos la cache cada 5 minutos
+  await redis.expire(key, 300);
+
+  if (results.length < 1) {
+    return res.status(404).json({ error: { message: 'No se encontraron más libros' } });
+  }
+
+  return res.status(200).json(response);
 }
-
 
 function getBooksRandom(req: Request, res: Response) {
   model.find().sort({ _id: -1 }).then((result) => {
