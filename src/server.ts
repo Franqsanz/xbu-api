@@ -1,17 +1,19 @@
-import express, { ErrorRequestHandler, Request, Response, NextFunction } from "express";
+import express, { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import { config } from 'dotenv';
 import helmet from 'helmet';
 import logger from 'morgan';
-import * as Sentry from "@sentry/node";
-import * as Tracing from "@sentry/tracing";
-// import cookieSession from "cookie-session";
-// import passport from "passport";
+import * as Sentry from '@sentry/node';
+import * as Tracing from '@sentry/tracing';
+import cookieSession from 'cookie-session';
+import passport from 'passport';
 
 import db from "./db";
 import books from './routes/books';
+import auth from './routes/auth';
+import './auth/passport';
 // import { Cors } from './types';
 
 const app = express();
@@ -41,9 +43,12 @@ const corsOptions = {
     }
     return callback(null, true);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: 'GET, POST, PUT, DELETE',
+  // credential: true,
 };
 
+app.use(passport.initialize());
+// app.use(passport.session());
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
@@ -52,6 +57,11 @@ app.use(compression());
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(logger('dev'));
+// app.use(cookieSession({
+//   name: 'session',
+//   keys: ['secretkeys'],
+//   maxAge: 24 * 60 * 60 * 100
+// }));
 app.use(
   helmet(
     {
@@ -93,21 +103,14 @@ app.get('/', (req: Request, res: Response) => {
   `);
 });
 app.use('/api', books);
+app.use('/auth', auth);
+
 app.use(Sentry.Handlers.errorHandler());
 app.use(function onError(err: ErrorRequestHandler, req: Request, res: any, next: NextFunction) {
   res.statusCode = 500;
   res.end(res.sentry + "\n");
 });
 app.all('*', (req, res: Response) => res.status(404).json({ error: 'Not found' }));
-
-// app.use(cookieSession({
-//   name: 'session',
-//   keys: [/* secret keys */],
-
-//   // Cookie Options
-//   maxAge: 24 * 60 * 60 * 1000 // 24 hours
-// }))
-// app.use(passport.initialize());
 
 app.listen(PORT, () => console.log('Server Ready'));
 
