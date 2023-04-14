@@ -102,6 +102,26 @@ async function getBooks(req: Request, res: Response) {
   return res.status(200).json(response);
 }
 
+function getAllCategories(req: Request, res: Response) {
+  model.aggregate([
+    {
+      $group: {
+        _id: '$category',
+        count: { $sum: 1 }
+      }
+    },
+    {
+      $sort: { _id: 1 }
+    }
+  ]).exec((err, result) => {
+    if (err) {
+      console.log(err);
+    } else {
+      return res.status(200).json(result);
+    }
+  });
+}
+
 function getBooksRandom(req: Request, res: Response) {
   model.find().sort({ _id: -1 }).then((result) => {
     const random = result.sort(() => { return Math.random() - 0.5; });
@@ -169,7 +189,6 @@ async function putBooks(req: Request, res: Response) {
   const result = await cloudinary.uploader.upload(url, { public_id: public_id });
 
   const imageUrl = result.secure_url;
-  // console.log(result.url);
 
   model.findByIdAndUpdate(id, { ...body, image: imageUrl }, { new: true }).then((result) => {
     if (!result) {
@@ -205,6 +224,7 @@ async function deleteBooks(req: Request, res: Response) {
 
 export {
   getBooks,
+  getAllCategories,
   getBooksRandom,
   getOnetBooks,
   postBooks,
