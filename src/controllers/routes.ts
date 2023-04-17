@@ -102,16 +102,48 @@ async function getBooks(req: Request, res: Response) {
   return res.status(200).json(response);
 }
 
-function getAllCategories(req: Request, res: Response) {
+function getAllOptions(req: Request, res: Response) {
   model.aggregate([
     {
-      $group: {
-        _id: '$category',
-        count: { $sum: 1 }
+      $facet: {
+        byCategory: [
+          {
+            $group: {
+              _id: "$category",
+              count: { $sum: 1 }
+            }
+          }, { $sort: { _id: 1 } }
+        ],
+        byLanguage: [
+          {
+            $group: {
+              _id: "$language",
+              count: { $sum: 1 }
+            }
+          }, { $sort: { _id: 1 } }
+        ],
+        byYear: [
+          {
+            $group: {
+              _id: "$year",
+              count: { $sum: 1 }
+            }
+          }, { $sort: { _id: 1 } }
+        ]
       }
     },
     {
-      $sort: { _id: 1 }
+      $group: {
+        _id: null,
+        categories: { $push: "$byCategory" },
+        languages: { $push: "$byLanguage" },
+        years: { $push: "$byYear" }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+      }
     }
   ]).exec((err, result) => {
     if (err) {
@@ -224,7 +256,7 @@ async function deleteBooks(req: Request, res: Response) {
 
 export {
   getBooks,
-  getAllCategories,
+  getAllOptions,
   getBooksRandom,
   getOnetBooks,
   postBooks,
