@@ -47,8 +47,13 @@ const corsOptions = {
   // credential: true,
 };
 
+app.use(cookieSession({
+  name: 'session',
+  keys: ['secretkeys'],
+  maxAge: 24 * 60 * 60 * 100
+}));
 app.use(passport.initialize());
-// app.use(passport.session());
+app.use(passport.session());
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
@@ -57,11 +62,6 @@ app.use(compression());
 app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(logger('dev'));
-// app.use(cookieSession({
-//   name: 'session',
-//   keys: ['secretkeys'],
-//   maxAge: 24 * 60 * 60 * 100
-// }));
 app.use(
   helmet(
     {

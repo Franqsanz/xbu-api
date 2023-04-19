@@ -5,10 +5,11 @@ import { Strategy as TwitterStrategy } from 'passport-twitter';
 passport.use(new FacebookStrategy({
   clientID: process.env.FACEBOOK_APP_ID || '',
   clientSecret: process.env.FACEBOOK_APP_SECRET || '',
-  callbackURL: '/auth/facebook/callback'
+  callbackURL: '/auth/facebook/callback',
+  profileFields: ['id', 'displayName', 'photos', 'email']
 },
   function (accessToken, refreshToken, profile, cb) {
-    // Aquí puedes guardar el usuario en la base de datos
+    console.log(profile);
     return cb(null, profile);
   }
 ));
