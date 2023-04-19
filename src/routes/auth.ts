@@ -10,7 +10,7 @@ const router = express.Router();
 
 const CLIENT_URL = 'http://localhost:1010/';
 
-router.get('/facebook', passport.authenticate('facebook', { scope: ['profile'] }));
+router.get('/facebook', passport.authenticate('facebook'));
 
 router.get('/facebook/callback',
   passport.authenticate('facebook', {

@@ -6,10 +6,11 @@ passport.use(new FacebookStrategy({
   clientID: process.env.FACEBOOK_APP_ID || '',
   clientSecret: process.env.FACEBOOK_APP_SECRET || '',
   callbackURL: '/auth/facebook/callback',
-  profileFields: ['id', 'displayName', 'photos', 'email']
+  profileFields: ['id', 'displayName', 'photos']
 },
   function (accessToken, refreshToken, profile, cb) {
-    console.log(profile);
+    const { _json } = profile;
+    console.log(_json);
     return cb(null, profile);
   }
 ));
