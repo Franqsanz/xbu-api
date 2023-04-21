@@ -192,7 +192,7 @@ async function postBooks(req: Request, res: Response) {
 function getOnetBooks(req: Request, res: Response) {
   const { id } = req.params;
 
-  model.findById(id).sort({ _id: -1 }).then((result) => {
+  model.findById(id).hint('_id_').then((result) => {
     if (!result) {
       return res.status(404).json({ error: { message: 'No se encuentra o no existe' } });
     } else {
