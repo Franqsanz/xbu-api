@@ -13,6 +13,7 @@ import passport from 'passport';
 import db from "./db";
 import books from './routes/books';
 import auth from './routes/auth';
+// import isLoggedIn from './middleware/isLoggedIn';
 import './auth/passport';
 // import { Cors } from './types';
 
@@ -31,7 +32,7 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
-const allowedOrigins = ['https://xbu.netlify.app', 'http://localhost:1010'];
+const allowedOrigins = ['https://xbu.netlify.app', 'https://xbu.vercel.app/', 'http://localhost:1010'];
 
 const corsOptions = {
   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
@@ -50,7 +51,7 @@ const corsOptions = {
 app.use(cookieSession({
   name: 'session',
   keys: ['secretkeys'],
-  maxAge: 24 * 60 * 60 * 100
+  maxAge: 24 * 60 * 60 * 1000
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -102,6 +103,11 @@ app.get('/', (req: Request, res: Response) => {
     </section>
   `);
 });
+
+// app.get('/error', (req, res) => {
+//   res.json({ error: { message: 'No tiene autorización' } });
+// });
+
 app.use('/api', books);
 app.use('/auth', auth);
 
