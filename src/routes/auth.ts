@@ -23,7 +23,7 @@ router.get('/facebook/callback',
   })
 );
 
-router.get('/twitter', passport.authenticate('twitter'));
+router.get('/twitter', passport.authenticate('twitter', { scope: ['users.read'] }));
 
 router.get('/twitter/callback',
   passport.authenticate('twitter', {
