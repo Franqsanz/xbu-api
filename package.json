@@ -14,8 +14,9 @@
   "description": "",
   "dependencies": {
     "@sentry/node": "7.36.0",
-    "@sentry/tracing": "7.36.0",
-    "cloudinary": "1.33.0",
+    "@sentry/tracing": "7.50.0",
+    "@superfaceai/passport-twitter-oauth2": "1.2.3",
+    "cloudinary": "1.36.2",
     "compression": "1.7.4",
     "cookie-parser": "1.4.6",
     "cookie-session": "2.0.0",
@@ -26,8 +27,7 @@
     "mongoose": "6.9.0",
     "passport": "0.6.0",
     "passport-facebook": "3.0.0",
-    "passport-google-oauth20": "2.0.0",
-    "passport-twitter": "0.1.5"
+    "passport-google-oauth20": "2.0.0"
   },
   "devDependencies": {
     "@types/compression": "1.7.2",
@@ -39,7 +39,6 @@
     "@types/passport": "1.0.12",
     "@types/passport-facebook": "2.1.11",
     "@types/passport-google-oauth20": "2.0.11",
-    "@types/passport-twitter": "1.0.37",
     "dotenv": "16.0.3",
     "morgan": "1.10.0",
     "ts-node-dev": "2.0.0",
