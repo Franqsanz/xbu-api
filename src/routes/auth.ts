@@ -26,9 +26,9 @@ router.get('/facebook/callback',
 router.get('/twitter', passport.authenticate('twitter', { scope: ['tweet.read', 'users.read'] }));
 
 router.get('/twitter/callback',
-  passport.authenticate('twitter'), function (req, res) {
-    // const userData = JSON.stringify(req.user, undefined, 2);
-    res.redirect('/login/check-user');
+  passport.authenticate('twitter', { failureRedirect: `${CLIENT_URL}/register` }),
+  function (req, res) {
+    res.redirect(`${CLIENT_URL}/explore`);
   }
 );
 
