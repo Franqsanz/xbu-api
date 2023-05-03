@@ -34,11 +34,13 @@ passport.use(new TwitterStrategy({
   clientID: process.env.TWITTER_CONSUMER_KEY || '',
   clientSecret: process.env.TWITTER_CONSUMER_SECRET || '',
   clientType: 'confidential',
-  callbackURL: `${API_URL}/auth/twitter/callback`
+  // callbackURL: `${API_URL}/auth/twitter/callback`
+  callbackURL: '/auth/twitter/callback'
 },
   function (accessToken, refreshToken, profile, cb) {
     // const { _json } = profile;
-    console.log(profile);
+    // console.log(profile);
+    console.log('Success!', { profile });
     return cb(null, profile);
   }
 ));

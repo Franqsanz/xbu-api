@@ -23,13 +23,13 @@ router.get('/facebook/callback',
   })
 );
 
-router.get('/twitter', passport.authenticate('twitter', { scope: ['users.read'] }));
+router.get('/twitter', passport.authenticate('twitter', { scope: ['tweet.read', 'users.read'] }));
 
 router.get('/twitter/callback',
-  passport.authenticate('twitter', {
-    successRedirect: CLIENT_URL,
-    failureRedirect: `${CLIENT_URL}/register`,
-  })
+  passport.authenticate('twitter'), function (req, res) {
+    // const userData = JSON.stringify(req.user, undefined, 2);
+    res.redirect('/auth/login/check-user');
+  }
 );
 
 router.get('/login/check-user', (req, res) => {

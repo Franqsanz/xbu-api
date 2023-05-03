@@ -13,7 +13,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@sentry/node": "7.36.0",
+    "@sentry/node": "7.50.0",
     "@sentry/tracing": "7.50.0",
     "@superfaceai/passport-twitter-oauth2": "1.2.3",
     "cloudinary": "1.36.2",
