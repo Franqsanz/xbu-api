@@ -34,8 +34,7 @@ passport.use(new TwitterStrategy({
   clientID: process.env.TWITTER_CONSUMER_KEY || '',
   clientSecret: process.env.TWITTER_CONSUMER_SECRET || '',
   clientType: 'confidential',
-  // callbackURL: `${API_URL}/auth/twitter/callback`
-  callbackURL: '/auth/twitter/callback'
+  callbackURL: `${API_URL}/auth/twitter/callback`
 },
   function (accessToken, refreshToken, profile, cb) {
     // const { _json } = profile;
@@ -50,7 +49,7 @@ passport.serializeUser(function (user, cb) {
 });
 
 passport.deserializeUser(function (user, cb) {
-  cb(null, user as null);
+  cb(null, user as any);
 });
 
 export default passport;

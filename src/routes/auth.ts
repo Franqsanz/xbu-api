@@ -28,7 +28,7 @@ router.get('/twitter', passport.authenticate('twitter', { scope: ['tweet.read', 
 router.get('/twitter/callback',
   passport.authenticate('twitter'), function (req, res) {
     // const userData = JSON.stringify(req.user, undefined, 2);
-    res.redirect('/auth/login/check-user');
+    res.redirect('/login/check-user');
   }
 );
 
