@@ -2,6 +2,7 @@ import express from 'express';
 
 import {
   getBooks,
+  getSearchBooks,
   getAllOptions,
   getBooksRandom,
   getOnetBooks,
@@ -14,6 +15,7 @@ import { query } from "../middleware/query";
 const router = express.Router();
 
 router.get('/', query, getBooks);
+router.get('/search', getSearchBooks);
 router.get('/options', getAllOptions);
 router.get('/related-post', getBooksRandom);
 router.get('/:id', getOnetBooks);

@@ -102,6 +102,12 @@ async function getBooks(req: Request, res: Response) {
   return res.status(200).json(response);
 }
 
+async function getSearchBooks(req: Request, res: Response) {
+  const results = await model.find().sort({ _id: -1 }).exec();
+
+  return res.status(200).json(results);
+}
+
 function getAllOptions(req: Request, res: Response) {
   model.aggregate([
     {
@@ -256,6 +262,7 @@ async function deleteBooks(req: Request, res: Response) {
 
 export {
   getBooks,
+  getSearchBooks,
   getAllOptions,
   getBooksRandom,
   getOnetBooks,
