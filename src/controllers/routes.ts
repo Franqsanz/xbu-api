@@ -103,7 +103,7 @@ async function getBooks(req: Request, res: Response) {
 }
 
 async function getSearchBooks(req: Request, res: Response) {
-  const results = await model.find().select('_id title author').sort({ _id: -1 }).exec();
+  const results = await model.find().select('_id title author').hint('_id_').sort({ _id: -1 }).exec();
 
   return res.status(200).json(results);
 }
@@ -161,7 +161,7 @@ function getAllOptions(req: Request, res: Response) {
 }
 
 function getBooksRandom(req: Request, res: Response) {
-  model.find().sort({ _id: -1 }).then((result) => {
+  model.find().select('_id title author').sort({ _id: -1 }).then((result) => {
     const random = result.sort(() => { return Math.random() - 0.5; });
     const resRandom = random.splice(0, 3);
 
