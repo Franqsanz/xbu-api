@@ -50,7 +50,7 @@ async function getBooks(req: Request, res: Response) {
   const offset = (page - 1) * limit;
 
   // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-  const results = await model.find().skip(offset).limit(limit).sort({ _id: -1 }).exec();
+  const results = await model.find().select('_id title category author image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
 
   // Aquí obtenemos el número total de libros en la base de datos
   const totalBooks = await model.countDocuments();
