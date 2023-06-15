@@ -113,6 +113,7 @@ function getAllOptions(req: Request, res: Response) {
     {
       $facet: {
         byCategory: [
+          { $unwind: "$category" },
           {
             $group: {
               _id: "$category",
@@ -211,24 +212,27 @@ async function putBooks(req: Request, res: Response) {
   const { id } = req.params;
   const { body } = req;
 
-  const editBook = {
-    title: body.title,
-    author: body.author,
-    synopsis: body.synopsis,
-    category: body.category,
-    year: body.year,
-    sourceLink: body.sourceLink,
-    numberPages: body.numberPages,
-    format: body.format,
-    image: body.image,
-  };
+  // const editBook = {
+  //   title: body.title,
+  //   author: body.author,
+  //   synopsis: body.synopsis,
+  //   category: body.category,
+  //   year: body.year,
+  //   sourceLink: body.sourceLink,
+  //   numberPages: body.numberPages,
+  //   format: body.format,
+  //   image: body.image,
+  // };
 
   let { url, public_id } = body.image;
   const result = await cloudinary.uploader.upload(url, { public_id: public_id });
 
-  const imageUrl = result.secure_url;
+  const image = {
+    url: result.secure_url,
+    public_id: result.public_id
+  };
 
-  model.findByIdAndUpdate(id, { ...body, image: imageUrl }, { new: true }).then((result) => {
+  model.findByIdAndUpdate(id, { ...body, image: image }, { new: true }).then((result) => {
     if (!result) {
       return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
     } else {
