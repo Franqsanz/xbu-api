@@ -50,7 +50,7 @@ async function getBooks(req: Request, res: Response) {
   const offset = (page - 1) * limit;
 
   // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-  const results = await model.find({}, 'title category author image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
+  const results = await model.find({}, 'title category author pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
 
   // Aquí obtenemos el número total de libros en la base de datos
   const totalBooks = await model.countDocuments();
@@ -208,6 +208,18 @@ function getOnetBooks(req: Request, res: Response) {
   }).catch((err) => console.log(err));
 }
 
+function getPathUrlBooks(req: Request, res: Response) {
+  const { pathUrl } = req.params;
+
+  model.findOne({ pathUrl: pathUrl }).then((result) => {
+    if (!result) {
+      return res.status(404).json({ error: { message: 'No se encuentra o no existe' } });
+    } else {
+      return res.status(200).json(result);
+    }
+  }).catch((err) => console.log(err));
+}
+
 async function putBooks(req: Request, res: Response) {
   const { id } = req.params;
   const { body } = req;
@@ -270,6 +282,7 @@ export {
   getAllOptions,
   getBooksRandom,
   getOnetBooks,
+  getPathUrlBooks,
   postBooks,
   putBooks,
   deleteBooks,

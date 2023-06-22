@@ -40,6 +40,10 @@ const booksSchema = new Schema({
     type: String,
     require: true
   },
+  pathUrl: {
+    type: String,
+    require: true
+  },
   image: {
     url: {
       type: String,
