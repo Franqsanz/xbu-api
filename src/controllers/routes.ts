@@ -162,7 +162,7 @@ function getAllOptions(req: Request, res: Response) {
 }
 
 function getBooksRandom(req: Request, res: Response) {
-  model.find({}, 'title author').sort({ _id: -1 }).then((result) => {
+  model.find({}, 'title author pathUrl').sort({ _id: -1 }).then((result) => {
     const random = result.sort(() => { return Math.random() - 0.5; });
     const resRandom = random.splice(0, 3);
 
