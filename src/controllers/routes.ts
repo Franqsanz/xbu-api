@@ -103,7 +103,7 @@ async function getBooks(req: Request, res: Response) {
 }
 
 async function getSearchBooks(req: Request, res: Response) {
-  const results = await model.find({}, 'title author').hint('_id_').sort({ _id: -1 }).exec();
+  const results = await model.find({}, 'title author pathUrl').hint('_id_').sort({ _id: -1 }).exec();
 
   return res.status(200).json(results);
 }
