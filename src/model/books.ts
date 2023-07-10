@@ -7,10 +7,12 @@ const booksSchema = new Schema({
   title: {
     type: String,
     required: true,
+    trim: true,
   },
   author: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
   },
   synopsis: {
     type: String,
@@ -23,18 +25,22 @@ const booksSchema = new Schema({
   },
   sourceLink: {
     type: String,
+    trim: true,
   },
   language: {
     type: String,
-    required: true
+    required: true,
+    trim: true,
   },
   year: {
     type: Number,
-    required: true
+    required: true,
+    trim: true,
   },
   numberPages: {
     type: Number,
-    required: true
+    required: true,
+    trim: true,
   },
   format: {
     type: String,
@@ -42,7 +48,8 @@ const booksSchema = new Schema({
   },
   pathUrl: {
     type: String,
-    require: true
+    require: true,
+    trim: true,
   },
   image: {
     url: {
@@ -63,4 +70,4 @@ booksSchema.set('toJSON', {
   }
 });
 
-export default model<BooksDocument>("books", booksSchema);
+export default model<BooksDocument>('books', booksSchema);
