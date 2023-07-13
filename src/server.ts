@@ -32,20 +32,26 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
-const allowedOrigins = ['https://xbu.netlify.app', 'https://xbu.vercel.app', 'http://localhost:1010'];
+// const allowedOrigins = ['https://xbu.netlify.app', 'https://xbu.vercel.app', 'http://localhost:1010'];
+
+// const corsOptions = {
+//   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+//     if (!origin) return callback(null, true);
+
+//     if (allowedOrigins.indexOf(origin) === -1) {
+//       const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+//       return callback(new Error(msg), false);
+//     }
+//     return callback(null, true);
+//   },
+//   methods: 'GET, POST, PUT, DELETE',
+//   // credential: true,
+// };
+// const allowedOrigin = process.env.ALLOWED_ORIGIN || '';
 
 const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  methods: 'GET, POST, PUT, DELETE',
-  // credential: true,
+  origin: process.env.ALLOWED_ORIGIN || '',
+  methods: 'GET, POST, PUT, PATCH, DELETE',
 };
 
 app.use(cookieSession({
