@@ -152,13 +152,14 @@ function getAllOptions(req: Request, res: Response) {
         _id: 0,
       }
     }
-  ]).exec((err, result) => {
-    if (err) {
-      console.log(err);
-    } else {
+  ]).exec()
+    .then((result) => {
       return res.status(200).json(result);
-    }
-  });
+    })
+    .catch((err) => {
+      console.log(err);
+      return res.status(500).json({ error: 'Error al obtener los datos' });
+    });
 }
 
 function getBooksRandom(req: Request, res: Response) {
@@ -268,7 +269,7 @@ async function deleteBooks(req: Request, res: Response) {
       await cloudinary.uploader.destroy(public_id);
     }
 
-    await book?.delete();
+    await book?.deleteOne();
 
     res.status(200).json({ success: { message: 'Libro eliminado' } });
   } catch (error) {

@@ -5,13 +5,13 @@ export default function connect() {
   const options = { autoIndex: true };
 
   mongoose.set("strictQuery", false);
-  mongoose.connect(uri, options, (err) => {
-    if (err) {
-      console.log(err);
-    } else {
+  mongoose.connect(uri, options)
+    .then(() => {
       console.log('Connected to MongoDB');
-    }
-  });
+    })
+    .catch((err) => {
+      console.log(err);
+    });
 
   process.on('exit', error => {
     console.error(error);

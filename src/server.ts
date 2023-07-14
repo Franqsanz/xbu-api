@@ -60,7 +60,6 @@ app.use(
       crossOriginOpenerPolicy: true,
       crossOriginResourcePolicy: true,
       dnsPrefetchControl: true,
-      expectCt: true,
       frameguard: true,
       hidePoweredBy: true,
       hsts: true,
