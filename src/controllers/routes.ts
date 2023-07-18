@@ -197,7 +197,7 @@ async function postBooks(req: Request, res: Response) {
   }).catch((err) => console.log(err));
 }
 
-function getOnetBooks(req: Request, res: Response) {
+function getOneBooks(req: Request, res: Response) {
   const { id } = req.params;
 
   model.findById(id).hint('_id_').then((result) => {
@@ -224,18 +224,6 @@ function getPathUrlBooks(req: Request, res: Response) {
 async function putBooks(req: Request, res: Response) {
   const { id } = req.params;
   const { body } = req;
-
-  // const editBook = {
-  //   title: body.title,
-  //   author: body.author,
-  //   synopsis: body.synopsis,
-  //   category: body.category,
-  //   year: body.year,
-  //   sourceLink: body.sourceLink,
-  //   numberPages: body.numberPages,
-  //   format: body.format,
-  //   image: body.image,
-  // };
 
   let { url, public_id } = body.image;
   const result = await cloudinary.uploader.upload(url, { public_id: public_id });
@@ -282,7 +270,7 @@ export {
   getSearchBooks,
   getAllOptions,
   getBooksRandom,
-  getOnetBooks,
+  getOneBooks,
   getPathUrlBooks,
   postBooks,
   putBooks,
