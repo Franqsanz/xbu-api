@@ -22,7 +22,7 @@ router.get('/related-post', getBooksRandom);
 router.get('/path/:pathUrl', getPathUrlBooks);
 router.get('/:id', getOneBooks);
 router.post('/', postBooks);
-router.put('/:id', putBooks);
+router.patch('/:id', putBooks);
 router.delete('/:id', deleteBooks);
 
 export default router;

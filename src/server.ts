@@ -32,11 +32,6 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
-const corsOptions = {
-  origin: process.env.ALLOWED_ORIGIN || '',
-  methods: 'GET, POST, PUT, PATCH, DELETE',
-};
-
 app.use(cookieSession({
   name: 'session',
   keys: ['secretkeys'],
@@ -49,9 +44,13 @@ app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 app.use(compression());
-app.use(cors(corsOptions));
 app.use(cookieParser());
 app.use(logger('dev'));
+app.use(cors({
+  origin: process.env.ALLOWED_ORIGIN || '',
+  methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['X-Requested-With', 'Content-Type', 'Accept', 'Origin'],
+}));
 app.use(
   helmet(
     {
