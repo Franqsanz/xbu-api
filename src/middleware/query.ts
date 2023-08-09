@@ -7,7 +7,7 @@ export async function query(req: Request, res: Response, next: NextFunction) {
   let query = {};
 
   if (category) {
-    query = { ...query, category: { $regex: category, $options: 'i' } };
+    query = { ...query, category: category };
   }
 
   if (year) {
