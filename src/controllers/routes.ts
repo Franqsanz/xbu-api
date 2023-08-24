@@ -96,16 +96,32 @@ async function getBooks(req: Request, res: Response) {
   await redis.expire(key, 300);
 
   if (results.length < 1) {
-    return res.status(404).json({ error: { message: 'No se encontraron más libros' } });
+    return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
   }
 
   return res.status(200).json(response);
 }
 
 async function getSearchBooks(req: Request, res: Response) {
-  const results = await model.find({}, 'title author pathUrl').hint('_id_').sort({ _id: -1 }).exec();
+  try {
+    const { q } = req.query;
 
-  return res.status(200).json(results);
+    const results = await model.find({
+      $or: [
+        { title: { $regex: q, $options: 'i' } },
+        { author: { $regex: q, $options: 'i' } }
+      ]
+    }, 'title author pathUrl').hint('_id_').sort({ _id: -1 }).exec();
+
+    if (results.length < 1) {
+      return res.status(404).json({ info: { message: `No se encontraron resultados para: ${q}` } });
+    }
+
+    return res.status(200).json(results);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+  }
 }
 
 function getAllOptions(req: Request, res: Response) {
@@ -158,7 +174,7 @@ function getAllOptions(req: Request, res: Response) {
     })
     .catch((err) => {
       console.log(err);
-      return res.status(500).json({ error: 'Error al obtener los datos' });
+      return res.status(500).json({ error: { message: 'Error al obtener los datos' } });
     });
 }
 
@@ -202,7 +218,7 @@ function getOneBooks(req: Request, res: Response) {
 
   model.findById(id).hint('_id_').then((result) => {
     if (!result) {
-      return res.status(404).json({ error: { message: 'No se encuentra o no existe' } });
+      return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
     } else {
       return res.status(200).json(result);
     }
@@ -214,7 +230,7 @@ function getPathUrlBooks(req: Request, res: Response) {
 
   model.findOne({ pathUrl: pathUrl }).then((result) => {
     if (!result) {
-      return res.status(404).json({ error: { message: 'No se encuentra o no existe' } });
+      return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
     } else {
       return res.status(200).json(result);
     }
@@ -249,7 +265,7 @@ async function deleteBooks(req: Request, res: Response) {
     const book = await model.findById(id);
 
     if (!book) {
-      return res.status(404).json({ error: { message: 'Libro no encontrado' } });
+      return res.status(404).json({ info: { message: 'Libro no encontrado' } });
     }
 
     if (book) {
