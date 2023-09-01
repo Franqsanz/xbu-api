@@ -124,68 +124,70 @@ async function getSearchBooks(req: Request, res: Response) {
   }
 }
 
-function getAllOptions(req: Request, res: Response) {
-  model.aggregate([
-    {
-      $facet: {
-        byCategory: [
-          { $unwind: "$category" },
-          {
-            $group: {
-              _id: "$category",
-              count: { $sum: 1 }
-            }
-          }, { $sort: { _id: 1 } }
-        ],
-        byLanguage: [
-          {
-            $group: {
-              _id: "$language",
-              count: { $sum: 1 }
-            }
-          }, { $sort: { _id: 1 } }
-        ],
-        byYear: [
-          {
-            $group: {
-              _id: "$year",
-              count: { $sum: 1 }
-            }
-          }, { $sort: { _id: 1 } }
-        ]
+async function getAllOptions(req: Request, res: Response) {
+  try {
+    const result = await model.aggregate([
+      {
+        $facet: {
+          byCategory: [
+            { $unwind: "$category" },
+            {
+              $group: {
+                _id: "$category",
+                count: { $sum: 1 }
+              }
+            }, { $sort: { _id: 1 } }
+          ],
+          byLanguage: [
+            {
+              $group: {
+                _id: "$language",
+                count: { $sum: 1 }
+              }
+            }, { $sort: { _id: 1 } }
+          ],
+          byYear: [
+            {
+              $group: {
+                _id: "$year",
+                count: { $sum: 1 }
+              }
+            }, { $sort: { _id: 1 } }
+          ]
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          categories: { $push: "$byCategory" },
+          languages: { $push: "$byLanguage" },
+          years: { $push: "$byYear" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+        }
       }
-    },
-    {
-      $group: {
-        _id: null,
-        categories: { $push: "$byCategory" },
-        languages: { $push: "$byLanguage" },
-        years: { $push: "$byYear" }
-      }
-    },
-    {
-      $project: {
-        _id: 0,
-      }
-    }
-  ]).exec()
-    .then((result) => {
-      return res.status(200).json(result);
-    })
-    .catch((err) => {
-      console.log(err);
-      return res.status(500).json({ error: { message: 'Error al obtener los datos' } });
-    });
+    ]).exec();
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: { message: 'Error al obtener los datos' } });
+  }
 }
 
-function getBooksRandom(req: Request, res: Response) {
-  model.find({}, 'title author pathUrl').sort({ _id: -1 }).then((result) => {
+async function getBooksRandom(req: Request, res: Response) {
+  try {
+    const result = await model.find({}, 'title author pathUrl').sort({ _id: -1 });
     const random = result.sort(() => { return Math.random() - 0.5; });
     const resRandom = random.splice(0, 3);
 
     return res.status(200).json(resRandom);
-    // connection.close();
-  }).catch((err) => console.log(err));
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function postBooks(req: Request, res: Response) {
@@ -194,7 +196,7 @@ async function postBooks(req: Request, res: Response) {
   let { url } = body.image;
   const result = await cloudinary.uploader.upload(url, {
     upload_preset: 'xbu-uploads',
-    format: 'webp'
+    format: 'webp',
   });
 
   body.image.url = result.secure_url;
@@ -213,55 +215,67 @@ async function postBooks(req: Request, res: Response) {
   }).catch((err) => console.log(err));
 }
 
-function getOneBooks(req: Request, res: Response) {
-  const { id } = req.params;
+async function getOneBooks(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
 
-  model.findById(id).hint('_id_').then((result) => {
+    const result = await model.findById(id).hint('_id_');
+
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
-    } else {
-      return res.status(200).json(result);
     }
-  }).catch((err) => console.log(err));
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+  }
 }
 
-function getPathUrlBooks(req: Request, res: Response) {
-  const { pathUrl } = req.params;
+async function getPathUrlBooks(req: Request, res: Response) {
+  try {
+    const { pathUrl } = req.params;
 
-  model.findOne({ pathUrl: pathUrl }).then((result) => {
+    const result = await model.findOne({ pathUrl: pathUrl });
+
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
-    } else {
-      return res.status(200).json(result);
     }
-  }).catch((err) => console.log(err));
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function putBooks(req: Request, res: Response) {
-  const { id } = req.params;
-  const { body } = req;
+  try {
+    const { id } = req.params;
+    const { body } = req;
 
-  let { url, public_id } = body.image;
-  const result = await cloudinary.uploader.upload(url, { public_id: public_id });
+    let { url, public_id } = body.image;
+    const resultCloudinary = await cloudinary.uploader.upload(url, { public_id: public_id });
 
-  const image = {
-    url: result.secure_url,
-    public_id: result.public_id
-  };
+    const image = {
+      url: resultCloudinary.secure_url,
+      public_id: resultCloudinary.public_id
+    };
 
-  model.findByIdAndUpdate(id, { ...body, image: image }, { new: true }).then((result) => {
+    const result = await model.findByIdAndUpdate(id, { ...body, image: image }, { new: true });
+
     if (!result) {
       return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
-    } else {
-      return res.status(200).json(result);
     }
-  }).catch((err) => console.log(err));
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function deleteBooks(req: Request, res: Response) {
-  const { id } = req.params;
-
   try {
+    const { id } = req.params;
+
     const book = await model.findById(id);
 
     if (!book) {

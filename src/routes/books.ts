@@ -15,14 +15,14 @@ import { query } from "../middleware/query";
 
 const router = express.Router();
 
-router.get('/', query, getBooks);
-router.get('/search', getSearchBooks);
+router.get('/books', query, getBooks);
+router.get('/books/search', getSearchBooks);
 router.get('/options', getAllOptions);
 router.get('/related-post', getBooksRandom);
-router.get('/path/:pathUrl', getPathUrlBooks);
-router.get('/:id', getOneBooks);
-router.post('/', postBooks);
-router.patch('/:id', putBooks);
-router.delete('/:id', deleteBooks);
+router.get('/book/path/:pathUrl', getPathUrlBooks);
+router.get('/book/:id', getOneBooks);
+router.post('/books', postBooks);
+router.patch('/book/:id', putBooks);
+router.delete('/book/:id', deleteBooks);
 
 export default router;
