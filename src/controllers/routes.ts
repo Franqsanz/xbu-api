@@ -42,64 +42,69 @@ cloudinary.config({
 // }
 
 async function getBooks(req: Request, res: Response) {
-  const { body } = req;
-  const key = `books_${body}`;
-  const limit = parseInt(req.query.limit as string);
-  const page = parseInt(req.query.page as string) || 1;
+  try {
+    const { body } = req;
+    const key = `books_${body}`;
+    const limit = parseInt(req.query.limit as string);
+    const page = parseInt(req.query.page as string) || 1;
 
-  const offset = (page - 1) * limit;
+    const offset = (page - 1) * limit;
 
-  // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-  const results = await model.find({}, 'title category language author pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
+    // Aquí obtenemos los libros de la base de datos usando el método skip y limit
+    const results = await model.find({}, 'title category language author pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
 
-  // Aquí obtenemos el número total de libros en la base de datos
-  const totalBooks = await model.countDocuments();
+    // Aquí obtenemos el número total de libros en la base de datos
+    const totalBooks = await model.countDocuments();
 
-  // Aquí calculamos el número total de páginas
-  const totalPages = Math.ceil(totalBooks / limit);
-  const nextPage = page < totalPages ? page + 1 : null;
-  const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}${req.path}api?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
+    // Aquí calculamos el número total de páginas
+    const totalPages = Math.ceil(totalBooks / limit);
+    const nextPage = page < totalPages ? page + 1 : null;
+    const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}/api${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
 
-  // Aquí construimos el objeto de paginación para incluir en la respuesta
-  const info = {
-    totalBooks,
-    totalPages,
-    currentPage: page,
-    nextPage: nextPage,
-    prevPage: page > 1 ? page - 1 : null,
-    nextPageLink: nextPageLink,
-    prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}${req.path}api?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
-  };
+    // Aquí construimos el objeto de paginación para incluir en la respuesta
+    const info = {
+      totalBooks,
+      totalPages,
+      currentPage: page,
+      nextPage: nextPage,
+      prevPage: page > 1 ? page - 1 : null,
+      nextPageLink: nextPageLink,
+      prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}/api${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
+    };
 
-  // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
-  const response = {
-    info,
-    results,
-  };
+    // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
+    const response = {
+      info,
+      results,
+    };
 
-  // Se elimina la cache cuando se busca por paginación
-  if (limit && page) await redis.del(key);
+    // Se elimina la cache cuando se busca por paginación
+    if (limit && page) await redis.del(key);
 
-  // Se leen los datos almacenados en cache
-  const cachedData = await redis.get(key);
+    // Se leen los datos almacenados en cache
+    const cachedData = await redis.get(key);
 
-  // Si hay datos en la cache se envian al cliente
-  if (cachedData) {
-    const cachedResponse = JSON.parse(cachedData);
-    return res.status(200).json(cachedResponse);
+    // Si hay datos en la cache se envian al cliente
+    if (cachedData) {
+      const cachedResponse = JSON.parse(cachedData);
+      return res.status(200).json(cachedResponse);
+    }
+
+    // Si no hay datos en la cache, se envian a redis los datos de la base
+    await redis.set(key, JSON.stringify(response));
+
+    // Expiramos la cache cada 5 minutos
+    await redis.expire(key, 300);
+
+    if (results.length < 1) {
+      return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
+    }
+
+    return res.status(200).json(response);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
-
-  // Si no hay datos en la cache, se envian a redis los datos de la base
-  await redis.set(key, JSON.stringify(response));
-
-  // Expiramos la cache cada 5 minutos
-  await redis.expire(key, 300);
-
-  if (results.length < 1) {
-    return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
-  }
-
-  return res.status(200).json(response);
 }
 
 async function getSearchBooks(req: Request, res: Response) {
@@ -118,8 +123,8 @@ async function getSearchBooks(req: Request, res: Response) {
     }
 
     return res.status(200).json(results);
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -174,7 +179,7 @@ async function getAllOptions(req: Request, res: Response) {
     return res.status(200).json(result);
   } catch (err) {
     console.log(err);
-    return res.status(500).json({ error: { message: 'Error al obtener los datos' } });
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
@@ -187,32 +192,36 @@ async function getBooksRandom(req: Request, res: Response) {
     return res.status(200).json(resRandom);
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
 async function postBooks(req: Request, res: Response) {
-  const { body } = req;
+  try {
+    const { body } = req;
 
-  let { url } = body.image;
-  const result = await cloudinary.uploader.upload(url, {
-    upload_preset: 'xbu-uploads',
-    format: 'webp',
-  });
+    let { url } = body.image;
+    const result = await cloudinary.uploader.upload(url, {
+      upload_preset: 'xbu-uploads',
+      format: 'webp',
+    });
 
-  body.image.url = result.secure_url;
-  body.image.public_id = result.public_id;
+    body.image.url = result.secure_url;
+    body.image.public_id = result.public_id;
 
-  const newBook = new model(body);
+    const newBook = new model(body);
+    const resultBook = await newBook.save();
 
-  newBook.save().then((result) => {
-    if (!result) {
+    if (!resultBook) {
       return res.status(500).json({ error: { message: 'Error al Publicar' } });
-    } else {
-      redis.expire(`books_${req.body}`, 0);
-      return res.status(200).json(result);
-      // connection.close();
     }
-  }).catch((err) => console.log(err));
+
+    redis.expire(`books_${req.body}`, 0);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+  }
 }
 
 async function getOneBooks(req: Request, res: Response) {
@@ -228,6 +237,7 @@ async function getOneBooks(req: Request, res: Response) {
     return res.status(200).json(result);
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
@@ -244,6 +254,7 @@ async function getPathUrlBooks(req: Request, res: Response) {
     return res.status(200).json(result);
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
@@ -269,6 +280,7 @@ async function putBooks(req: Request, res: Response) {
     return res.status(200).json(result);
   } catch (err) {
     console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
@@ -290,8 +302,9 @@ async function deleteBooks(req: Request, res: Response) {
     await book?.deleteOne();
 
     res.status(200).json({ success: { message: 'Libro eliminado' } });
-  } catch (error) {
-    res.status(500).json({ error: { message: 'Error al eliminar libro' } });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
