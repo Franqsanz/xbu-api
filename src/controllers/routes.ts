@@ -5,6 +5,7 @@ import { config } from 'dotenv';
 import { connection } from 'mongoose';
 
 import model from "../model/books";
+import { bookSchema } from '../utils/validation';
 config();
 
 const redis = new Redis({
@@ -200,16 +201,18 @@ async function postBooks(req: Request, res: Response) {
   try {
     const { body } = req;
 
-    let { url } = body.image;
+    const validateBook = bookSchema.parse(body);
+
+    let { url } = validateBook.image;
     const result = await cloudinary.uploader.upload(url, {
       upload_preset: 'xbu-uploads',
       format: 'webp',
     });
 
-    body.image.url = result.secure_url;
-    body.image.public_id = result.public_id;
+    validateBook.image.url = result.secure_url;
+    validateBook.image.public_id = result.public_id;
 
-    const newBook = new model(body);
+    const newBook = new model(validateBook);
     const resultBook = await newBook.save();
 
     if (!resultBook) {

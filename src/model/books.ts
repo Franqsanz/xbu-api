@@ -35,16 +35,21 @@ const booksSchema = new Schema({
   year: {
     type: Number,
     required: true,
-    trim: true,
+    validate: {
+      validator: (value: any) => {
+        const yearString = value.toString();
+        return yearString.length === 4 && !isNaN(value);
+      },
+    },
   },
   numberPages: {
     type: Number,
     required: true,
-    trim: true,
+    min: 49,
   },
   format: {
     type: String,
-    require: true
+    require: true,
   },
   pathUrl: {
     type: String,
@@ -54,13 +59,13 @@ const booksSchema = new Schema({
   image: {
     url: {
       type: String,
-      required: true
+      required: true,
     },
     public_id: {
       type: String,
     }
   },
-}, { versionKey: false });
+}, { versionKey: false, });
 
 booksSchema.set('toJSON', {
   transform: (_, returnedObject) => {
