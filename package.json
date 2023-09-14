@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
   "scripts": {
     "dev": "ts-node-dev src/server.ts",
