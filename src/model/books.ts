@@ -30,17 +30,12 @@ const booksSchema = new Schema({
   language: {
     type: String,
     required: true,
-    trim: true,
   },
   year: {
     type: Number,
     required: true,
-    validate: {
-      validator: (value: any) => {
-        const yearString = value.toString();
-        return yearString.length === 4 && !isNaN(value);
-      },
-    },
+    min: 1800,
+    max: 2050,
   },
   numberPages: {
     type: Number,
