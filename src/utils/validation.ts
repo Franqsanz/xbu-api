@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export const bookSchema = z.object({
   title: z.string().nonempty({ message: 'title es requerido.' }),
-  author: z.string().nonempty({ message: 'author es requerido.' }),
+  authors: z.array(z.string().refine((item) => item.trim() !== '')).nonempty({ message: 'El array authors es requerido.' }),
   synopsis: z.string().nonempty({ message: 'synopsis es requerido.' }),
   year: z.string().refine((value) => {
     const parsedValue = parseInt(value);
