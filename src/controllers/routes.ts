@@ -52,7 +52,7 @@ async function getBooks(req: Request, res: Response) {
     const offset = (page - 1) * limit;
 
     // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-    const results = await model.find({}, 'title category language author pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
+    const results = await model.find({}, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
 
     // Aquí obtenemos el número total de libros en la base de datos
     const totalBooks = await model.countDocuments();
@@ -115,9 +115,9 @@ async function getSearchBooks(req: Request, res: Response) {
     const results = await model.find({
       $or: [
         { title: { $regex: q, $options: 'i' } },
-        { author: { $regex: q, $options: 'i' } }
+        { authors: { $regex: q, $options: 'i' } }
       ]
-    }, 'title author pathUrl').hint('_id_').sort({ _id: -1 }).exec();
+    }, 'title authors pathUrl').hint('_id_').sort({ _id: -1 }).exec();
 
     if (results.length < 1) {
       return res.status(404).json({ info: { message: `No se encontraron resultados para: ${q}` } });
@@ -186,7 +186,7 @@ async function getAllOptions(req: Request, res: Response) {
 
 async function getBooksRandom(req: Request, res: Response) {
   try {
-    const result = await model.find({}, 'title author pathUrl').sort({ _id: -1 });
+    const result = await model.find({}, 'title authors pathUrl').sort({ _id: -1 });
     const random = result.sort(() => { return Math.random() - 0.5; });
     const resRandom = random.splice(0, 3);
 
