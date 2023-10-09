@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Response } from 'express';
 
 import {
   getBooks,
@@ -15,6 +15,9 @@ import { query } from "../middleware/query";
 
 const router = express.Router();
 
+router.get('/', (req, res: Response) => {
+  res.redirect('/api/books');
+});
 router.get('/books', query, getBooks);
 router.get('/books/search', getSearchBooks);
 router.get('/options', getAllOptions);
