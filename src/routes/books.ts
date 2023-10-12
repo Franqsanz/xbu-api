@@ -20,12 +20,12 @@ router.get('/', (req, res: Response) => {
 });
 router.get('/books', query, getBooks);
 router.get('/books/search', getSearchBooks);
-router.get('/options', getAllOptions);
-router.get('/related-post', getBooksRandom);
+router.get('/books/options', getAllOptions);
+router.get('/books/more-books', getBooksRandom);
 router.get('/book/path/:pathUrl', getPathUrlBooks);
 router.get('/book/:id', getOneBooks);
-router.post('/books', postBooks);
-router.patch('/book/:id', putBooks);
-router.delete('/book/:id', deleteBooks);
+router.post('/book/post', postBooks);
+router.patch('/book/update/:id', putBooks);
+router.delete('/book/delete/:id', deleteBooks);
 
 export default router;
