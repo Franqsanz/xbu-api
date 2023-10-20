@@ -7,14 +7,16 @@ import helmet from 'helmet';
 import logger from 'morgan';
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
+import swaggerUi from 'swagger-ui-express';
 import cookieSession from 'cookie-session';
 import passport from 'passport';
 
+import swaggerDocument from './docs/swagger.json';
 import db from "./db";
 import books from './routes/books';
 import auth from './routes/auth';
-// import isLoggedIn from './middleware/isLoggedIn';
 import './auth/passport';
+// import isLoggedIn from './middleware/isLoggedIn';
 // import { Cors } from './types';
 
 const app = express();
@@ -91,12 +93,9 @@ app.get('/', (req: Request, res: Response) => {
   `);
 });
 
-// app.get('/error', (req, res) => {
-//   res.json({ error: { message: 'No tiene autorización' } });
-// });
-
 app.use('/api', books);
 app.use('/auth', auth);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(Sentry.Handlers.errorHandler());
 app.use(function onError(err: ErrorRequestHandler, req: Request, res: any, next: NextFunction) {

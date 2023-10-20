@@ -31,7 +31,8 @@
     "passport": "0.6.0",
     "passport-facebook": "3.0.0",
     "passport-google-oauth20": "2.0.0",
-    "zod": "3.22.2"
+    "swagger-ui-express": "5.0.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/compression": "1.7.2",
@@ -43,6 +44,7 @@
     "@types/passport": "1.0.12",
     "@types/passport-facebook": "2.1.11",
     "@types/passport-google-oauth20": "2.0.11",
+    "@types/swagger-ui-express": "4.1.5",
     "dotenv": "16.3.1",
     "morgan": "1.10.0",
     "ts-node-dev": "2.0.0",
