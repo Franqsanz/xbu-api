@@ -1,4 +1,5 @@
 import express, { ErrorRequestHandler, Request, Response, NextFunction } from 'express';
+import path from 'path';
 import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
@@ -95,6 +96,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api', books);
 app.use('/auth', auth);
+app.use('/api-docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(Sentry.Handlers.errorHandler());

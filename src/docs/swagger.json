@@ -126,7 +126,110 @@
     },
     "/api/books?page={page}&limit={limit}":{
       "get": {
-        "summary": "Paginación y limite"
+        "summary": "Paginación y limite",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "paginación de la respuesta",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Limite de la cantidad de libros devueltos",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "info": {
+                      "type": "object",
+                      "properties": {
+                        "totalBooks": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "currentPage": {
+                          "type": "number"
+                        },
+                        "nextPage": {
+                          "type": "number"
+                        },
+                        "prevPage": {
+                          "type": "number"
+                        },
+                        "nextPageLink": {
+                          "type": "string"
+                        },
+                        "prevPageLink": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties":{
+                          "image": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "public_id": {
+                                "type":"string"
+                              }
+                            }
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "language": {
+                            "type": "string"
+                          },
+                          "pathUrl": {
+                            "type": "string"
+                          },
+                          "authors": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/book/{id}":{
@@ -216,12 +319,120 @@
     },
     "/api/books/search?q={title / author}":{
       "get": {
-        "summary": "Buscar libros por titulo o autor via consulta"
+        "summary": "Buscar libros por titulo o autor",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Término de búsqueda que puede ser un título o un autor",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "pathUrl": {
+                      "type": "string"
+                    },
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/books/options":{
       "get": {
-        "summary": "Esta consulta agrupa y muestra: las categorias, lenguaje y años con su respectiva cantidad de cada uno"
+        "summary": "Esta consulta agrupa y muestra: las categorias, lenguaje y años con su respectiva cantidad de cada uno",
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "categories": {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type":"object",
+                            "properties": {
+                              "_id": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "languages": {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type":"object",
+                            "properties": {
+                              "_id": {
+                                "type": "string"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "years": {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type":"object",
+                            "properties": {
+                              "_id": {
+                                "type": "number"
+                              },
+                              "count": {
+                                "type": "number"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/books/more-books":{
