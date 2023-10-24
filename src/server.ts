@@ -96,11 +96,6 @@ app.get('/', (req: Request, res: Response) => {
 app.use('/api', books);
 app.use('/auth', auth);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-app.use('/docs', swaggerUi.serve, async (_req: Request, res: Response) => {
-  return res.send(
-    swaggerUi.generateHTML(await import('./docs/swagger.json'))
-  );
-});
 
 app.use(Sentry.Handlers.errorHandler());
 app.use(function onError(err: ErrorRequestHandler, req: Request, res: any, next: NextFunction) {
