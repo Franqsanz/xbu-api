@@ -314,7 +314,82 @@
     },
     "/api/book/path/{pathUrl}":{
       "get": {
-        "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su titulo con este formato: 'la-casa-de-los-espiritus-UVfw'"
+        "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su titulo con este formato: 'la-casa-de-los-espiritus-UVfw'",
+        "parameters": [
+          {
+            "name": "pathUrl",
+            "in": "path",
+            "description": "pathUrl del libro",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "image": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "public_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "synopsis": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sourceLink": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "type": "number"
+                    },
+                    "numberPages": {
+                      "type": "number"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "pathUrl": {
+                      "type": "string"
+                    },
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/books/search?q={title / author}":{
@@ -476,12 +551,178 @@
     },
     "/api/book/update/{id}":{
       "patch": {
-        "summary": "Actualizar un libro"
+        "summary": "Actualizar un libro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del libro",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string"
+                      },
+                      "public_id": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "synopsis": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sourceLink": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "type": "string"
+                  },
+                  "year": {
+                    "type": "number"
+                  },
+                  "numberPages": {
+                    "type": "number"
+                  },
+                  "format": {
+                    "type": "string"
+                  },
+                  "pathUrl": {
+                    "type": "string"
+                  },
+                  "authors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "image": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "public_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "synopsis": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sourceLink": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "type": "number"
+                    },
+                    "numberPages": {
+                      "type": "number"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "pathUrl": {
+                      "type": "string"
+                    },
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/book/delete/{id}":{
       "delete": {
-        "summary": "Borrar un libro"
+        "summary": "Borrar un libro",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del libro",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }
