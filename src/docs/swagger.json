@@ -1,5 +1,5 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.1.0",
   "info": {
     "title": "API RESTful de XBUniverse",
     "version": "1.0.0",
@@ -17,10 +17,85 @@
   ],
   "components":{
     "schemas": {
-      "Books": {
+      "info": {
         "type": "object",
+        "description": "Objeto con la info de la API.",
         "properties": {
+          "totalBooks": {
+            "type": "number"
+          },
+          "totalPages": {
+            "type": "number"
+          },
+          "currentPage": {
+            "type": "number"
+          },
+          "nextPage": {
+            "type": "number"
+          },
+          "prevPage": {
+            "type": "number"
+          },
+          "nextPageLink": {
+            "type": "string"
+          },
+          "prevPageLink": {
+            "type": "string"
+          }
+        }
+      },
+      "Book": {
+        "type": "object",
+        "description": "Objeto con todos los campos de un libro.",
+        "properties": {
+          "image": {
+            "type": "object",
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "public_id": {
+                "type": "string"
+              }
+            }
+          },
           "title": {
+            "type": "string"
+          },
+          "synopsis": {
+            "type": "string"
+          },
+          "category": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "sourceLink": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "year": {
+            "type": "number"
+          },
+          "numberPages": {
+            "type": "number"
+          },
+          "format": {
+            "type": "string"
+          },
+          "pathUrl": {
+            "type": "string"
+          },
+          "authors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id": {
             "type": "string"
           }
         }
@@ -30,12 +105,15 @@
   "paths": {
     "/api":{
       "get": {
-        "summary": "redirecciona a /api/books"
+        "summary": "redirecciona a /api/books",
+        "tags": ["Books"]
       }
     },
     "/api/books": {
       "get": {
         "summary": "Obtiene todos los libros",
+        "description": "Esta consulta devuelve una lista completa de todos los libros disponibles, incluyendo información sobre el número total de libros y detalles adicionales.",
+        "tags": ["Books"],
         "responses": {
           "200": {
             "description": "Ok",
@@ -115,7 +193,7 @@
                     }
                   },
                   "items": {
-                    "$ref": "#/components/schemas/Books"
+                    "$ref": "#/components/schemas/Book"
                   }
                 }
               }
@@ -127,6 +205,7 @@
     "/api/books?page={page}&limit={limit}":{
       "get": {
         "summary": "Paginación y limite",
+        "tags": ["Books"],
         "parameters": [
           {
             "name": "page",
@@ -235,6 +314,7 @@
     "/api/book/{id}":{
       "get": {
         "summary": "Ver un libro con todos los detalles",
+        "tags": ["Books"],
         "parameters": [
           {
             "name": "id",
@@ -315,6 +395,7 @@
     "/api/book/path/{pathUrl}":{
       "get": {
         "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su titulo con este formato: 'la-casa-de-los-espiritus-UVfw'",
+        "tags": ["Books"],
         "parameters": [
           {
             "name": "pathUrl",
@@ -395,6 +476,7 @@
     "/api/books/search?q={title / author}":{
       "get": {
         "summary": "Buscar libros por titulo o autor",
+        "tags": ["Books"],
         "parameters": [
           {
             "name": "search",
@@ -440,6 +522,7 @@
     "/api/books/options":{
       "get": {
         "summary": "Esta consulta agrupa y muestra: las categorias, lenguaje y años con su respectiva cantidad de cada uno",
+        "tags": ["Books"],
         "responses": {
           "200": {
             "description": "Ok",
@@ -513,6 +596,7 @@
     "/api/books/more-books":{
       "get": {
         "summary": "Muestra 3 libros random",
+        "tags": ["Books"],
         "responses": {
           "200": {
             "description": "Ok",
@@ -546,12 +630,78 @@
     },
     "/api/book/post":{
       "post": {
-        "summary": "Guardar un nuevo libro"
+        "summary": "Guardar un nuevo libro",
+        "tags": ["Books"],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "image": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "public_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "synopsis": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sourceLink": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "type": "number"
+                    },
+                    "numberPages": {
+                      "type": "number"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "pathUrl": {
+                      "type": "string"
+                    },
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/book/update/{id}":{
       "patch": {
         "summary": "Actualizar un libro",
+        "tags": ["Books"],
         "parameters": [
           {
             "name": "id",
@@ -690,6 +840,7 @@
     "/api/book/delete/{id}":{
       "delete": {
         "summary": "Borrar un libro",
+        "tags": ["Books"],
         "parameters": [
           {
             "name": "id",
