@@ -200,17 +200,27 @@ async function getBooksRandom(req: Request, res: Response) {
 async function postBooks(req: Request, res: Response) {
   try {
     const { body } = req;
-
     const validateBook = bookSchema.parse(body);
 
-    let { url } = validateBook.image;
-    const result = await cloudinary.uploader.upload(url, {
-      upload_preset: 'xbu-uploads',
-      format: 'webp',
+    let { url } = body.image;
+    const uint8Array = new Uint8Array(url);
+    const buffer = Buffer.from(uint8Array);
+
+    const cloudinaryResult = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader.upload_stream({
+        upload_preset: 'xbu-uploads',
+        format: 'webp'
+      }, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      }).end(buffer);
     });
 
-    validateBook.image.url = result.secure_url;
-    validateBook.image.public_id = result.public_id;
+    validateBook.image.url = cloudinaryResult.secure_url;
+    validateBook.image.public_id = cloudinaryResult.public_id;
 
     const newBook = new model(validateBook);
     const resultBook = await newBook.save();
@@ -220,7 +230,7 @@ async function postBooks(req: Request, res: Response) {
     }
 
     redis.expire(`books_${req.body}`, 0);
-    return res.status(200).json(result);
+    return res.status(200).json(resultBook);
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
