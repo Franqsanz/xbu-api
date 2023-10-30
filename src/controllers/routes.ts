@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
+import pako from 'pako';
 import { config } from 'dotenv';
 import { connection } from 'mongoose';
 
@@ -204,7 +205,8 @@ async function postBooks(req: Request, res: Response) {
 
     let { url } = body.image;
     const uint8Array = new Uint8Array(url);
-    const buffer = Buffer.from(uint8Array);
+    const decompressedImage = pako.inflate(uint8Array);
+    const buffer = Buffer.from(decompressedImage);
 
     const cloudinaryResult = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader.upload_stream({
@@ -277,11 +279,24 @@ async function putBooks(req: Request, res: Response) {
     const { body } = req;
 
     let { url, public_id } = body.image;
-    const resultCloudinary = await cloudinary.uploader.upload(url, { public_id: public_id });
+    const uint8Array = new Uint8Array(url);
+    const buffer = Buffer.from(uint8Array);
+
+    const cloudinaryResult = await new Promise<any>((resolve, reject) => {
+      cloudinary.uploader.upload_stream({
+        public_id: public_id
+      }, (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      }).end(buffer);
+    });
 
     const image = {
-      url: resultCloudinary.secure_url,
-      public_id: resultCloudinary.public_id
+      url: cloudinaryResult.secure_url,
+      public_id: cloudinaryResult.public_id
     };
 
     const result = await model.findByIdAndUpdate(id, { ...body, image: image }, { new: true });
