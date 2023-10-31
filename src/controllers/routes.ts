@@ -185,13 +185,71 @@ async function getAllOptions(req: Request, res: Response) {
   }
 }
 
+// Algoritmo de Fisher-Yates (https://bost.ocks.org/mike/shuffle/)
+// Para generar el random de libros con un enfoque mas eficiente, en teoria.
+function shuffle<T>(array: T[]): T[] {
+  let m = array.length, t, i;
+
+  while (m) {
+    i = Math.floor(Math.random() * m--);
+    t = array[m];
+    array[m] = array[i];
+    array[i] = t;
+  }
+
+  return array;
+}
+
 async function getBooksRandom(req: Request, res: Response) {
   try {
-    const result = await model.find({}, 'title authors pathUrl').sort({ _id: -1 });
-    const random = result.sort(() => { return Math.random() - 0.5; });
-    const resRandom = random.splice(0, 3);
+    const result = await model.find({}, 'title authors pathUrl');
+
+    // Aplicamos el algoritmo a los libros
+    const shuffledResult = shuffle(result);
+
+    // Seleccionamos los primeros 3 elementos (libros)
+    const resRandom = shuffledResult.slice(0, 3);
 
     return res.status(200).json(resRandom);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+  }
+}
+
+async function getRelatedBooks(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const currentBook = await model.findById(id);
+
+    if (!currentBook) {
+      return res.status(404).json({ error: 'Libro no encontrado' });
+    }
+
+    const categories = currentBook.category;
+    const selectedCategory = categories[0];
+
+    const relatedBooks = await model.aggregate([
+      {
+        $match: {
+          _id: { $ne: id }, // Excluye el libro actual
+          category: selectedCategory,
+        },
+      },
+      {
+        $sample: { size: 3 } // Obtener 3 documentos aleatorios
+      },
+      {
+        $project: {
+          title: 1,
+          authors: 1,
+          pathUrl: 1
+        }
+      }
+    ]);
+
+    return res.status(200).json(relatedBooks);
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
@@ -211,7 +269,8 @@ async function postBooks(req: Request, res: Response) {
     const cloudinaryResult = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader.upload_stream({
         upload_preset: 'xbu-uploads',
-        format: 'webp'
+        format: 'webp',
+        transformation: { quality: 50 }
       }, (error, result) => {
         if (error) {
           reject(error);
@@ -280,7 +339,8 @@ async function putBooks(req: Request, res: Response) {
 
     let { url, public_id } = body.image;
     const uint8Array = new Uint8Array(url);
-    const buffer = Buffer.from(uint8Array);
+    const decompressedImage = pako.inflate(uint8Array);
+    const buffer = Buffer.from(decompressedImage);
 
     const cloudinaryResult = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader.upload_stream({
@@ -341,6 +401,7 @@ export {
   getSearchBooks,
   getAllOptions,
   getBooksRandom,
+  getRelatedBooks,
   getOneBooks,
   getPathUrlBooks,
   postBooks,

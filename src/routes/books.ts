@@ -5,6 +5,7 @@ import {
   getSearchBooks,
   getAllOptions,
   getBooksRandom,
+  getRelatedBooks,
   getOneBooks,
   getPathUrlBooks,
   postBooks,
@@ -22,6 +23,7 @@ router.get('/books', query, getBooks);
 router.get('/books/search', getSearchBooks);
 router.get('/books/options', getAllOptions);
 router.get('/books/more-books', getBooksRandom);
+router.get('/books/related-books/:id', getRelatedBooks);
 router.get('/book/path/:pathUrl', getPathUrlBooks);
 router.get('/book/:id', getOneBooks);
 router.post('/book/post', postBooks);
