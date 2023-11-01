@@ -185,32 +185,26 @@ async function getAllOptions(req: Request, res: Response) {
   }
 }
 
-// Algoritmo de Fisher-Yates (https://bost.ocks.org/mike/shuffle/)
-// Para generar el random de libros con un enfoque mas eficiente, en teoria.
-function shuffle<T>(array: T[]): T[] {
-  let m = array.length, t, i;
-
-  while (m) {
-    i = Math.floor(Math.random() * m--);
-    t = array[m];
-    array[m] = array[i];
-    array[i] = t;
-  }
-
-  return array;
-}
-
 async function getBooksRandom(req: Request, res: Response) {
   try {
-    const result = await model.find({}, 'title authors pathUrl');
+    const result = await model.aggregate([
+      { $sample: { size: 3 } },
+      {
+        $project: {
+          title: 1,
+          pathUrl: 1,
+          authors: {
+            $cond: {
+              if: { $isArray: "$authors" },
+              then: "$authors",
+              else: ["$authors"]
+            }
+          }
+        }
+      }
+    ]);
 
-    // Aplicamos el algoritmo a los libros
-    const shuffledResult = shuffle(result);
-
-    // Seleccionamos los primeros 3 elementos (libros)
-    const resRandom = shuffledResult.slice(0, 3);
-
-    return res.status(200).json(resRandom);
+    return res.status(200).json(result);
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
@@ -224,7 +218,7 @@ async function getRelatedBooks(req: Request, res: Response) {
     const currentBook = await model.findById(id);
 
     if (!currentBook) {
-      return res.status(404).json({ error: 'Libro no encontrado' });
+      return res.status(404).json({ info: { message: 'Libro no encontrado' } });
     }
 
     const categories = currentBook.category;
@@ -233,18 +227,24 @@ async function getRelatedBooks(req: Request, res: Response) {
     const relatedBooks = await model.aggregate([
       {
         $match: {
-          _id: { $ne: id }, // Excluye el libro actual
+          _id: { $ne: id },
           category: selectedCategory,
         },
       },
       {
-        $sample: { size: 3 } // Obtener 3 documentos aleatorios
+        $sample: { size: 3 }
       },
       {
         $project: {
           title: 1,
-          authors: 1,
-          pathUrl: 1
+          pathUrl: 1,
+          authors: {
+            $cond: {
+              if: { $isArray: "$authors" },
+              then: "$authors",
+              else: ["$authors"]
+            }
+          }
         }
       }
     ]);
