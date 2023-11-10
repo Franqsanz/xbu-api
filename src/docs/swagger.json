@@ -105,13 +105,13 @@
   "paths": {
     "/api":{
       "get": {
-        "summary": "redirecciona a /api/books",
+        "summary": "redirecciona a /api/books.",
         "tags": ["Books"]
       }
     },
     "/api/books": {
       "get": {
-        "summary": "Obtiene todos los libros",
+        "summary": "Obtiene todos los libros.",
         "description": "Esta consulta devuelve una lista completa de todos los libros disponibles, incluyendo información sobre el número total de libros y detalles adicionales.",
         "tags": ["Books"],
         "responses": {
@@ -204,7 +204,7 @@
     },
     "/api/books?page={page}&limit={limit}":{
       "get": {
-        "summary": "Paginación y limite",
+        "summary": "Paginación y limite.",
         "tags": ["Books"],
         "parameters": [
           {
@@ -313,7 +313,7 @@
     },
     "/api/book/{id}":{
       "get": {
-        "summary": "Ver un libro con todos los detalles",
+        "summary": "Ver un libro con todos los detalles.",
         "tags": ["Books"],
         "parameters": [
           {
@@ -394,7 +394,7 @@
     },
     "/api/book/path/{pathUrl}":{
       "get": {
-        "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su titulo con este formato: 'la-casa-de-los-espiritus-UVfw'",
+        "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su titulo con este formato: 'la-casa-de-los-espiritus-UVfw'.",
         "tags": ["Books"],
         "parameters": [
           {
@@ -475,7 +475,7 @@
     },
     "/api/books/search?q={title / author}":{
       "get": {
-        "summary": "Buscar libros por titulo o autor",
+        "summary": "Buscar libros por titulo o autor.",
         "tags": ["Books"],
         "parameters": [
           {
@@ -521,7 +521,7 @@
     },
     "/api/books/options":{
       "get": {
-        "summary": "Esta consulta agrupa y muestra: las categorias, lenguaje y años con su respectiva cantidad de cada uno",
+        "summary": "Esta consulta agrupa y muestra: las categorias, lenguaje y años con su respectiva cantidad de cada uno.",
         "tags": ["Books"],
         "responses": {
           "200": {
@@ -595,8 +595,54 @@
     },
     "/api/books/more-books":{
       "get": {
-        "summary": "Muestra 3 libros random",
+        "summary": "Muestra 3 libros aleatorios.",
         "tags": ["Books"],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "pathUrl": {
+                      "type": "string"
+                    },
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/books/related-books/{id}":{
+      "get": {
+        "summary": "Muestra tres libros relacionados de manera aleatoria, seleccionados en función de su categoría en relación con el libro actual.",
+        "tags": ["Books"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id del libro",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Ok",
@@ -630,7 +676,7 @@
     },
     "/api/book/post":{
       "post": {
-        "summary": "Guardar un nuevo libro",
+        "summary": "Guardar un nuevo libro.",
         "tags": ["Books"],
         "responses": {
           "200": {
@@ -700,7 +746,7 @@
     },
     "/api/book/update/{id}":{
       "patch": {
-        "summary": "Actualizar un libro",
+        "summary": "Actualizar un libro.",
         "tags": ["Books"],
         "parameters": [
           {
@@ -839,7 +885,7 @@
     },
     "/api/book/delete/{id}":{
       "delete": {
-        "summary": "Borrar un libro",
+        "summary": "Borrar un libro.",
         "tags": ["Books"],
         "parameters": [
           {
