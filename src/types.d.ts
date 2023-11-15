@@ -2,7 +2,7 @@ import pkg from 'mongoose';
 
 interface BooksDocument extends pkg.Document {
   title: string;
-  author: string;
+  authors: string[];
   synopsis: string;
   category: string[];
   year: number;

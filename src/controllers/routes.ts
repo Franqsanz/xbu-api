@@ -3,7 +3,6 @@ import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
 import pako from 'pako';
 import { config } from 'dotenv';
-import { connection } from 'mongoose';
 
 import model from "../model/books";
 import { bookSchema } from '../utils/validation';
@@ -221,8 +220,8 @@ async function getRelatedBooks(req: Request, res: Response) {
       return res.status(404).json({ info: { message: 'Libro no encontrado' } });
     }
 
-    const categories = currentBook.category;
-    const selectedCategory = categories[0];
+    const { category } = currentBook;
+    const selectedCategory = category[0];
 
     const relatedBooks = await model.aggregate([
       {
@@ -250,6 +249,51 @@ async function getRelatedBooks(req: Request, res: Response) {
     ]);
 
     return res.status(200).json(relatedBooks);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+  }
+}
+
+async function getMoreBooksAuthors(req: Request, res: Response) {
+  try {
+    const { id } = req.params;
+
+    const currentBook = await model.findById(id);
+
+    if (!currentBook) {
+      return res.status(404).json({ info: { message: 'Libro no encontrado' } });
+    }
+
+    const { authors } = currentBook;
+    const selectedAuthors = authors[0];
+
+    const moreBooksAuthors = await model.aggregate([
+      {
+        $match: {
+          _id: { $ne: id },
+          authors: selectedAuthors,
+        },
+      },
+      {
+        $sample: { size: 3 }
+      },
+      {
+        $project: {
+          title: 1,
+          pathUrl: 1,
+          authors: {
+            $cond: {
+              if: { $isArray: "$authors" },
+              then: "$authors",
+              else: ["$authors"]
+            }
+          }
+        }
+      }
+    ]);
+
+    return res.status(200).json(moreBooksAuthors);
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
@@ -402,6 +446,7 @@ export {
   getAllOptions,
   getBooksRandom,
   getRelatedBooks,
+  getMoreBooksAuthors,
   getOneBooks,
   getPathUrlBooks,
   postBooks,
