@@ -272,7 +272,7 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
       {
         $match: {
           _id: { $ne: id },
-          authors: selectedAuthors,
+          authors: { $regex: selectedAuthors, $options: 'i' },
         },
       },
       {
