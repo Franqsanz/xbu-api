@@ -314,7 +314,7 @@ async function postBooks(req: Request, res: Response) {
       cloudinary.uploader.upload_stream({
         upload_preset: 'xbu-uploads',
         format: 'webp',
-        transformation: { quality: 50 }
+        transformation: { quality: 60 }
       }, (error, result) => {
         if (error) {
           reject(error);
