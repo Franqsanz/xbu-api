@@ -3,10 +3,25 @@ import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
 import pako from 'pako';
 import { config } from 'dotenv';
+// import { credential } from 'firebase-admin';
+// import { initializeApp, applicationDefault } from 'firebase-admin/app';
+// import { getAuth } from 'firebase-admin/auth';
 
-import model from "../model/books";
+import booksModel from "../model/books";
+// import usersModel from "../model/users";
 import { bookSchema } from '../utils/validation';
+
 config();
+
+// initializeApp({
+//   credential: credential.cert({
+//     projectId: process.env.FIREBASE_PROJECT_ID,
+//     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+//     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+//   }),
+// });
+
+// const auth = getAuth();
 
 const redis = new Redis({
   host: process.env.REDIS_HOST,
@@ -52,10 +67,10 @@ async function getBooks(req: Request, res: Response) {
     const offset = (page - 1) * limit;
 
     // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-    const results = await model.find({}, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
+    const results = await booksModel.find({}, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
 
     // Aquí obtenemos el número total de libros en la base de datos
-    const totalBooks = await model.countDocuments();
+    const totalBooks = await booksModel.countDocuments();
 
     // Aquí calculamos el número total de páginas
     const totalPages = Math.ceil(totalBooks / limit);
@@ -112,7 +127,7 @@ async function getSearchBooks(req: Request, res: Response) {
   try {
     const { q } = req.query;
 
-    const results = await model.find({
+    const results = await booksModel.find({
       $or: [
         { title: { $regex: q, $options: 'i' } },
         { authors: { $regex: q, $options: 'i' } }
@@ -132,7 +147,7 @@ async function getSearchBooks(req: Request, res: Response) {
 
 async function getAllOptions(req: Request, res: Response) {
   try {
-    const result = await model.aggregate([
+    const result = await booksModel.aggregate([
       {
         $facet: {
           byCategory: [
@@ -186,7 +201,7 @@ async function getAllOptions(req: Request, res: Response) {
 
 async function getBooksRandom(req: Request, res: Response) {
   try {
-    const result = await model.aggregate([
+    const result = await booksModel.aggregate([
       { $sample: { size: 3 } },
       {
         $project: {
@@ -214,7 +229,7 @@ async function getRelatedBooks(req: Request, res: Response) {
   try {
     const { id } = req.params;
 
-    const currentBook = await model.findById(id);
+    const currentBook = await booksModel.findById(id);
 
     if (!currentBook) {
       return res.status(404).json({ info: { message: 'Libro no encontrado' } });
@@ -223,7 +238,7 @@ async function getRelatedBooks(req: Request, res: Response) {
     const { category } = currentBook;
     const selectedCategory = category[0];
 
-    const relatedBooks = await model.aggregate([
+    const relatedBooks = await booksModel.aggregate([
       {
         $match: {
           _id: { $ne: id },
@@ -259,7 +274,7 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
   try {
     const { id } = req.params;
 
-    const currentBook = await model.findById(id);
+    const currentBook = await booksModel.findById(id);
 
     if (!currentBook) {
       return res.status(404).json({ info: { message: 'Libro no encontrado' } });
@@ -268,7 +283,7 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
     const { authors } = currentBook;
     const selectedAuthors = authors[0];
 
-    const moreBooksAuthors = await model.aggregate([
+    const moreBooksAuthors = await booksModel.aggregate([
       {
         $match: {
           _id: { $ne: id },
@@ -327,7 +342,7 @@ async function postBooks(req: Request, res: Response) {
     validateBook.image.url = cloudinaryResult.secure_url;
     validateBook.image.public_id = cloudinaryResult.public_id;
 
-    const newBook = new model(validateBook);
+    const newBook = new booksModel(validateBook);
     const resultBook = await newBook.save();
 
     if (!resultBook) {
@@ -346,7 +361,7 @@ async function getOneBooks(req: Request, res: Response) {
   try {
     const { id } = req.params;
 
-    const result = await model.findById(id).hint('_id_');
+    const result = await booksModel.findById(id).hint('_id_');
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
@@ -363,7 +378,7 @@ async function getPathUrlBooks(req: Request, res: Response) {
   try {
     const { pathUrl } = req.params;
 
-    const result = await model.findOne({ pathUrl: pathUrl });
+    const result = await booksModel.findOne({ pathUrl: pathUrl });
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
@@ -403,7 +418,7 @@ async function putBooks(req: Request, res: Response) {
       public_id: cloudinaryResult.public_id
     };
 
-    const result = await model.findByIdAndUpdate(id, { ...body, image: image }, { new: true });
+    const result = await booksModel.findByIdAndUpdate(id, { ...body, image: image }, { new: true });
 
     if (!result) {
       return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
@@ -420,7 +435,7 @@ async function deleteBooks(req: Request, res: Response) {
   try {
     const { id } = req.params;
 
-    const book = await model.findById(id);
+    const book = await booksModel.findById(id);
 
     if (!book) {
       return res.status(404).json({ info: { message: 'Libro no encontrado' } });
@@ -440,7 +455,76 @@ async function deleteBooks(req: Request, res: Response) {
   }
 }
 
+// async function register(req: Request, res: Response) {
+//   const token = (req.headers['authorization'] || '').split(' ')[1];
+
+//   try {
+//     const decodedToken = await auth.verifyIdToken(token);
+
+//     // Verificar si el usuario ya está registrado
+//     const existingUser = await usersModel.findOne({ uid: decodedToken.uid });
+
+//     if (existingUser) {
+//       // Usuario ya registrado, responder en consecuencia
+//       return res.status(200).json({ info: { message: 'Usuario ya registrado', user: existingUser } });
+//     }
+
+//     // Usuario no registrado, proceder con el registro
+//     const newUser = new usersModel(decodedToken);
+//     const resultUser = await newUser.save();
+
+//     return res.status(200).json(resultUser);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(401).json({ error: 'Token inválido' });
+//   }
+// }
+
+// // Manejo del inicio de sesión
+// async function login(req: Request, res: Response) {
+//   const token = (req.headers['authorization'] || '').split(' ')[1];
+
+//   try {
+//     const decodedToken = await auth.verifyIdToken(token);
+
+//     // Consulta para obtener datos del usuario
+//     const user = await usersModel.findOne({ uid: decodedToken.uid });
+
+//     if (!user) {
+//       return res.status(404).json({ error: 'Usuario no encontrado' });
+//     }
+
+//     return res.status(200).json(user);
+//   } catch (error) {
+//     console.error(error);
+//     res.status(401).json({ error: 'Token inválido' });
+//   }
+// }
+
+// async function getUserAndBooks(req: Request, res: Response) {
+//   try {
+//     const { userId } = req.params;
+//     const user = await usersModel.findById(userId);
+
+//     if (!user) {
+//       console.log('Usuario no encontrado');
+//       return null;
+//     }
+
+//     // Obtener libros del usuario por su ID
+//     const books = await booksModel.find({ userId: user.uid });
+
+//     return res.status(200).json({ user, books });
+//   } catch (error) {
+//     console.error('Error al obtener usuario y libros:', error);
+//   }
+// }
+
+
 export {
+  // register,
+  // login,
+  // getUserAndBooks,
   getBooks,
   getSearchBooks,
   getAllOptions,

@@ -12,12 +12,9 @@ import cookieSession from 'cookie-session';
 import passport from 'passport';
 
 import swaggerDocument from './docs/swagger.json';
-import db from "./db";
+import db from './db';
 import books from './routes/books';
-import auth from './routes/auth';
 import './auth/passport';
-// import isLoggedIn from './middleware/isLoggedIn';
-// import { Cors } from './types';
 
 const app = express();
 const PORT = process.env.PORT || 9090;
@@ -51,7 +48,7 @@ app.use(logger('dev'));
 app.use(cors({
   origin: process.env.ALLOWED_ORIGIN || '',
   methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['X-Requested-With', 'Content-Type', 'Accept', 'Origin'],
+  allowedHeaders: ['X-Requested-With', 'Authorization', 'Content-Type', 'Accept', 'Origin'],
 }));
 app.use(
   helmet(
@@ -94,7 +91,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.use('/api', books);
-app.use('/auth', auth);
+// app.use('/auth', auth);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(Sentry.Handlers.errorHandler());
