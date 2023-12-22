@@ -9,18 +9,22 @@ import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import swaggerUi from 'swagger-ui-express';
 import cookieSession from 'cookie-session';
-import passport from 'passport';
+import { getAuth } from 'firebase-admin/auth';
 
+import { firebaseInitialize } from './services/firebase';
 import swaggerDocument from './docs/swagger.json';
 import db from './db';
 import books from './routes/books';
-import './auth/passport';
+import auth from './routes/auth';
 
 const app = express();
 const PORT = process.env.PORT || 9090;
 
 config();
 db();
+firebaseInitialize();
+
+export const authFirebase = getAuth();
 
 Sentry.init({
   dsn: process.env.SENTRY_DNS,
@@ -36,8 +40,6 @@ app.use(cookieSession({
   keys: ['secretkeys'],
   maxAge: 24 * 60 * 60 * 1000
 }));
-app.use(passport.initialize());
-app.use(passport.session());
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
@@ -91,7 +93,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.use('/api', books);
-// app.use('/auth', auth);
+app.use('/auth', auth);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(Sentry.Handlers.errorHandler());

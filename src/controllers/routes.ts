@@ -3,25 +3,12 @@ import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
 import pako from 'pako';
 import { config } from 'dotenv';
-// import { credential } from 'firebase-admin';
-// import { initializeApp, applicationDefault } from 'firebase-admin/app';
-// import { getAuth } from 'firebase-admin/auth';
 
 import booksModel from "../model/books";
-// import usersModel from "../model/users";
+import usersModel from "../model/users";
 import { bookSchema } from '../utils/validation';
 
 config();
-
-// initializeApp({
-//   credential: credential.cert({
-//     projectId: process.env.FIREBASE_PROJECT_ID,
-//     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-//     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-//   }),
-// });
-
-// const auth = getAuth();
 
 const redis = new Redis({
   host: process.env.REDIS_HOST,
@@ -455,32 +442,7 @@ async function deleteBooks(req: Request, res: Response) {
   }
 }
 
-// async function register(req: Request, res: Response) {
-//   const token = (req.headers['authorization'] || '').split(' ')[1];
-
-//   try {
-//     const decodedToken = await auth.verifyIdToken(token);
-
-//     // Verificar si el usuario ya está registrado
-//     const existingUser = await usersModel.findOne({ uid: decodedToken.uid });
-
-//     if (existingUser) {
-//       // Usuario ya registrado, responder en consecuencia
-//       return res.status(200).json({ info: { message: 'Usuario ya registrado', user: existingUser } });
-//     }
-
-//     // Usuario no registrado, proceder con el registro
-//     const newUser = new usersModel(decodedToken);
-//     const resultUser = await newUser.save();
-
-//     return res.status(200).json(resultUser);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(401).json({ error: 'Token inválido' });
-//   }
-// }
-
-// // Manejo del inicio de sesión
+// Usuarios
 // async function login(req: Request, res: Response) {
 //   const token = (req.headers['authorization'] || '').split(' ')[1];
 
@@ -501,30 +463,28 @@ async function deleteBooks(req: Request, res: Response) {
 //   }
 // }
 
-// async function getUserAndBooks(req: Request, res: Response) {
-//   try {
-//     const { userId } = req.params;
-//     const user = await usersModel.findById(userId);
+async function getUserAndBooks(req: Request, res: Response) {
+  try {
+    const { userId } = req.params;
+    const user = await usersModel.findOne({ uid: userId });
 
-//     if (!user) {
-//       console.log('Usuario no encontrado');
-//       return null;
-//     }
+    if (!user) {
+      console.log('Usuario no encontrado');
+      return null;
+    }
 
-//     // Obtener libros del usuario por su ID
-//     const books = await booksModel.find({ userId: user.uid });
+    // Obtener libros del usuario por su ID
+    const books = await booksModel.find({ userId: user.uid });
 
-//     return res.status(200).json({ user, books });
-//   } catch (error) {
-//     console.error('Error al obtener usuario y libros:', error);
-//   }
-// }
+    return res.status(200).json({ user, books });
+  } catch (error) {
+    console.error('Error al obtener usuario y libros:', error);
+  }
+}
 
 
 export {
-  // register,
-  // login,
-  // getUserAndBooks,
+  getUserAndBooks,
   getBooks,
   getSearchBooks,
   getAllOptions,

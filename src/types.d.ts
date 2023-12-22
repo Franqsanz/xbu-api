@@ -17,9 +17,18 @@ interface BooksDocument extends pkg.Document {
   };
 }
 
+interface UsersDocument extends pkg.Document {
+  uid: string;
+  name: string;
+  picture: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // interface Cors {
 //   origin: string;
 //   callback: (err: Error | null, allow?: boolean) => void;
 // }
 
-export { BooksDocument };
+export { BooksDocument, UsersDocument };
