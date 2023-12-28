@@ -9,9 +9,7 @@ import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import swaggerUi from 'swagger-ui-express';
 import cookieSession from 'cookie-session';
-import { getAuth } from 'firebase-admin/auth';
 
-import { firebaseInitialize } from './services/firebase';
 import swaggerDocument from './docs/swagger.json';
 import db from './db';
 import books from './routes/books';
@@ -22,9 +20,6 @@ const PORT = process.env.PORT || 9090;
 
 config();
 db();
-firebaseInitialize();
-
-export const authFirebase = getAuth();
 
 Sentry.init({
   dsn: process.env.SENTRY_DNS,

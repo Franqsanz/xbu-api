@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 
 import usersModel from '../../model/users';
-import { authFirebase } from '../../server';
+import { authFirebase } from '../../services/firebase';
 
 const auth = authFirebase;
 
