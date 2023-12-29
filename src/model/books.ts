@@ -61,6 +61,10 @@ const booksSchema = new Schema({
       type: String,
     }
   },
+  userId: {
+    type: String,
+    required: true,
+  }
 }, { versionKey: false, });
 
 booksSchema.set('toJSON', {

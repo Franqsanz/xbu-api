@@ -15,6 +15,7 @@ interface BooksDocument extends pkg.Document {
     url: string;
     public_id: string;
   };
+  userId: string;
 }
 
 interface UsersDocument extends pkg.Document {

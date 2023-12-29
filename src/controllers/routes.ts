@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
 import pako from 'pako';
@@ -443,30 +443,28 @@ async function deleteBooks(req: Request, res: Response) {
 }
 
 // Usuarios
-// async function login(req: Request, res: Response) {
-//   const token = (req.headers['authorization'] || '').split(' ')[1];
+// import { authFirebase } from '../services/firebase';
 
-//   try {
-//     const decodedToken = await auth.verifyIdToken(token);
+// const auth = authFirebase;
 
-//     // Consulta para obtener datos del usuario
-//     const user = await usersModel.findOne({ uid: decodedToken.uid });
 
-//     if (!user) {
-//       return res.status(404).json({ error: 'Usuario no encontrado' });
-//     }
-
-//     return res.status(200).json(user);
-//   } catch (error) {
-//     console.error(error);
-//     res.status(401).json({ error: 'Token inválido' });
-//   }
-// }
-
-async function getUserAndBooks(req: Request, res: Response) {
+async function getUserAndBooks(req: Request, res: Response, next: NextFunction) {
+  // const token = (req.headers['authorization'] || '').split(' ')[1];
+  // console.log(token);
   try {
     const { userId } = req.params;
     const user = await usersModel.findOne({ uid: userId });
+    // const decodedToken = await auth.verifyIdToken(token);
+
+    // if (decodedToken && userId === decodedToken.uid) {
+    // Usuario autorizado, permite continuar con la solicitud
+    // console.log(decodedToken && userId === decodedToken.uid);
+    // console.log(decodedToken.uid);
+    // next();
+    // } else {
+    // Usuario no autorizado, responde con un código de acceso denegado
+    // res.status(403).json({ error: 'Acceso denegado' });
+    // }
 
     if (!user) {
       console.log('Usuario no encontrado');
@@ -474,7 +472,7 @@ async function getUserAndBooks(req: Request, res: Response) {
     }
 
     // Obtener libros del usuario por su ID
-    const books = await booksModel.find({ userId: user.uid });
+    const books = await booksModel.find({ userId: user.uid }).sort({ _id: -1 });
 
     return res.status(200).json({ user, books });
   } catch (error) {
