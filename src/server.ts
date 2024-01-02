@@ -88,7 +88,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.use('/api', books);
-app.use('/auth', auth);
+app.use('/api/auth', auth);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(Sentry.Handlers.errorHandler());
