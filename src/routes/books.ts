@@ -12,7 +12,6 @@ import {
   postBooks,
   putBooks,
   deleteBooks,
-  getUserAndBooks,
 } from "../controllers/routes";
 import { query } from "../middleware/query";
 
@@ -32,7 +31,5 @@ router.get('/book/:id', getOneBooks);
 router.post('/book/post', postBooks);
 router.patch('/book/update/:id', putBooks);
 router.delete('/book/delete/:id', deleteBooks);
-// perfil
-router.get('/my-books/:userId', getUserAndBooks);
 
 export default router;

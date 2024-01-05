@@ -14,6 +14,7 @@ import swaggerDocument from './docs/swagger.json';
 import db from './db';
 import books from './routes/books';
 import auth from './routes/auth';
+import users from './routes/users';
 
 const app = express();
 const PORT = process.env.PORT || 9090;
@@ -89,6 +90,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api', books);
 app.use('/api/auth', auth);
+app.use('/api/user', users);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(Sentry.Handlers.errorHandler());

@@ -443,28 +443,10 @@ async function deleteBooks(req: Request, res: Response) {
 }
 
 // Usuarios
-// import { authFirebase } from '../services/firebase';
-
-// const auth = authFirebase;
-
-
-async function getUserAndBooks(req: Request, res: Response, next: NextFunction) {
-  // const token = (req.headers['authorization'] || '').split(' ')[1];
-  // console.log(token);
+async function getUserAndBooks(req: Request, res: Response) {
   try {
     const { userId } = req.params;
     const user = await usersModel.findOne({ uid: userId });
-    // const decodedToken = await auth.verifyIdToken(token);
-
-    // if (decodedToken && userId === decodedToken.uid) {
-    // Usuario autorizado, permite continuar con la solicitud
-    // console.log(decodedToken && userId === decodedToken.uid);
-    // console.log(decodedToken.uid);
-    // next();
-    // } else {
-    // Usuario no autorizado, responde con un código de acceso denegado
-    // res.status(403).json({ error: 'Acceso denegado' });
-    // }
 
     if (!user) {
       console.log('Usuario no encontrado');
