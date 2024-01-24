@@ -390,14 +390,13 @@ async function putBooks(req: Request, res: Response) {
         url: url
       };
     } else {
-      if (public_id) {
-        await cloudinary.uploader.destroy(public_id);
-      }
-      console.log(public_id);
+      if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
+
       const uint8Array = new Uint8Array(url);
       const decompressedImage = pako.inflate(uint8Array);
       const buffer = Buffer.from(decompressedImage);
 
+      // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
         cloudinary.uploader.upload_stream({
           upload_preset: 'xbu-uploads',
