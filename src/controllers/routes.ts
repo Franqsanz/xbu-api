@@ -382,28 +382,43 @@ async function putBooks(req: Request, res: Response) {
   try {
     const { id } = req.params;
     const { body } = req;
-
     let { url, public_id } = body.image;
-    const uint8Array = new Uint8Array(url);
-    const decompressedImage = pako.inflate(uint8Array);
-    const buffer = Buffer.from(decompressedImage);
+    let image;
 
-    const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader.upload_stream({
-        public_id: public_id
-      }, (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      }).end(buffer);
-    });
+    if (typeof body.image.url === 'string') {
+      image = {
+        url: url
+      };
+    } else {
+      if (public_id) {
+        await cloudinary.uploader.destroy(public_id);
+      }
+      console.log(public_id);
+      const uint8Array = new Uint8Array(url);
+      const decompressedImage = pako.inflate(uint8Array);
+      const buffer = Buffer.from(decompressedImage);
 
-    const image = {
-      url: cloudinaryResult.secure_url,
-      public_id: cloudinaryResult.public_id
-    };
+      const cloudinaryResult = await new Promise<any>((resolve, reject) => {
+        cloudinary.uploader.upload_stream({
+          upload_preset: 'xbu-uploads',
+          format: 'webp',
+          transformation: { quality: 60 },
+          public_id: public_id
+        }, (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }).end(buffer);
+      });
+
+      image = {
+        url: cloudinaryResult.secure_url,
+        public_id: cloudinaryResult.public_id
+      };
+    }
+
 
     const result = await booksModel.findByIdAndUpdate(id, { ...body, image: image }, { new: true });
 

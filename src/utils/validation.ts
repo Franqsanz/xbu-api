@@ -22,7 +22,7 @@ export const bookSchema = z.object({
   format: z.string().nonempty({ message: 'format es requerido.' }),
   pathUrl: z.string().nonempty(),
   image: z.object({
-    url: z.array(z.number()),
+    url: z.union([z.string(), z.array(z.number())]),
     public_id: z.string(),
   }),
   userId: z.string(),
