@@ -387,7 +387,8 @@ async function putBooks(req: Request, res: Response) {
 
     if (typeof body.image.url === 'string') {
       image = {
-        url: url
+        url: url,
+        public_id: public_id
       };
     } else {
       if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
