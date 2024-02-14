@@ -20,11 +20,11 @@ interface BooksDocument extends pkg.Document {
 
 interface UsersDocument extends pkg.Document {
   uid: string;
+  username: string;
   name: string;
   picture: string;
   email: string;
   createdAt: Date;
-  updatedAt: Date;
 }
 
 // interface Cors {

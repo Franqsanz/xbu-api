@@ -458,14 +458,38 @@ async function deleteBooks(req: Request, res: Response) {
 }
 
 // Usuarios
-async function getUserAndBooks(req: Request, res: Response) {
+async function getUsers(req: Request, res: Response) {
+  try {
+    const users = await usersModel.find();
+
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error('Error al obtener los usuario', error);
+  }
+}
+
+async function getCheckUser(req: Request, res: Response) {
   try {
     const { userId } = req.params;
     const user = await usersModel.findOne({ uid: userId });
 
     if (!user) {
-      console.log('Usuario no encontrado');
-      return null;
+      return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
+    }
+
+    return res.status(200).json(user);
+  } catch (error) {
+    console.error('Error al buscar el usuario', error);
+  }
+}
+
+async function getUserAndBooks(req: Request, res: Response) {
+  try {
+    const { username } = req.params;
+    const user = await usersModel.findOne({ username: username });
+
+    if (!user) {
+      return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
     }
 
     // Obtener libros del usuario por su ID
@@ -479,6 +503,8 @@ async function getUserAndBooks(req: Request, res: Response) {
 
 
 export {
+  getUsers,
+  getCheckUser,
   getUserAndBooks,
   getBooks,
   getSearchBooks,

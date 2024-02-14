@@ -1,11 +1,13 @@
 import express from 'express';
 
-import { getUserAndBooks } from "../controllers/routes";
+import { getUsers, getCheckUser, getUserAndBooks } from "../controllers/routes";
 import { verifyToken } from "../middleware/verifyToken";
 
 const router = express.Router();
 
-// perfil
-router.get('/my-books/:userId', verifyToken, getUserAndBooks);
+// Usuarios
+router.get('/', getUsers);
+router.get('/check-user/:userId', getCheckUser);
+router.get('/my-books/:username/:userId', verifyToken, getUserAndBooks);
 
 export default router;

@@ -7,6 +7,7 @@ const auth = authFirebase;
 
 async function postRegister(req: Request, res: Response) {
   const token = (req.headers['authorization'] || '').split(' ')[1];
+  const { username } = req.body;
 
   try {
     const decodedToken = await auth.verifyIdToken(token);
@@ -20,8 +21,8 @@ async function postRegister(req: Request, res: Response) {
 
     const userToSave = {
       ...decodedToken,
+      username: username,
       createdAt: new Date(),
-      updatedAt: new Date(),
     };
 
     const newUser = new usersModel(userToSave);

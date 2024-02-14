@@ -10,6 +10,9 @@ const usersSchema = new Schema({
   name: {
     type: String,
   },
+  username: {
+    type: String,
+  },
   picture: {
     type: String,
   },
@@ -18,16 +21,8 @@ const usersSchema = new Schema({
   },
   createdAt: {
     type: Date,
-  },
-  updatedAt: {
-    type: Date,
   }
 }, { versionKey: false, });
-
-usersSchema.pre('save', function (next) {
-  this.updatedAt = new Date();
-  next();
-});
 
 usersSchema.set('toJSON', {
   transform: (_, returnedObject) => {

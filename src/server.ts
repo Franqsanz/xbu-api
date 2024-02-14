@@ -47,6 +47,7 @@ app.use(cors({
   origin: process.env.ALLOWED_ORIGIN || '',
   methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['X-Requested-With', 'Authorization', 'Content-Type', 'Accept', 'Origin'],
+  // credentials: true,
 }));
 app.use(
   helmet(
@@ -90,7 +91,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api', books);
 app.use('/api/auth', auth);
-app.use('/api/user', users);
+app.use('/api/users', users);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(Sentry.Handlers.errorHandler());
