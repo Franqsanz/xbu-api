@@ -501,11 +501,33 @@ async function getUserAndBooks(req: Request, res: Response) {
   }
 }
 
+async function deleteAccount(req: Request, res: Response) {
+  try {
+    const { userId } = req.params;
+
+    const user = await usersModel.findOne({ uid: userId });
+    const books = await booksModel.find({ userId: userId });
+
+    if (!user) {
+      return res.status(404).json({ info: { message: 'Usuario no encontrado' } });
+    }
+
+    for (let book of books) {
+      const public_id = book.image.public_id;
+      await cloudinary.uploader.destroy(public_id);
+      await book.deleteOne();
+    }
+
+    await user?.deleteOne();
+
+    res.status(200).json({ success: { message: 'Cuenta eliminada' } });
+  } catch (error) {
+    res.status(500).json({ error: { message: 'Error en el servidor' } });
+  }
+}
+
 
 export {
-  getUsers,
-  getCheckUser,
-  getUserAndBooks,
   getBooks,
   getSearchBooks,
   getAllOptions,
@@ -517,4 +539,9 @@ export {
   postBooks,
   putBooks,
   deleteBooks,
+  // Usuarios
+  getUsers,
+  getCheckUser,
+  getUserAndBooks,
+  deleteAccount,
 };
