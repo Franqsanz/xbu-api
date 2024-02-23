@@ -471,7 +471,7 @@ async function getUsers(req: Request, res: Response) {
 async function getCheckUser(req: Request, res: Response) {
   try {
     const { userId } = req.params;
-    const user = await usersModel.findOne({ uid: userId });
+    const user = await usersModel.findOne({ uid: userId }, 'uid name username picture');
 
     if (!user) {
       return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
@@ -486,14 +486,14 @@ async function getCheckUser(req: Request, res: Response) {
 async function getUserAndBooks(req: Request, res: Response) {
   try {
     const { username } = req.params;
-    const user = await usersModel.findOne({ username: username });
+    const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
 
     if (!user) {
       return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
     }
 
     // Obtener libros del usuario por su ID
-    const books = await booksModel.find({ userId: user.uid }).sort({ _id: -1 });
+    const books = await booksModel.find({ userId: user.uid }, 'title category language authors pathUrl image').sort({ _id: -1 });
 
     return res.status(200).json({ user, books });
   } catch (error) {
