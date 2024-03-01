@@ -519,9 +519,9 @@ async function getUserAndBooks(req: Request, res: Response) {
       results,
     };
 
-    if (results.length < 1) {
-      return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
-    }
+    // if (results.length < 1) {
+    //   return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
+    // }
 
     return res.status(200).json(response);
   } catch (error) {
