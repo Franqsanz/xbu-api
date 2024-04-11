@@ -99,6 +99,33 @@
             "type": "string"
           }
         }
+      },
+      "Users": {
+        "type": "object",
+        "description": "Objeto con todos los campos de un usuario",
+        "properties": {
+          "uid": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "picture": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          }
+        }
       }
     }
   },
@@ -394,13 +421,13 @@
     },
     "/api/book/path/{pathUrl}":{
       "get": {
-        "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su titulo con este formato: 'la-casa-de-los-espiritus-UVfw'.",
+        "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su slug.",
         "tags": ["Books"],
         "parameters": [
           {
             "name": "pathUrl",
             "in": "path",
-            "description": "pathUrl del libro",
+            "description": "pathUrl (Slug) del libro",
             "required": true,
             "schema": {
               "type": "string"
@@ -965,6 +992,164 @@
               }
             }
           }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "Obtiene todos los usuarios.",
+        "description": "Esta consulta devuelve una lista completa de todos los usuarios.",
+        "tags": ["Users"],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uid": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "picture": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "items": {
+          "$ref": "#/components/schemas/Users"
+        }
+      }
+    },
+    "/api/users/{username}/my-books/{uid}": {
+      "get": {
+        "summary": "Obtiene todos los libros de un usuario especifico.",
+        "description": "Esta consulta devuelve una lista completa de todos los libros de un usuario.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Nombre de usuario",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Id de usuario",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "info": {
+                      "type": "object",
+                      "properties": {
+                        "totalBooks": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "currentPage": {
+                          "type": "number"
+                        },
+                        "nextPage": {
+                          "type": "number"
+                        },
+                        "prevPage": {
+                          "type": "number"
+                        },
+                        "nextPageLink": {
+                          "type": "string"
+                        },
+                        "prevPageLink": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties":{
+                          "image": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "public_id": {
+                                "type":"string"
+                              }
+                            }
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "language": {
+                            "type": "string"
+                          },
+                          "pathUrl": {
+                            "type": "string"
+                          },
+                          "authors": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "items": {
+          "$ref": "#/components/schemas/Users"
         }
       }
     }
