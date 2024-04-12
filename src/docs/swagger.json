@@ -1040,6 +1040,62 @@
         }
       }
     },
+    "/api/users/check-user/{uid}": {
+      "get": {
+        "summary": "Chequear si el usuario existe.",
+        "description": "Esta consulta verifica si el usuario existe y devuelve toda su información.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Id de usuario",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uid": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "picture": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "items": {
+          "$ref": "#/components/schemas/Users"
+        }
+      }
+    },
     "/api/users/{username}/my-books/{uid}": {
       "get": {
         "summary": "Obtiene todos los libros de un usuario especifico.",
@@ -1139,6 +1195,105 @@
                           "id": {
                             "type": "string"
                           }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "items": {
+          "$ref": "#/components/schemas/Users"
+        }
+      }
+    },
+    "/api/auth/register":{
+      "post": {
+        "summary": "Crear un nuevo usuario",
+        "description": "Registro de un nuevo usuario en firebase y base de datos.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "username",
+            "in": "path",
+            "description": "Crear nombre de usuario",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uid": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "picture": {
+                      "type": "string"
+                    },
+                    "email": {
+                      "type": "string"
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "username": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "items": {
+          "$ref": "#/components/schemas/Users"
+        }
+      }
+    },
+    "/api/users/delete-account/{uid}":{
+      "delete": {
+        "summary": "Borrar la cuenta.",
+        "description": "Se eliminan, el usuario de Firebase, el perfil del usuario en la base de datos y todos los libros publicados por ese usuario.",
+        "tags": ["Users"],
+        "parameters": [
+          {
+            "name": "uid",
+            "in": "path",
+            "description": "Id del usuario",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "type": "string"
                         }
                       }
                     }
