@@ -354,6 +354,9 @@ async function getOneBooks(req: Request, res: Response) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
     }
 
+    result.views++; // Incrementa el contador de vistas
+    await result.save();
+
     return res.status(200).json(result);
   } catch (err) {
     console.log(err);
@@ -370,6 +373,24 @@ async function getPathUrlBooks(req: Request, res: Response) {
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
     }
+
+    result.views++; // Incrementa el contador de vistas
+    await result.save();
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+  }
+}
+
+async function getMostViewedBooks(req: Request, res: Response) {
+  try {
+    const result = await booksModel.find({}, 'title pathUrl').sort({ views: -1 }).limit(10);
+
+    // if (!result) {
+    //   return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
+    // }
 
     return res.status(200).json(result);
   } catch (err) {
@@ -564,6 +585,7 @@ export {
   getMoreBooksAuthors,
   getOneBooks,
   getPathUrlBooks,
+  getMostViewedBooks,
   postBooks,
   putBooks,
   deleteBooks,

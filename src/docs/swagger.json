@@ -16,6 +16,14 @@
     }
   ],
   "components":{
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "jwt",
+        "name": "Authorization",
+        "in": "header",
+        "description": "JWT authorization token. Example: 'Bearer {token}'"
+      }
+    },
     "schemas": {
       "info": {
         "type": "object",
@@ -128,6 +136,9 @@
         }
       }
     }
+  },
+  "security": {
+    "bearerAuth": []
   },
   "paths": {
     "/api":{
@@ -643,6 +654,35 @@
                       "items": {
                         "type": "string"
                       }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/books/most-viewed-books":{
+      "get": {
+        "summary": "Muestra los 10 libros más vistos.",
+        "tags": ["Books"],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "title": {
+                      "type": "string"
+                    },
+                    "pathUrl": {
+                      "type": "string"
                     },
                     "id": {
                       "type": "string"

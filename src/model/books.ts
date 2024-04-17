@@ -63,7 +63,11 @@ const booksSchema = new Schema({
   },
   userId: {
     type: String,
-    required: true,
+    // required: true,
+  },
+  views: {
+    type: Number,
+    default: 0
   }
 }, { versionKey: false, });
 
