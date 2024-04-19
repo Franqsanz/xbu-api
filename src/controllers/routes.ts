@@ -348,14 +348,15 @@ async function getOneBooks(req: Request, res: Response) {
   try {
     const { id } = req.params;
 
-    const result = await booksModel.findById(id).hint('_id_');
+    const result = await booksModel.findByIdAndUpdate(
+      { _id: id },
+      { $inc: { views: 1 } },
+      { new: true }
+    ).hint('_id_');
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
     }
-
-    result.views++; // Incrementa el contador de vistas
-    await result.save();
 
     return res.status(200).json(result);
   } catch (err) {
@@ -368,14 +369,15 @@ async function getPathUrlBooks(req: Request, res: Response) {
   try {
     const { pathUrl } = req.params;
 
-    const result = await booksModel.findOne({ pathUrl: pathUrl });
+    const result = await booksModel.findOneAndUpdate(
+      { pathUrl: pathUrl },
+      { $inc: { views: 1 } }, // Incrementa el contador de vistas en 1
+      { new: true } // Devuelve el documento actualizado
+    );
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
     }
-
-    result.views++; // Incrementa el contador de vistas
-    await result.save();
 
     return res.status(200).json(result);
   } catch (err) {
