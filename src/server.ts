@@ -31,6 +31,15 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
+import { address } from 'ip';
+const serverIp = address();
+
+app.use('/', (req, res, next) => {
+  console.log('IP 1:', serverIp);
+  console.log('IP 2:', req.socket.remoteAddress);
+  next();
+});
+
 app.use(cookieSession({
   name: 'session',
   keys: ['secretkeys'],
