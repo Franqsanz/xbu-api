@@ -49,26 +49,26 @@ app.use(cors({
   allowedHeaders: ['X-Requested-With', 'Authorization', 'Content-Type', 'Accept', 'Origin'],
   // credentials: true,
 }));
-// app.use(
-//   helmet(
-//     {
-//       contentSecurityPolicy: true,
-//       crossOriginEmbedderPolicy: true,
-//       crossOriginOpenerPolicy: true,
-//       crossOriginResourcePolicy: true,
-//       dnsPrefetchControl: true,
-//       frameguard: true,
-//       hidePoweredBy: true,
-//       hsts: true,
-//       ieNoOpen: true,
-//       noSniff: true,
-//       originAgentCluster: true,
-//       permittedCrossDomainPolicies: true,
-//       referrerPolicy: true,
-//       xssFilter: true,
-//     }
-//   )
-// );
+app.use(
+  helmet(
+    {
+      contentSecurityPolicy: true,
+      crossOriginEmbedderPolicy: true,
+      crossOriginOpenerPolicy: true,
+      crossOriginResourcePolicy: true,
+      dnsPrefetchControl: true,
+      frameguard: true,
+      hidePoweredBy: true,
+      hsts: true,
+      ieNoOpen: true,
+      noSniff: true,
+      originAgentCluster: true,
+      permittedCrossDomainPolicies: true,
+      referrerPolicy: true,
+      xssFilter: true,
+    }
+  )
+);
 
 app.use((req, res, next) => {
   res.header('Set-Cookie', `SameSite=None; Secure`);
