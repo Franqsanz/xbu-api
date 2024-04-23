@@ -666,10 +666,22 @@
         }
       }
     },
-    "/api/books/most-viewed-books":{
+    "/api/books/most-viewed-books?detail={query}":{
       "get": {
         "summary": "Muestra los 10 libros más vistos.",
+        "description": "Esta consulta ofrece dos opciones para visualizar los datos de los libros: una con detalles mínimos y otra con casi todos los campos disponibles.",
         "tags": ["Books"],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "path",
+            "description": "Las dos opciones que hay son: 'summary' y 'full'.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Ok",
@@ -684,8 +696,42 @@
                     "pathUrl": {
                       "type": "string"
                     },
+                    "views": {
+                      "type": "number"
+                    },
                     "id": {
                       "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "summary": {
+                    "value": {
+                      "title": "Un beso en París",
+                      "pathUrl": "un-beso-en-paris-mg_q",
+                      "views": 16,
+                      "id": "6621a92224ab0d31e9481302"
+                    }
+                  },
+                  "full": {
+                    "value": {
+                      "image": {
+                        "url": "https://res.cloudinary.com/xbu/image/upload/v1713482017/xbu/ldnisxkqtkjddvwscs2g.webp",
+                        "public_id": "xbu/ldnisxkqtkjddvwscs2g"
+                      },
+                      "title": "Un beso en París",
+                      "authors": [
+                        "Stephanie Perkins"
+                      ],
+                      "category": [
+                        "Novela Romantica",
+                        "Romance",
+                        "Ficción",
+                        "Literatura"
+                      ],
+                      "language": "Español",
+                      "pathUrl": "un-beso-en-paris-mg_q",
+                      "id": "6621a92224ab0d31e9481302"
                     }
                   }
                 }
