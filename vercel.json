@@ -10,7 +10,11 @@
     {
       "src": "/(.*)",
       "dest": "/src/server.ts",
-      "methods": ["GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS"]
+      "methods": ["GET", "POST", "HEAD", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      "headers": {
+        "Access-Control-Allow-Origin": "https://xbu.vercel.app, http://localhost:1010",
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+      }
     }
   ]
 }

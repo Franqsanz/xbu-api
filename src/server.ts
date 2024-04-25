@@ -71,13 +71,6 @@ app.use(
 );
 
 app.use((req, res, next) => {
-  console.log(req.headers['x-real-ip']);
-  console.log(req.headers['x-forwarded-for']);
-
-  next();
-});
-
-app.use((req, res, next) => {
   res.header('Set-Cookie', `SameSite=None; Secure`);
   next();
 });
