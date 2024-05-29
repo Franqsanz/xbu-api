@@ -11,7 +11,7 @@ import swaggerUi from 'swagger-ui-express';
 import cookieSession from 'cookie-session';
 
 import swaggerDocument from './docs/swagger.json';
-import db from './db';
+import db from './db/connection';
 import books from './routes/books';
 import auth from './routes/auth';
 import users from './routes/users';

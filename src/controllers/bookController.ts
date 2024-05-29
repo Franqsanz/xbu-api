@@ -1,12 +1,22 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
 import pako from 'pako';
 import { config } from 'dotenv';
 
 import booksModel from "../model/books";
-import usersModel from "../model/users";
+// import usersModel from "../model/users";
 import { bookSchema } from '../utils/validation';
+import {
+  qyBooksRandom,
+  qyGroupOptions,
+  qyMoreBooksAuthors,
+  qyOneBooks,
+  qyPathUrlBooks,
+  qyPutBook,
+  qyRelatedBooks,
+  qySearch
+} from '../db/bookQueries';
 
 config();
 
@@ -45,14 +55,13 @@ cloudinary.config({
 // }
 
 async function getBooks(req: Request, res: Response) {
+  const { body } = req;
+  const key = `books_${body}`;
+  const limit = parseInt(req.query.limit as string);
+  const page = parseInt(req.query.page as string) || 1;
+  const offset = (page - 1) * limit;
+
   try {
-    const { body } = req;
-    const key = `books_${body}`;
-    const limit = parseInt(req.query.limit as string);
-    const page = parseInt(req.query.page as string) || 1;
-
-    const offset = (page - 1) * limit;
-
     // Aquí obtenemos los libros de la base de datos usando el método skip y limit
     const results = await booksModel.find({}, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
 
@@ -111,15 +120,11 @@ async function getBooks(req: Request, res: Response) {
 }
 
 async function getSearchBooks(req: Request, res: Response) {
-  try {
-    const { q } = req.query;
+  const { q } = req.query;
+  const { query, projection } = qySearch(q);
 
-    const results = await booksModel.find({
-      $or: [
-        { title: { $regex: q, $options: 'i' } },
-        { authors: { $regex: q, $options: 'i' } }
-      ]
-    }, 'title authors pathUrl').hint('_id_').sort({ _id: -1 }).exec();
+  try {
+    const results = await booksModel.find(query, projection).hint('_id_').sort({ _id: -1 }).exec();
 
     if (results.length < 1) {
       return res.status(404).json({ info: { message: `No se encontraron resultados para: ${q}` } });
@@ -133,51 +138,10 @@ async function getSearchBooks(req: Request, res: Response) {
 }
 
 async function getAllOptions(req: Request, res: Response) {
+  const query = qyGroupOptions();
+
   try {
-    const result = await booksModel.aggregate([
-      {
-        $facet: {
-          byCategory: [
-            { $unwind: "$category" },
-            {
-              $group: {
-                _id: "$category",
-                count: { $sum: 1 }
-              }
-            }, { $sort: { _id: 1 } }
-          ],
-          byLanguage: [
-            {
-              $group: {
-                _id: "$language",
-                count: { $sum: 1 }
-              }
-            }, { $sort: { _id: 1 } }
-          ],
-          byYear: [
-            {
-              $group: {
-                _id: "$year",
-                count: { $sum: 1 }
-              }
-            }, { $sort: { _id: 1 } }
-          ]
-        }
-      },
-      {
-        $group: {
-          _id: null,
-          categories: { $push: "$byCategory" },
-          languages: { $push: "$byLanguage" },
-          years: { $push: "$byYear" }
-        }
-      },
-      {
-        $project: {
-          _id: 0,
-        }
-      }
-    ]).exec();
+    const result = await booksModel.aggregate(query).exec();
 
     return res.status(200).json(result);
   } catch (err) {
@@ -187,23 +151,10 @@ async function getAllOptions(req: Request, res: Response) {
 }
 
 async function getBooksRandom(req: Request, res: Response) {
+  const query = qyBooksRandom();
+
   try {
-    const result = await booksModel.aggregate([
-      { $sample: { size: 3 } },
-      {
-        $project: {
-          title: 1,
-          pathUrl: 1,
-          authors: {
-            $cond: {
-              if: { $isArray: "$authors" },
-              then: "$authors",
-              else: ["$authors"]
-            }
-          }
-        }
-      }
-    ]);
+    const result = await booksModel.aggregate(query);
 
     return res.status(200).json(result);
   } catch (err) {
@@ -213,9 +164,9 @@ async function getBooksRandom(req: Request, res: Response) {
 }
 
 async function getRelatedBooks(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
+  try {
     const currentBook = await booksModel.findById(id);
 
     if (!currentBook) {
@@ -224,31 +175,9 @@ async function getRelatedBooks(req: Request, res: Response) {
 
     const { category } = currentBook;
     const selectedCategory = category[0];
+    const query = qyRelatedBooks(id, selectedCategory);
 
-    const relatedBooks = await booksModel.aggregate([
-      {
-        $match: {
-          _id: { $ne: id },
-          category: selectedCategory,
-        },
-      },
-      {
-        $sample: { size: 3 }
-      },
-      {
-        $project: {
-          title: 1,
-          pathUrl: 1,
-          authors: {
-            $cond: {
-              if: { $isArray: "$authors" },
-              then: "$authors",
-              else: ["$authors"]
-            }
-          }
-        }
-      }
-    ]);
+    const relatedBooks = await booksModel.aggregate(query);
 
     return res.status(200).json(relatedBooks);
   } catch (err) {
@@ -258,9 +187,9 @@ async function getRelatedBooks(req: Request, res: Response) {
 }
 
 async function getMoreBooksAuthors(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
+  try {
     const currentBook = await booksModel.findById(id);
 
     if (!currentBook) {
@@ -269,31 +198,9 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
 
     const { authors } = currentBook;
     const selectedAuthors = authors[0];
+    const query = qyMoreBooksAuthors(id, selectedAuthors);
 
-    const moreBooksAuthors = await booksModel.aggregate([
-      {
-        $match: {
-          _id: { $ne: id },
-          authors: { $regex: selectedAuthors, $options: 'i' },
-        },
-      },
-      {
-        $sample: { size: 3 }
-      },
-      {
-        $project: {
-          title: 1,
-          pathUrl: 1,
-          authors: {
-            $cond: {
-              if: { $isArray: "$authors" },
-              then: "$authors",
-              else: ["$authors"]
-            }
-          }
-        }
-      }
-    ]);
+    const moreBooksAuthors = await booksModel.aggregate(query);
 
     return res.status(200).json(moreBooksAuthors);
   } catch (err) {
@@ -303,15 +210,15 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
 }
 
 async function postBooks(req: Request, res: Response) {
+  const { body } = req;
+  const validateBook = bookSchema.parse(body);
+
+  let { url } = body.image;
+  const uint8Array = new Uint8Array(url);
+  const decompressedImage = pako.inflate(uint8Array);
+  const buffer = Buffer.from(decompressedImage);
+
   try {
-    const { body } = req;
-    const validateBook = bookSchema.parse(body);
-
-    let { url } = body.image;
-    const uint8Array = new Uint8Array(url);
-    const decompressedImage = pako.inflate(uint8Array);
-    const buffer = Buffer.from(decompressedImage);
-
     const cloudinaryResult = await new Promise<any>((resolve, reject) => {
       cloudinary.uploader.upload_stream({
         upload_preset: 'xbu-uploads',
@@ -345,14 +252,11 @@ async function postBooks(req: Request, res: Response) {
 }
 
 async function getOneBooks(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
+  const query = qyOneBooks(id);
 
-    const result = await booksModel.findByIdAndUpdate(
-      { _id: id },
-      { $inc: { views: 1 } },
-      { new: true }
-    ).hint('_id_');
+  try {
+    const result = await booksModel.findByIdAndUpdate(...query).hint('_id_');
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
@@ -366,14 +270,11 @@ async function getOneBooks(req: Request, res: Response) {
 }
 
 async function getPathUrlBooks(req: Request, res: Response) {
-  try {
-    const { pathUrl } = req.params;
+  const { pathUrl } = req.params;
+  const query = qyPathUrlBooks(pathUrl);
 
-    const result = await booksModel.findOneAndUpdate(
-      { pathUrl: pathUrl },
-      { $inc: { views: 1 } }, // Incrementa el contador de vistas en 1
-      { new: true } // Devuelve el documento actualizado
-    );
+  try {
+    const result = await booksModel.findOneAndUpdate(...query);
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
@@ -387,9 +288,9 @@ async function getPathUrlBooks(req: Request, res: Response) {
 }
 
 async function getMostViewedBooks(req: Request, res: Response) {
-  try {
-    const { detail } = req.query;
+  const { detail } = req.query;
 
+  try {
     if (detail === 'summary') {
       const result = await booksModel.find({}, ' title pathUrl views').sort({ views: -1 }).limit(10);
 
@@ -412,28 +313,13 @@ async function getMostViewedBooks(req: Request, res: Response) {
   }
 }
 
-// async function getMostViewedBooksDetails(req: Request, res: Response) {
-//   try {
-//     const result = await booksModel.find({}, ' title category language authors pathUrl image views').sort({ views: -1 }).limit(10);
-
-//     if (!result) {
-//       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
-//     }
-
-//     return res.status(200).json(result);
-//   } catch (err) {
-//     console.log(err);
-//     return res.status(500).json({ error: { message: 'Error en el servidor' } });
-//   }
-// }
-
 async function putBooks(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
-    const { body } = req;
-    let { url, public_id } = body.image;
-    let image;
+  const { id } = req.params;
+  const { body } = req;
+  let { url, public_id } = body.image;
+  let image;
 
+  try {
     if (typeof body.image.url === 'string') {
       image = {
         url: url,
@@ -468,8 +354,8 @@ async function putBooks(req: Request, res: Response) {
       };
     }
 
-
-    const result = await booksModel.findByIdAndUpdate(id, { ...body, image: image }, { new: true });
+    const query = qyPutBook(id, body, image);
+    const result = await booksModel.findByIdAndUpdate(...query);
 
     if (!result) {
       return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
@@ -483,9 +369,9 @@ async function putBooks(req: Request, res: Response) {
 }
 
 async function deleteBooks(req: Request, res: Response) {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
+  try {
     const book = await booksModel.findById(id);
 
     if (!book) {
@@ -507,101 +393,101 @@ async function deleteBooks(req: Request, res: Response) {
 }
 
 // Usuarios
-async function getUsers(req: Request, res: Response) {
-  try {
-    const users = await usersModel.find();
+// async function getUsers(req: Request, res: Response) {
+//   try {
+//     const users = await usersModel.find();
 
-    return res.status(200).json(users);
-  } catch (error) {
-    console.error('Error al obtener los usuario', error);
-  }
-}
+//     return res.status(200).json(users);
+//   } catch (error) {
+//     console.error('Error al obtener los usuario', error);
+//   }
+// }
 
-async function getCheckUser(req: Request, res: Response) {
-  try {
-    const { userId } = req.params;
-    const user = await usersModel.findOne({ uid: userId }, 'uid name username picture');
+// async function getCheckUser(req: Request, res: Response) {
+//   try {
+//     const { userId } = req.params;
+//     const user = await usersModel.findOne({ uid: userId }, 'uid name username picture');
 
-    if (!user) {
-      return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
-    }
+//     if (!user) {
+//       return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
+//     }
 
-    return res.status(200).json(user);
-  } catch (error) {
-    console.error('Error al buscar el usuario', error);
-  }
-}
+//     return res.status(200).json(user);
+//   } catch (error) {
+//     console.error('Error al buscar el usuario', error);
+//   }
+// }
 
-async function getUserAndBooks(req: Request, res: Response) {
-  try {
-    const { username } = req.params;
-    const limit = parseInt(req.query.limit as string);
-    const page = parseInt(req.query.page as string) || 1;
-    const offset = (page - 1) * limit;
+// async function getUserAndBooks(req: Request, res: Response) {
+//   try {
+//     const { username } = req.params;
+//     const limit = parseInt(req.query.limit as string);
+//     const page = parseInt(req.query.page as string) || 1;
+//     const offset = (page - 1) * limit;
 
-    const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
+//     const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
 
-    if (!user) {
-      return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
-    }
+//     if (!user) {
+//       return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
+//     }
 
-    const results = await booksModel.find({ userId: user.uid }, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
-    const totalBooks = await booksModel.countDocuments({ userId: user.uid });
+//     const results = await booksModel.find({ userId: user.uid }, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
+//     const totalBooks = await booksModel.countDocuments({ userId: user.uid });
 
-    const totalPages = Math.ceil(totalBooks / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
+//     const totalPages = Math.ceil(totalBooks / limit);
+//     const nextPage = page < totalPages ? page + 1 : null;
+//     const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
 
-    const info = {
-      totalBooks,
-      totalPages,
-      currentPage: page,
-      nextPage: nextPage,
-      prevPage: page > 1 ? page - 1 : null,
-      nextPageLink: nextPageLink,
-      prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
-    };
+//     const info = {
+//       totalBooks,
+//       totalPages,
+//       currentPage: page,
+//       nextPage: nextPage,
+//       prevPage: page > 1 ? page - 1 : null,
+//       nextPageLink: nextPageLink,
+//       prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
+//     };
 
-    const response = {
-      info,
-      user,
-      results,
-    };
+//     const response = {
+//       info,
+//       user,
+//       results,
+//     };
 
-    // if (results.length < 1) {
-    //   return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
-    // }
+//     // if (results.length < 1) {
+//     //   return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
+//     // }
 
-    return res.status(200).json(response);
-  } catch (error) {
-    console.error('Error al obtener el usuario y los libros:', error);
-  }
-}
+//     return res.status(200).json(response);
+//   } catch (error) {
+//     console.error('Error al obtener el usuario y los libros:', error);
+//   }
+// }
 
-async function deleteAccount(req: Request, res: Response) {
-  try {
-    const { userId } = req.params;
+// async function deleteAccount(req: Request, res: Response) {
+//   try {
+//     const { userId } = req.params;
 
-    const user = await usersModel.findOne({ uid: userId });
-    const books = await booksModel.find({ userId: userId });
+//     const user = await usersModel.findOne({ uid: userId });
+//     const books = await booksModel.find({ userId: userId });
 
-    if (!user) {
-      return res.status(404).json({ info: { message: 'Usuario no encontrado' } });
-    }
+//     if (!user) {
+//       return res.status(404).json({ info: { message: 'Usuario no encontrado' } });
+//     }
 
-    for (let book of books) {
-      const public_id = book.image.public_id;
-      await cloudinary.uploader.destroy(public_id);
-      await book.deleteOne();
-    }
+//     for (let book of books) {
+//       const public_id = book.image.public_id;
+//       await cloudinary.uploader.destroy(public_id);
+//       await book.deleteOne();
+//     }
 
-    await user?.deleteOne();
+//     await user?.deleteOne();
 
-    res.status(200).json({ success: { message: 'Cuenta eliminada' } });
-  } catch (error) {
-    res.status(500).json({ error: { message: 'Error en el servidor' } });
-  }
-}
+//     res.status(200).json({ success: { message: 'Cuenta eliminada' } });
+//   } catch (error) {
+//     res.status(500).json({ error: { message: 'Error en el servidor' } });
+//   }
+// }
 
 
 export {
@@ -618,8 +504,8 @@ export {
   putBooks,
   deleteBooks,
   // Usuarios
-  getUsers,
-  getCheckUser,
-  getUserAndBooks,
-  deleteAccount,
+  // getUsers,
+  // getCheckUser,
+  // getUserAndBooks,
+  // deleteAccount,
 };

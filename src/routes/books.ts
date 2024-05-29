@@ -13,7 +13,7 @@ import {
   postBooks,
   putBooks,
   deleteBooks,
-} from "../controllers/routes";
+} from "../controllers/bookController";
 import { query } from "../middleware/query";
 
 const router = express.Router();

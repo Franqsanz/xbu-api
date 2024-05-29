@@ -517,10 +517,10 @@
         "tags": ["Books"],
         "parameters": [
           {
-            "name": "search",
+            "name": "q",
             "in": "query",
-            "description": "Término de búsqueda que puede ser un título o un autor",
-            "required": true,
+            "description": "Título o Autor del libro a buscar.",
+            "required": false,
             "schema": {
               "type": "string"
             }

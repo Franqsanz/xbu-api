@@ -1,9 +1,9 @@
 import { z } from 'zod';
 
 export const bookSchema = z.object({
-  title: z.string().nonempty({ message: 'title es requerido.' }),
+  title: z.string().min(0, 'title es requerido.'),
   authors: z.array(z.string().refine((item) => item.trim() !== '')).nonempty({ message: 'El array authors es requerido.' }),
-  synopsis: z.string().nonempty({ message: 'synopsis es requerido.' }),
+  synopsis: z.string().min(0, 'synopsis es requerido.'),
   year: z.string().refine((value) => {
     const parsedValue = parseInt(value);
     return !isNaN(parsedValue) && parsedValue >= 1800 && parsedValue <= 2050;
@@ -18,9 +18,9 @@ export const bookSchema = z.object({
     message: '"numberPages" debe tener un minimo o igual a 49, es el número minimo de paginas para un libro.'
   }),
   sourceLink: z.string().optional(),
-  language: z.string().nonempty({ message: 'language es requerido.' }),
-  format: z.string().nonempty({ message: 'format es requerido.' }),
-  pathUrl: z.string().nonempty(),
+  language: z.string().min(0, 'language es requerido.'),
+  format: z.string().min(0, 'format es requerido.'),
+  pathUrl: z.string().min(0),
   image: z.object({
     url: z.union([z.string(), z.array(z.number())]),
     public_id: z.string(),

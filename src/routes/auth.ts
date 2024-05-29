@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { postRegister } from '../controllers/auth/auth';
+import { postRegister } from '../controllers/auth/userAuth';
 
 const router = express.Router();
 
