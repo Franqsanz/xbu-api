@@ -1,21 +1,24 @@
 import { Request, Response } from 'express';
 import Redis from 'ioredis';
 import { v2 as cloudinary } from 'cloudinary';
-import pako from 'pako';
 import { config } from 'dotenv';
 
-import booksModel from "../model/books";
-import { bookSchema } from '../utils/validation';
-import {
-  qyBooksRandom,
-  qyGroupOptions,
-  qyMoreBooksAuthors,
-  qyOneBooks,
-  qyPathUrlBooks,
-  qyPutBook,
-  qyRelatedBooks,
-  qySearch
-} from '../db/bookQueries';
+import { BookService } from '../services/bookService';
+
+const {
+  findAllBooks,
+  findOne,
+  findBySlug,
+  findSearch,
+  findByGroupFields,
+  findBooksRandom,
+  findRelatedBooks,
+  findMoreBooksAuthors,
+  findMostViewedBooks,
+  createBook,
+  updateBook,
+  removeBook,
+} = BookService;
 
 config();
 
@@ -31,28 +34,6 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// async function cacheData(req, res, next) {
-//   const { body } = req;
-//   const key = `books_${body}`;
-//   let results;
-
-//   try {
-//     const cacheResults = await redis.get(key);
-//     if (cacheResults) {
-//       results = JSON.parse(cacheResults);
-//       res.send({
-//         fromCache: true,
-//         data: results,
-//       });
-//     } else {
-//       next();
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     res.status(404);
-//   }
-// }
-
 async function getBooks(req: Request, res: Response) {
   const { body } = req;
   const key = `books_${body}`;
@@ -61,16 +42,15 @@ async function getBooks(req: Request, res: Response) {
   const offset = (page - 1) * limit;
 
   try {
-    // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-    const results = await booksModel.find({}, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
-
-    // Aquí obtenemos el número total de libros en la base de datos
-    const totalBooks = await booksModel.countDocuments();
+    // Llamar al servicio que ejecuta las consultas
+    const { results, totalBooks } = await findAllBooks(limit, offset);
 
     // Aquí calculamos el número total de páginas
     const totalPages = Math.ceil(totalBooks / limit);
     const nextPage = page < totalPages ? page + 1 : null;
+    const prevPage = page > 1 ? page - 1 : null;
     const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}/api${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
+    const prevPageLink = page > 1 ? `${req.protocol}://${req.get('host')}/api${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null;
 
     // Aquí construimos el objeto de paginación para incluir en la respuesta
     const info = {
@@ -78,9 +58,9 @@ async function getBooks(req: Request, res: Response) {
       totalPages,
       currentPage: page,
       nextPage: nextPage,
-      prevPage: page > 1 ? page - 1 : null,
+      prevPage: prevPage,
       nextPageLink: nextPageLink,
-      prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}/api${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
+      prevPageLink: prevPageLink,
     };
 
     // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
@@ -120,10 +100,9 @@ async function getBooks(req: Request, res: Response) {
 
 async function getSearchBooks(req: Request, res: Response) {
   const { q } = req.query;
-  const { query, projection } = qySearch(q);
 
   try {
-    const results = await booksModel.find(query, projection).hint('_id_').sort({ _id: -1 }).exec();
+    const results = await findSearch(q);
 
     if (results.length < 1) {
       return res.status(404).json({ info: { message: `No se encontraron resultados para: ${q}` } });
@@ -137,10 +116,8 @@ async function getSearchBooks(req: Request, res: Response) {
 }
 
 async function getAllOptions(req: Request, res: Response) {
-  const query = qyGroupOptions();
-
   try {
-    const result = await booksModel.aggregate(query).exec();
+    const result = await findByGroupFields();
 
     return res.status(200).json(result);
   } catch (err) {
@@ -150,10 +127,8 @@ async function getAllOptions(req: Request, res: Response) {
 }
 
 async function getBooksRandom(req: Request, res: Response) {
-  const query = qyBooksRandom();
-
   try {
-    const result = await booksModel.aggregate(query);
+    const result = await findBooksRandom();
 
     return res.status(200).json(result);
   } catch (err) {
@@ -166,17 +141,7 @@ async function getRelatedBooks(req: Request, res: Response) {
   const { id } = req.params;
 
   try {
-    const currentBook = await booksModel.findById(id);
-
-    if (!currentBook) {
-      return res.status(404).json({ info: { message: 'Libro no encontrado' } });
-    }
-
-    const { category } = currentBook;
-    const selectedCategory = category[0];
-    const query = qyRelatedBooks(id, selectedCategory);
-
-    const relatedBooks = await booksModel.aggregate(query);
+    const relatedBooks = await findRelatedBooks(id);
 
     return res.status(200).json(relatedBooks);
   } catch (err) {
@@ -189,17 +154,7 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
   const { id } = req.params;
 
   try {
-    const currentBook = await booksModel.findById(id);
-
-    if (!currentBook) {
-      return res.status(404).json({ info: { message: 'Libro no encontrado' } });
-    }
-
-    const { authors } = currentBook;
-    const selectedAuthors = authors[0];
-    const query = qyMoreBooksAuthors(id, selectedAuthors);
-
-    const moreBooksAuthors = await booksModel.aggregate(query);
+    const moreBooksAuthors = await findMoreBooksAuthors(id);
 
     return res.status(200).json(moreBooksAuthors);
   } catch (err) {
@@ -208,54 +163,11 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
   }
 }
 
-async function postBooks(req: Request, res: Response) {
-  const { body } = req;
-  const validateBook = bookSchema.parse(body);
-
-  let { url } = body.image;
-  const uint8Array = new Uint8Array(url);
-  const decompressedImage = pako.inflate(uint8Array);
-  const buffer = Buffer.from(decompressedImage);
-
-  try {
-    const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-      cloudinary.uploader.upload_stream({
-        upload_preset: 'xbu-uploads',
-        format: 'webp',
-        transformation: { quality: 60 }
-      }, (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result);
-        }
-      }).end(buffer);
-    });
-
-    validateBook.image.url = cloudinaryResult.secure_url;
-    validateBook.image.public_id = cloudinaryResult.public_id;
-
-    const newBook = new booksModel(validateBook);
-    const resultBook = await newBook.save();
-
-    if (!resultBook) {
-      return res.status(500).json({ error: { message: 'Error al Publicar' } });
-    }
-
-    redis.expire(`books_${req.body}`, 0);
-    return res.status(200).json(resultBook);
-  } catch (err) {
-    console.log(err);
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
-  }
-}
-
 async function getOneBooks(req: Request, res: Response) {
   const { id } = req.params;
-  const query = qyOneBooks(id);
 
   try {
-    const result = await booksModel.findByIdAndUpdate(...query).hint('_id_');
+    const result = await findOne(id);
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
@@ -270,10 +182,9 @@ async function getOneBooks(req: Request, res: Response) {
 
 async function getPathUrlBooks(req: Request, res: Response) {
   const { pathUrl } = req.params;
-  const query = qyPathUrlBooks(pathUrl);
 
   try {
-    const result = await booksModel.findOneAndUpdate(...query);
+    const result = await findBySlug(pathUrl);
 
     if (!result) {
       return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
@@ -290,22 +201,31 @@ async function getMostViewedBooks(req: Request, res: Response) {
   const { detail } = req.query;
 
   try {
-    if (detail === 'summary') {
-      const result = await booksModel.find({}, ' title pathUrl views').sort({ views: -1 }).limit(10);
-
-      return res.status(200).json(result);
-    } else if (detail === 'full') {
-      const result = await booksModel.find({}, 'title category language authors pathUrl image').sort({ views: -1 }).limit(10);
-
-      return res.status(200).json(result);
-    } else {
+    if (!detail || (detail !== 'summary' && detail !== 'full')) {
       return res.status(400).json({ error: { message: 'Parámetro detail inválido' } });
     }
 
-    // if (!result) {
-    //   return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
-    // }
+    const result = await findMostViewedBooks(detail as string);
 
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+  }
+}
+
+async function postBooks(req: Request, res: Response) {
+  const { body } = req;
+
+  try {
+    const resultBook = await createBook(body);
+
+    if (!resultBook) {
+      return res.status(500).json({ error: { message: 'Error al Publicar' } });
+    }
+
+    redis.expire(`books_${req.body}`, 0);
+    return res.status(200).json(resultBook);
   } catch (err) {
     console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
@@ -315,46 +235,9 @@ async function getMostViewedBooks(req: Request, res: Response) {
 async function putBooks(req: Request, res: Response) {
   const { id } = req.params;
   const { body } = req;
-  let { url, public_id } = body.image;
-  let image;
 
   try {
-    if (typeof body.image.url === 'string') {
-      image = {
-        url: url,
-        public_id: public_id
-      };
-    } else {
-      if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
-
-      const uint8Array = new Uint8Array(url);
-      const decompressedImage = pako.inflate(uint8Array);
-      const buffer = Buffer.from(decompressedImage);
-
-      // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
-      const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader.upload_stream({
-          upload_preset: 'xbu-uploads',
-          format: 'webp',
-          transformation: { quality: 60 },
-          public_id: public_id
-        }, (error, result) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        }).end(buffer);
-      });
-
-      image = {
-        url: cloudinaryResult.secure_url,
-        public_id: cloudinaryResult.public_id
-      };
-    }
-
-    const query = qyPutBook(id, body, image);
-    const result = await booksModel.findByIdAndUpdate(...query);
+    const result = await updateBook(id, body);
 
     if (!result) {
       return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
@@ -367,24 +250,17 @@ async function putBooks(req: Request, res: Response) {
   }
 }
 
-async function deleteBooks(req: Request, res: Response) {
+async function deleteBook(req: Request, res: Response) {
   const { id } = req.params;
 
   try {
-    const book = await booksModel.findById(id);
+    const book = await removeBook(id);
 
     if (!book) {
       return res.status(404).json({ info: { message: 'Libro no encontrado' } });
     }
 
-    if (book) {
-      const public_id = book.image.public_id;
-      await cloudinary.uploader.destroy(public_id);
-    }
-
-    await book?.deleteOne();
-
-    res.status(200).json({ success: { message: 'Libro eliminado' } });
+    return res.status(200).json({ success: { message: 'Libro eliminado' } });
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: { message: 'Error en el servidor' } });
@@ -403,5 +279,5 @@ export {
   getMostViewedBooks,
   postBooks,
   putBooks,
-  deleteBooks,
+  deleteBook,
 };

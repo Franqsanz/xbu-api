@@ -12,7 +12,7 @@ import {
   getMostViewedBooks,
   postBooks,
   putBooks,
-  deleteBooks,
+  deleteBook,
 } from "../controllers/bookController";
 import { query } from "../middleware/query";
 
@@ -32,6 +32,6 @@ router.get('/book/path/:pathUrl', getPathUrlBooks);
 router.get('/book/:id', getOneBooks);
 router.post('/book/post', postBooks);
 router.patch('/book/update/:id', putBooks);
-router.delete('/book/delete/:id', deleteBooks);
+router.delete('/book/delete/:id', deleteBook);
 
 export default router;
