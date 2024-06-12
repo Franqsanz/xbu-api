@@ -2,7 +2,6 @@ import express, { ErrorRequestHandler, Request, Response, NextFunction } from 'e
 import cors from 'cors';
 import compression from 'compression';
 import cookieParser from 'cookie-parser';
-import { config } from 'dotenv';
 import helmet from 'helmet';
 import logger from 'morgan';
 import * as Sentry from '@sentry/node';
@@ -11,17 +10,16 @@ import swaggerUi from 'swagger-ui-express';
 import cookieSession from 'cookie-session';
 
 import swaggerDocument from './docs/swagger.json';
-import db from './db/connection';
-import limiter from './middleware/rateLimit';
-import books from './routes/books';
-import auth from './routes/auth';
-import users from './routes/users';
+import connectDB from './db/connection';
+import limiter from './app/middlewares/rateLimit';
+import books from './app/routes/books';
+import auth from './app/routes/auth';
+import users from './app/routes/users';
+
+connectDB(); // Ejecutar conexión a la base de datos.
 
 const app = express();
 const PORT = process.env.PORT || 9090;
-
-config();
-db();
 
 Sentry.init({
   dsn: process.env.SENTRY_DNS,

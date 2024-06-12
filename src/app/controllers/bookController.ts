@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
-import Redis from 'ioredis';
-import { v2 as cloudinary } from 'cloudinary';
-import { config } from 'dotenv';
 
 import { BookService } from '../services/bookService';
+import { redis } from '../../config/redis';
 
 const {
   findAllBooks,
@@ -19,20 +17,6 @@ const {
   updateBook,
   removeBook,
 } = BookService;
-
-config();
-
-const redis = new Redis({
-  host: process.env.REDIS_HOST,
-  port: parseInt(process.env.REDIS_PORT as string),
-  password: process.env.REDIS_PASS,
-});
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
 
 async function getBooks(req: Request, res: Response) {
   const { body } = req;

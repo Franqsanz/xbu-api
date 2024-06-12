@@ -1,6 +1,6 @@
 import pkg from 'mongoose';
 
-interface BooksDocument extends pkg.Document {
+interface IBook extends pkg.Document {
   title: string;
   authors: string[];
   synopsis: string;
@@ -19,7 +19,7 @@ interface BooksDocument extends pkg.Document {
   views: number;
 }
 
-interface UsersDocument extends pkg.Document {
+interface IUser extends pkg.Document {
   uid: string;
   username: string;
   name: string;
@@ -28,9 +28,4 @@ interface UsersDocument extends pkg.Document {
   createdAt: Date;
 }
 
-// interface Cors {
-//   origin: string;
-//   callback: (err: Error | null, allow?: boolean) => void;
-// }
-
-export { BooksDocument, UsersDocument };
+export { IBook, IUser };

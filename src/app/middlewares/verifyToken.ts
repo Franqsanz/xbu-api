@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { authFirebase } from '../services/firebase';
+import { authFirebase } from '../../config/firebase';
 
 const auth = authFirebase;
 

@@ -1,83 +1,54 @@
-import { v2 as cloudinary } from 'cloudinary';
+// import { v2 as cloudinary } from 'cloudinary';
 import pako from 'pako';
 
-import booksModel from "../model/books";
-import { bookSchema } from '../utils/validation';
-import {
-  qyGroupOptions,
-  qyOneBooks,
-  qyPathUrlBooks,
-  qySearch,
-  qyBooksRandom,
-  qyRelatedBooks,
-  qyMoreBooksAuthors,
-  qyPutBook
-} from '../db/bookQueries';
+import { cloudinary } from '../../config/cloudinary';
+import { BookRepository } from "../../repositories/bookRepository";
+import { bookSchema } from '../../utils/validation';
 
 export const BookService = {
   async findAllBooks(limit: number, offset: number) {
     try {
-      // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-      const results = await booksModel.find({}, 'title category language authors pathUrl image')
-        .skip(offset)
-        .limit(limit)
-        .sort({ _id: -1 })
-        .exec();
-
-      // Aquí obtenemos el número total de libros en la base de datos
-      const totalBooks = await booksModel.countDocuments();
-
-      return { results, totalBooks };
+      return await BookRepository.findBooks(limit, offset);
     } catch (error) {
       throw error;
     }
   },
 
   async findOne(id: string) {
-    const query = qyOneBooks(id);
-
     try {
-      return await booksModel.findByIdAndUpdate(...query).hint('_id_');
+      return await BookRepository.findOne(id);
     } catch (error) {
       throw error;
     }
   },
 
   async findBySlug(pathUrl: string) {
-    const query = qyPathUrlBooks(pathUrl);
-
     try {
-      return await booksModel.findOneAndUpdate(...query);
+      return await BookRepository.findBySlug(pathUrl);
     } catch (error) {
       throw error;
     }
   },
 
   async findSearch(q: object | string | undefined) {
-    const { query, projection } = qySearch(q);
-
     try {
-      return await booksModel.find(query, projection).hint('_id_').sort({ _id: -1 }).exec();
+      return await BookRepository.findSearch(q);
     } catch (error) {
       throw error;
     }
   },
 
   async findByGroupFields() {
-    const query = qyGroupOptions();
-
     try {
-      return await booksModel.aggregate(query).exec();
+      return await BookRepository.findByGroupFields();
     } catch (error) {
       throw error;
     }
   },
 
   async findBooksRandom() {
-    const query = qyBooksRandom();
-
     try {
-      return await booksModel.aggregate(query);
+      return await BookRepository.findBooksRandom();
     } catch (error) {
       throw error;
     }
@@ -85,15 +56,7 @@ export const BookService = {
 
   async findRelatedBooks(id: string) {
     try {
-      const currentBook = await booksModel.findById(id);
-
-      if (currentBook) {
-        const { category } = currentBook;
-        const selectedCategory = category[0];
-        const query = qyRelatedBooks(id, selectedCategory);
-
-        return await booksModel.aggregate(query);
-      }
+      return await BookRepository.findRelatedBooks(id);
     } catch (error) {
       throw error;
     }
@@ -101,15 +64,7 @@ export const BookService = {
 
   async findMoreBooksAuthors(id: string) {
     try {
-      const currentBook = await booksModel.findById(id);
-
-      if (currentBook) {
-        const { authors } = currentBook;
-        const selectedCategory = authors[0];
-        const query = qyMoreBooksAuthors(id, selectedCategory);
-
-        return await booksModel.aggregate(query);
-      }
+      return await BookRepository.findMoreBooksAuthors(id);
     } catch (error) {
       throw error;
     }
@@ -117,39 +72,15 @@ export const BookService = {
 
   async findMostViewedBooks(detail: string | undefined) {
     try {
-      if (detail === 'summary') {
-        return await booksModel.find({}, ' title pathUrl views').sort({ views: -1 }).limit(10);
-      } else if (detail === 'full') {
-        return await booksModel.find({}, 'title category language authors pathUrl image').sort({ views: -1 }).limit(10);
-      } else {
-        throw new Error('Parámetro detail inválido');
-      }
+      return await BookRepository.findMostViewedBooks(detail);
     } catch (error) {
       throw error;
     }
   },
 
   async findOptionsFiltering(category: string, year: string, language: string) {
-    let query: any = {};
-
-    if (category) {
-      query.category = category;
-    }
-
-    if (year) {
-      query.year = year;
-    }
-
-    if (language) {
-      query.language = { $regex: language, $options: 'i' };
-    }
-
-    const projection = 'image title authors category language year pathUrl';
-
     try {
-      if (Object.keys(query).length > 0) {
-        return await booksModel.find(query, projection).sort({ _id: -1 });
-      }
+      return await BookRepository.findOptionsFiltering(category, year, language);
     } catch (error) {
       throw error;
     }
@@ -179,12 +110,9 @@ export const BookService = {
       });
 
       validateBook.image.url = cloudinaryResult.secure_url;
-      validateBook.image.public_id = cloudinaryResult.public_id;
+      validateBook.image.public_id = cloudinaryResult.public_id;;
 
-      const newBook = new booksModel(validateBook);
-
-      return await newBook.save();
-
+      return await BookRepository.createBook(validateBook);
     } catch (error) {
       throw error;
     }
@@ -229,9 +157,7 @@ export const BookService = {
         };
       }
 
-      const query = qyPutBook(id, body, image);
-
-      return await booksModel.findByIdAndUpdate(...query);
+      return await BookRepository.updateBook(id, body, image);
     } catch (error) {
       throw error;
     }
@@ -239,14 +165,14 @@ export const BookService = {
 
   async removeBook(id: string) {
     try {
-      const book = await booksModel.findById(id);
+      const { book, deleteOne } = await BookRepository.deleteBook(id);
 
       if (book) {
         const public_id = book.image.public_id;
         await cloudinary.uploader.destroy(public_id);
       }
 
-      return await book?.deleteOne();
+      return deleteOne;
 
     } catch (error) {
       throw error;

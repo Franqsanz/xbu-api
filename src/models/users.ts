@@ -1,7 +1,7 @@
 import pkg from 'mongoose';
 const { Schema, model } = pkg;
 
-import { UsersDocument } from '../types';
+import { IUser } from '../types/types';
 
 const usersSchema = new Schema({
   uid: {
@@ -32,4 +32,4 @@ usersSchema.set('toJSON', {
   }
 });
 
-export default model<UsersDocument>('users', usersSchema);
+export default model<IUser>('users', usersSchema);

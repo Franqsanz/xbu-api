@@ -14,7 +14,7 @@ import {
   putBooks,
   deleteBook,
 } from "../controllers/bookController";
-import { query } from "../middleware/query";
+import { query } from "../middlewares/query";
 
 const router = express.Router();
 

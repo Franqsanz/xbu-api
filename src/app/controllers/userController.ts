@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import { v2 as cloudinary } from 'cloudinary';
 
-import booksModel from "../model/books";
-import usersModel from "../model/users";
-import { qyCheckUser } from "../db/userQueries";
+import booksModel from "../../models/books";
+import usersModel from "../../models/users";
+import { qyCheckUser } from "../../db/userQueries";
 
 
 async function getUsers(req: Request, res: Response) {

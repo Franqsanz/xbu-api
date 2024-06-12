@@ -1,7 +1,7 @@
 import pkg from 'mongoose';
 const { Schema, model } = pkg;
 
-import { BooksDocument } from '../types';
+import { IBook } from '../types/types';
 
 const booksSchema = new Schema({
   title: {
@@ -79,4 +79,4 @@ booksSchema.set('toJSON', {
   }
 });
 
-export default model<BooksDocument>('books', booksSchema);
+export default model<IBook>('books', booksSchema);

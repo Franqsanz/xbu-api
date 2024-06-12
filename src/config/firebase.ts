@@ -1,9 +1,6 @@
-import { config } from 'dotenv';
 import { credential } from 'firebase-admin';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-
-config();
 
 const firebaseConfig = {
   credential: credential.cert({
