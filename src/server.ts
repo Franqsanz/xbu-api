@@ -7,8 +7,8 @@ import logger from 'morgan';
 import * as Sentry from '@sentry/node';
 import * as Tracing from '@sentry/tracing';
 import swaggerUi from 'swagger-ui-express';
-import cookieSession from 'cookie-session';
 
+import { PORT, SENTRY_DSN, ALLOWED_ORIGIN } from './config/env';
 import swaggerDocument from './docs/swagger.json';
 import connectDB from './db/connection';
 import limiter from './app/middlewares/rateLimit';
@@ -19,10 +19,9 @@ import users from './app/routes/users';
 connectDB(); // Ejecutar conexión a la base de datos.
 
 const app = express();
-const PORT = process.env.PORT || 9090;
 
 Sentry.init({
-  dsn: process.env.SENTRY_DNS,
+  dsn: SENTRY_DSN,
   integrations: [
     new Sentry.Integrations.Http({ tracing: true }),
     new Tracing.Integrations.Express({ app }),
@@ -30,11 +29,6 @@ Sentry.init({
   tracesSampleRate: 1.0,
 });
 
-app.use(cookieSession({
-  name: 'session',
-  keys: ['secretkeys'],
-  maxAge: 24 * 60 * 60 * 1000
-}));
 app.use(Sentry.Handlers.requestHandler());
 app.use(Sentry.Handlers.tracingHandler());
 app.use(express.json({ limit: '50mb' }));
@@ -44,10 +38,10 @@ app.use(cookieParser());
 app.use(limiter);
 app.use(logger('dev'));
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGIN || '',
+  origin: ALLOWED_ORIGIN || '',
   methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['X-Requested-With', 'Authorization', 'Content-Type', 'Accept', 'Origin'],
-  // credentials: true,
+  credentials: true,
 }));
 app.use(
   helmet(

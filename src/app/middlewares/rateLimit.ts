@@ -11,8 +11,8 @@ const rateLimitHandler = (req: Request, res: Response) => {
 };
 
 const limiter = rateLimit({
-  windowMs: 20 * 60 * 1000, // 20 minutos
-  max: 80, // límite de 80 peticiones por IP
+  windowMs: 30 * 60 * 1000, // 30 minutos
+  max: 200, // límite de 200 peticiones por IP
   standardHeaders: 'draft-7',
   legacyHeaders: false,
   handler: rateLimitHandler

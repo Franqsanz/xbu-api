@@ -28,10 +28,10 @@ router.get('/books/more-books', getBooksRandom);
 router.get('/books/related-books/:id', getRelatedBooks);
 router.get('/books/more-books-authors/:id', getMoreBooksAuthors);
 router.get('/books/most-viewed-books', getMostViewedBooks);
-router.get('/book/path/:pathUrl', getPathUrlBooks);
-router.get('/book/:id', getOneBooks);
-router.post('/book/post', postBooks);
-router.patch('/book/update/:id', putBooks);
-router.delete('/book/delete/:id', deleteBook);
+router.get('/books/path/:pathUrl', getPathUrlBooks);
+router.get('/books/:id', getOneBooks);
+router.post('/books', postBooks);
+router.patch('/books/:id', putBooks);
+router.delete('/books/:id', deleteBook);
 
 export default router;

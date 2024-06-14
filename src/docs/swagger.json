@@ -147,99 +147,6 @@
         "tags": ["Books"]
       }
     },
-    "/api/books": {
-      "get": {
-        "summary": "Obtiene todos los libros.",
-        "description": "Esta consulta devuelve una lista completa de todos los libros disponibles, incluyendo información sobre el número total de libros y detalles adicionales.",
-        "tags": ["Books"],
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "info": {
-                      "type": "object",
-                      "properties": {
-                        "totalBooks": {
-                          "type": "number"
-                        },
-                        "totalPages": {
-                          "type": "number"
-                        },
-                        "currentPage": {
-                          "type": "number"
-                        },
-                        "nextPage": {
-                          "type": "number"
-                        },
-                        "prevPage": {
-                          "type": "number"
-                        },
-                        "nextPageLink": {
-                          "type": "string"
-                        },
-                        "prevPageLink": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "results": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties":{
-                          "image": {
-                            "type": "object",
-                            "properties": {
-                              "url": {
-                                "type": "string"
-                              },
-                              "public_id": {
-                                "type":"string"
-                              }
-                            }
-                          },
-                          "title": {
-                            "type": "string"
-                          },
-                          "category": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "language": {
-                            "type": "string"
-                          },
-                          "pathUrl": {
-                            "type": "string"
-                          },
-                          "authors": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "id": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "items": {
-                    "$ref": "#/components/schemas/Book"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/books?page={page}&limit={limit}":{
       "get": {
         "summary": "Paginación y limite.",
@@ -349,88 +256,7 @@
         }
       }
     },
-    "/api/book/{id}":{
-      "get": {
-        "summary": "Ver un libro con todos los detalles.",
-        "tags": ["Books"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "description": "ID del libro",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Ok",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "image": {
-                      "type": "object",
-                      "properties": {
-                        "url": {
-                          "type": "string"
-                        },
-                        "public_id": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "title": {
-                      "type": "string"
-                    },
-                    "synopsis": {
-                      "type": "string"
-                    },
-                    "category": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "sourceLink": {
-                      "type": "string"
-                    },
-                    "language": {
-                      "type": "string"
-                    },
-                    "year": {
-                      "type": "number"
-                    },
-                    "numberPages": {
-                      "type": "number"
-                    },
-                    "format": {
-                      "type": "string"
-                    },
-                    "pathUrl": {
-                      "type": "string"
-                    },
-                    "authors": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "id": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/book/path/{pathUrl}":{
+    "/api/books/path/{pathUrl}":{
       "get": {
         "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su slug.",
         "tags": ["Books"],
@@ -833,7 +659,98 @@
         }
       }
     },
-    "/api/book/post":{
+    "/api/books": {
+      "get": {
+        "summary": "Obtiene todos los libros.",
+        "description": "Esta consulta devuelve una lista completa de todos los libros disponibles, incluyendo información sobre el número total de libros y detalles adicionales.",
+        "tags": ["Books"],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "info": {
+                      "type": "object",
+                      "properties": {
+                        "totalBooks": {
+                          "type": "number"
+                        },
+                        "totalPages": {
+                          "type": "number"
+                        },
+                        "currentPage": {
+                          "type": "number"
+                        },
+                        "nextPage": {
+                          "type": "number"
+                        },
+                        "prevPage": {
+                          "type": "number"
+                        },
+                        "nextPageLink": {
+                          "type": "string"
+                        },
+                        "prevPageLink": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties":{
+                          "image": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string"
+                              },
+                              "public_id": {
+                                "type":"string"
+                              }
+                            }
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "language": {
+                            "type": "string"
+                          },
+                          "pathUrl": {
+                            "type": "string"
+                          },
+                          "authors": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "id": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "items": {
+                    "$ref": "#/components/schemas/Book"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "summary": "Guardar un nuevo libro.",
         "tags": ["Books"],
@@ -903,7 +820,86 @@
         }
       }
     },
-    "/api/book/update/{id}":{
+    "/api/books/{id}":{
+      "get": {
+        "summary": "Ver un libro con todos los detalles.",
+        "tags": ["Books"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "ID del libro",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ok",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "image": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string"
+                        },
+                        "public_id": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "synopsis": {
+                      "type": "string"
+                    },
+                    "category": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "sourceLink": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    },
+                    "year": {
+                      "type": "number"
+                    },
+                    "numberPages": {
+                      "type": "number"
+                    },
+                    "format": {
+                      "type": "string"
+                    },
+                    "pathUrl": {
+                      "type": "string"
+                    },
+                    "authors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "patch": {
         "summary": "Actualizar un libro.",
         "tags": ["Books"],
@@ -1040,9 +1036,7 @@
             }
           }
         }
-      }
-    },
-    "/api/book/delete/{id}":{
+      },
       "delete": {
         "summary": "Borrar un libro.",
         "tags": ["Books"],
@@ -1182,25 +1176,25 @@
         }
       }
     },
-    "/api/users/{username}/my-books/{uid}": {
+    "/api/users/{uid}/{username}/my-books": {
       "get": {
         "summary": "Obtiene todos los libros de un usuario especifico.",
         "description": "Esta consulta devuelve una lista completa de todos los libros de un usuario.",
         "tags": ["Users"],
         "parameters": [
           {
-            "name": "username",
+            "name": "uid",
             "in": "path",
-            "description": "Nombre de usuario",
+            "description": "Id de usuario",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "uid",
+            "name": "username",
             "in": "path",
-            "description": "Id de usuario",
+            "description": "Nombre de usuario",
             "required": true,
             "schema": {
               "type": "string"
@@ -1351,7 +1345,7 @@
         }
       }
     },
-    "/api/users/delete-account/{uid}":{
+    "/api/users/{uid}":{
       "delete": {
         "summary": "Borrar la cuenta.",
         "description": "Se eliminan, el usuario de Firebase, el perfil del usuario en la base de datos y todos los libros publicados por ese usuario.",

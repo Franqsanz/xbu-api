@@ -77,7 +77,6 @@ async function getBooks(req: Request, res: Response) {
 
     return res.status(200).json(response);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -94,7 +93,6 @@ async function getSearchBooks(req: Request, res: Response) {
 
     return res.status(200).json(results);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -105,7 +103,6 @@ async function getAllOptions(req: Request, res: Response) {
 
     return res.status(200).json(result);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -116,7 +113,6 @@ async function getBooksRandom(req: Request, res: Response) {
 
     return res.status(200).json(result);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -129,7 +125,6 @@ async function getRelatedBooks(req: Request, res: Response) {
 
     return res.status(200).json(relatedBooks);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -142,7 +137,6 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
 
     return res.status(200).json(moreBooksAuthors);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -159,7 +153,6 @@ async function getOneBooks(req: Request, res: Response) {
 
     return res.status(200).json(result);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -176,7 +169,6 @@ async function getPathUrlBooks(req: Request, res: Response) {
 
     return res.status(200).json(result);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -193,7 +185,6 @@ async function getMostViewedBooks(req: Request, res: Response) {
 
     return res.status(200).json(result);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -205,13 +196,12 @@ async function postBooks(req: Request, res: Response) {
     const resultBook = await createBook(body);
 
     if (!resultBook) {
-      return res.status(500).json({ error: { message: 'Error al Publicar' } });
+      return res.status(400).json({ error: { message: 'Error al publicar, la solicitud está vacia' } });
     }
 
     redis.expire(`books_${req.body}`, 0);
-    return res.status(200).json(resultBook);
+    return res.status(201).json(resultBook);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -224,12 +214,11 @@ async function putBooks(req: Request, res: Response) {
     const result = await updateBook(id, body);
 
     if (!result) {
-      return res.status(500).json({ error: { message: 'No se pudo actualizar' } });
+      return res.status(400).json({ error: { message: 'No se pudo actualizar' } });
     }
 
-    return res.status(200).json(result);
+    return res.status(201).json(result);
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
@@ -246,7 +235,6 @@ async function deleteBook(req: Request, res: Response) {
 
     return res.status(200).json({ success: { message: 'Libro eliminado' } });
   } catch (err) {
-    console.log(err);
     res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }

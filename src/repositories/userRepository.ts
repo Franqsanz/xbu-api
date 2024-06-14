@@ -1,6 +1,7 @@
 import booksModel from "../models/books";
 import usersModel from "../models/users";
 import { qyCheckUser } from "../db/userQueries";
+import { BookRepository } from './bookRepository';
 
 export const UserRepository = {
   async findUsers() {
@@ -11,6 +12,13 @@ export const UserRepository = {
     const { query, projection } = qyCheckUser(userId);
 
     return await usersModel.findOne(query, projection);
+  },
+
+  async createUser(decodedToken: any, userToSave: any) {
+    const existingUser = await usersModel.findOne({ uid: decodedToken.uid });
+
+    const newUser = new usersModel(userToSave);
+    return await newUser.save();
   },
 
   async findUserAndBooks(username: string, limit: number, offset: number) {

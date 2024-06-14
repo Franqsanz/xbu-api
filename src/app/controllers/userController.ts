@@ -1,27 +1,22 @@
 import { Request, Response } from 'express';
-import { v2 as cloudinary } from 'cloudinary';
 
-import booksModel from "../../models/books";
-import usersModel from "../../models/users";
-import { qyCheckUser } from "../../db/userQueries";
-
+import { UserService } from "../services/userService";
 
 async function getUsers(req: Request, res: Response) {
   try {
-    const users = await usersModel.find();
+    const users = await UserService.findAllUsers();
 
     return res.status(200).json(users);
   } catch (error) {
-    console.error('Error al obtener los usuario', error);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
 async function getCheckUser(req: Request, res: Response) {
   const { userId } = req.params;
-  const { query, projection } = qyCheckUser(userId);
 
   try {
-    const user = await usersModel.findOne(query, projection);
+    const user = await UserService.findCheckUser(userId);
 
     if (!user) {
       return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
@@ -29,25 +24,23 @@ async function getCheckUser(req: Request, res: Response) {
 
     return res.status(200).json(user);
   } catch (error) {
-    console.error('Error al buscar el usuario', error);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
 async function getUserAndBooks(req: Request, res: Response) {
+  // const token = (req.headers['authorization'] || '').split(' ')[1];
   const { username } = req.params;
   const limit = parseInt(req.query.limit as string);
   const page = parseInt(req.query.page as string) || 1;
   const offset = (page - 1) * limit;
 
   try {
-    const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
+    const { user, results, totalBooks } = await UserService.findUserAndBooks(username, limit, offset);
 
     if (!user) {
       return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
     }
-
-    const results = await booksModel.find({ userId: user.uid }, 'title category language authors pathUrl image').skip(offset).limit(limit).sort({ _id: -1 }).exec();
-    const totalBooks = await booksModel.countDocuments({ userId: user.uid });
 
     const totalPages = Math.ceil(totalBooks / limit);
     const nextPage = page < totalPages ? page + 1 : null;
@@ -69,38 +62,43 @@ async function getUserAndBooks(req: Request, res: Response) {
       results,
     };
 
-    // if (results.length < 1) {
-    //   return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
-    // }
-
-    return res.status(200).json(response);
+    return res.status(200)
+      // .cookie('acc_tk', token, {
+      //   httpOnly: true,
+      //   secure: process.env.NODE_ENV === 'production',
+      //   sameSite: 'lax',
+      // })
+      .json(response);
   } catch (error) {
-    console.error('Error al obtener el usuario y los libros:', error);
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
 async function deleteAccount(req: Request, res: Response) {
+  const { userId } = req.params;
+
   try {
-    const { userId } = req.params;
 
-    const user = await usersModel.findOne({ uid: userId });
-    const books = await booksModel.find({ userId: userId });
+    // const user = await usersModel.findOne({ uid: userId });
+    // const books = await booksModel.find({ userId: userId });
 
-    if (!user) {
-      return res.status(404).json({ info: { message: 'Usuario no encontrado' } });
-    }
+    // if (!user) {
+    //   return res.status(404).json({ info: { message: 'Usuario no encontrado' } });
+    // }
 
-    for (let book of books) {
-      const public_id = book.image.public_id;
-      await cloudinary.uploader.destroy(public_id);
-      await book.deleteOne();
-    }
+    // for (let book of books) {
+    //   const public_id = book.image.public_id;
+    //   await cloudinary.uploader.destroy(public_id);
+    //   await book.deleteOne();
+    // }
 
-    await user?.deleteOne();
+    // await user?.deleteOne();
 
-    res.status(200).json({ success: { message: 'Cuenta eliminada' } });
+    await UserService.deleteAccount(userId);
+
+    return res.status(200).json({ success: { message: 'Cuenta eliminada' } });
   } catch (error) {
-    res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 

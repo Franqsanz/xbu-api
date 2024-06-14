@@ -1,7 +1,9 @@
 import mongoose from "mongoose";
 
+import { MONGODB_URI } from "../config/env";
+
 export default function connect() {
-  const uri = process.env.MONGODB_URI || '';
+  const uri = MONGODB_URI || '';
   const options = { autoIndex: true };
 
   mongoose.set("strictQuery", false);
