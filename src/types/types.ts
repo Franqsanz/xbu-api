@@ -1,3 +1,4 @@
+import { DecodedIdToken } from 'firebase-admin/auth';
 import pkg from 'mongoose';
 
 interface IBook extends pkg.Document {
@@ -28,4 +29,15 @@ interface IUser extends pkg.Document {
   createdAt: Date;
 }
 
-export { IBook, IUser };
+interface UserAndBooks {
+  user: IUser | null;
+  results: IBook[];
+  totalBooks: number;
+}
+
+interface IUserToSave extends DecodedIdToken {
+  username: string;
+  createdAt: Date;
+}
+
+export { IBook, IUser, UserAndBooks, IUserToSave };

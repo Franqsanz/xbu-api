@@ -1,10 +1,10 @@
 import express from 'express';
 
-import { postRegister } from '../controllers/auth/userAuth';
+import { createUser } from '../controllers/auth/userAuth';
 
 const router = express.Router();
 
-router.post('/register', postRegister);
+router.post('/register', createUser);
 
 // router.post('/logout', (req, res, next) => {
 //   req.logout(function (err) {
