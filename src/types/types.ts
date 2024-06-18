@@ -20,6 +20,15 @@ interface IBook extends pkg.Document {
   views: number;
 }
 
+interface IFindBooks {
+  results: IBook[];
+  totalBooks: number;
+}
+interface IDeleteBook {
+  book: IBook | null;
+  deleteOne: any;
+}
+
 interface IUser extends pkg.Document {
   uid: string;
   username: string;
@@ -29,7 +38,7 @@ interface IUser extends pkg.Document {
   createdAt: Date;
 }
 
-interface UserAndBooks {
+interface IUserAndBooks {
   user: IUser | null;
   results: IBook[];
   totalBooks: number;
@@ -40,4 +49,11 @@ interface IUserToSave extends DecodedIdToken {
   createdAt: Date;
 }
 
-export { IBook, IUser, UserAndBooks, IUserToSave };
+export {
+  IBook,
+  IFindBooks,
+  IDeleteBook,
+  IUser,
+  IUserAndBooks,
+  IUserToSave
+};

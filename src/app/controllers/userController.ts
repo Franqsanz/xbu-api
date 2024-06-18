@@ -1,8 +1,9 @@
 import { Request, Response } from 'express';
 
 import { UserService } from "../services/userService";
+import { IUser, IUserAndBooks } from '../../types/types';
 
-async function getUsers(req: Request, res: Response) {
+async function getUsers(req: Request, res: Response): Promise<Response<IUser[]>> {
   try {
     const users = await UserService.findAllUsers();
 
@@ -12,7 +13,7 @@ async function getUsers(req: Request, res: Response) {
   }
 }
 
-async function getCheckUser(req: Request, res: Response) {
+async function getCheckUser(req: Request, res: Response): Promise<Response<IUser | null>> {
   const { userId } = req.params;
 
   try {
@@ -28,7 +29,7 @@ async function getCheckUser(req: Request, res: Response) {
   }
 }
 
-async function getUserAndBooks(req: Request, res: Response) {
+async function getUserAndBooks(req: Request, res: Response): Promise<Response<IUserAndBooks>> {
   // const token = (req.headers['authorization'] || '').split(' ')[1];
   const { username } = req.params;
   const limit = parseInt(req.query.limit as string);
@@ -74,7 +75,7 @@ async function getUserAndBooks(req: Request, res: Response) {
   }
 }
 
-async function deleteAccount(req: Request, res: Response) {
+async function deleteAccount(req: Request, res: Response): Promise<Response<void>> {
   const { userId } = req.params;
 
   try {

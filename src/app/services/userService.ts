@@ -2,9 +2,15 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 
 import { cloudinary } from "../../config/cloudinary";
 import { UserRepository } from "../../repositories/userRepository";
+import { IBook, IUser, IUserAndBooks } from '../../types/types';
+
+interface IDeleteAccount {
+  user: IUser | null;
+  books: IBook[];
+}
 
 export const UserService = {
-  async findAllUsers() {
+  async findAllUsers(): Promise<IUser[]> {
     try {
       return await UserRepository.findUsers();
     } catch (error) {
@@ -12,7 +18,7 @@ export const UserService = {
     }
   },
 
-  async findCheckUser(userId: string) {
+  async findCheckUser(userId: string): Promise<IUser | null> {
     try {
       return await UserRepository.findOne(userId);
     } catch (error) {
@@ -20,7 +26,7 @@ export const UserService = {
     }
   },
 
-  async findUserAndBooks(username: string, limit: number, offset: number) {
+  async findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks> {
     try {
       return await UserRepository.findUserAndBooks(username, limit, offset);
     } catch (error) {
@@ -45,7 +51,7 @@ export const UserService = {
     }
   },
 
-  async deleteAccount(userId: string) {
+  async deleteAccount(userId: string): Promise<void> {
     try {
       const user = await UserRepository.findOne(userId);
       const books = await UserRepository.findBooksByUserId(userId);

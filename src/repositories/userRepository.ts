@@ -1,7 +1,7 @@
 import booksModel from "../models/books";
 import usersModel from "../models/users";
 import { qyCheckUser } from "../db/userQueries";
-import { IBook, IUser, IUserToSave, UserAndBooks } from '../types/types';
+import { IBook, IUser, IUserToSave, IUserAndBooks } from '../types/types';
 
 export const UserRepository = {
   async findUsers(): Promise<IUser[]> {
@@ -24,7 +24,7 @@ export const UserRepository = {
     return await newUser.save();
   },
 
-  async findUserAndBooks(username: string, limit: number, offset: number): Promise<UserAndBooks> {
+  async findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks> {
     const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
     const totalBooks = await booksModel.countDocuments({ userId: user?.uid });
     const results = await booksModel.find({ userId: user?.uid }, 'title category language authors pathUrl image')
@@ -41,11 +41,11 @@ export const UserRepository = {
     return await booksModel.find({ userId });
   },
 
-  async deleteUserBooks(id: any) {
+  async deleteUserBooks(id: any): Promise<any> {
     return await booksModel.deleteOne(id);
   },
 
-  async deleteUser(userId: any) {
+  async deleteUser(userId: any): Promise<any> {
     return await usersModel.deleteOne(userId);
   },
 };
