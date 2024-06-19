@@ -4,11 +4,6 @@ import { cloudinary } from "../../config/cloudinary";
 import { UserRepository } from "../../repositories/userRepository";
 import { IBook, IUser, IUserAndBooks } from '../../types/types';
 
-interface IDeleteAccount {
-  user: IUser | null;
-  books: IBook[];
-}
-
 export const UserService = {
   async findAllUsers(): Promise<IUser[]> {
     try {

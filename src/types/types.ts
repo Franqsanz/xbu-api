@@ -24,6 +24,7 @@ interface IFindBooks {
   results: IBook[];
   totalBooks: number;
 }
+
 interface IDeleteBook {
   book: IBook | null;
   deleteOne: any;

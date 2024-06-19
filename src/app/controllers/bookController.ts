@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 
 import { BookService } from '../services/bookService';
 import { redis } from '../../config/redis';
+import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
 const {
   findAllBooks,
@@ -18,7 +19,7 @@ const {
   removeBook,
 } = BookService;
 
-async function getBooks(req: Request, res: Response) {
+async function getBooks(req: Request, res: Response): Promise<Response<IFindBooks>> {
   const { body } = req;
   const key = `books_${body}`;
   const limit = parseInt(req.query.limit as string);
@@ -81,7 +82,7 @@ async function getBooks(req: Request, res: Response) {
   }
 }
 
-async function getSearchBooks(req: Request, res: Response) {
+async function getSearchBooks(req: Request, res: Response): Promise<Response<IBook[]>> {
   const { q } = req.query;
 
   try {
@@ -97,7 +98,7 @@ async function getSearchBooks(req: Request, res: Response) {
   }
 }
 
-async function getAllOptions(req: Request, res: Response) {
+async function getAllOptions(req: Request, res: Response): Promise<Response<IBook[]>> {
   try {
     const result = await findByGroupFields();
 
@@ -107,7 +108,7 @@ async function getAllOptions(req: Request, res: Response) {
   }
 }
 
-async function getBooksRandom(req: Request, res: Response) {
+async function getBooksRandom(req: Request, res: Response): Promise<Response<IBook[]>> {
   try {
     const result = await findBooksRandom();
 
@@ -117,7 +118,7 @@ async function getBooksRandom(req: Request, res: Response) {
   }
 }
 
-async function getRelatedBooks(req: Request, res: Response) {
+async function getRelatedBooks(req: Request, res: Response): Promise<Response<IBook[]>> {
   const { id } = req.params;
 
   try {
@@ -129,7 +130,7 @@ async function getRelatedBooks(req: Request, res: Response) {
   }
 }
 
-async function getMoreBooksAuthors(req: Request, res: Response) {
+async function getMoreBooksAuthors(req: Request, res: Response): Promise<Response<IBook[]>> {
   const { id } = req.params;
 
   try {
@@ -141,7 +142,7 @@ async function getMoreBooksAuthors(req: Request, res: Response) {
   }
 }
 
-async function getOneBooks(req: Request, res: Response) {
+async function getOneBooks(req: Request, res: Response): Promise<Response<IBook[] | null>> {
   const { id } = req.params;
 
   try {
@@ -157,7 +158,7 @@ async function getOneBooks(req: Request, res: Response) {
   }
 }
 
-async function getPathUrlBooks(req: Request, res: Response) {
+async function getPathUrlBooks(req: Request, res: Response): Promise<Response<IBook[] | null>> {
   const { pathUrl } = req.params;
 
   try {
@@ -173,7 +174,7 @@ async function getPathUrlBooks(req: Request, res: Response) {
   }
 }
 
-async function getMostViewedBooks(req: Request, res: Response) {
+async function getMostViewedBooks(req: Request, res: Response): Promise<Response<IBook[]>> {
   const { detail } = req.query;
 
   try {
@@ -189,7 +190,7 @@ async function getMostViewedBooks(req: Request, res: Response) {
   }
 }
 
-async function postBooks(req: Request, res: Response) {
+async function postBooks(req: Request, res: Response): Promise<Response<IBook>> {
   const { body } = req;
 
   try {
@@ -206,7 +207,7 @@ async function postBooks(req: Request, res: Response) {
   }
 }
 
-async function putBooks(req: Request, res: Response) {
+async function putBooks(req: Request, res: Response): Promise<Response<IBook | null>> {
   const { id } = req.params;
   const { body } = req;
 
@@ -223,7 +224,7 @@ async function putBooks(req: Request, res: Response) {
   }
 }
 
-async function deleteBook(req: Request, res: Response) {
+async function deleteBook(req: Request, res: Response): Promise<Response<IDeleteBook>> {
   const { id } = req.params;
 
   try {
@@ -235,7 +236,7 @@ async function deleteBook(req: Request, res: Response) {
 
     return res.status(200).json({ success: { message: 'Libro eliminado' } });
   } catch (err) {
-    res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return res.status(500).json({ error: { message: 'Error en el servidor' } });
   }
 }
 
