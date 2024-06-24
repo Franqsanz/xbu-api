@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-import { UserService } from "../services/userService";
+import { UserService } from '../services/userService';
 import { IUser, IUserAndBooks } from '../../types/types';
 
 async function getUsers(req: Request, res: Response): Promise<Response<IUser[]>> {
@@ -9,7 +9,11 @@ async function getUsers(req: Request, res: Response): Promise<Response<IUser[]>>
 
     return res.status(200).json(users);
   } catch (error) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return res.status(500).json({
+      error: {
+        message: 'Error en el servidor',
+      },
+    });
   }
 }
 
@@ -20,12 +24,20 @@ async function getCheckUser(req: Request, res: Response): Promise<Response<IUser
     const user = await UserService.findCheckUser(userId);
 
     if (!user) {
-      return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
+      return res.status(404).json({
+        error: {
+          message: 'Usuario no encontrado',
+        },
+      });
     }
 
     return res.status(200).json(user);
   } catch (error) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return res.status(500).json({
+      error: {
+        message: 'Error en el servidor',
+      },
+    });
   }
 }
 
@@ -37,15 +49,25 @@ async function getUserAndBooks(req: Request, res: Response): Promise<Response<IU
   const offset = (page - 1) * limit;
 
   try {
-    const { user, results, totalBooks } = await UserService.findUserAndBooks(username, limit, offset);
+    const { user, results, totalBooks } = await UserService.findUserAndBooks(
+      username,
+      limit,
+      offset
+    );
 
     if (!user) {
-      return res.status(404).json({ error: { message: 'Usuario no encontrado' } });
+      return res.status(404).json({
+        error: {
+          message: 'Usuario no encontrado',
+        },
+      });
     }
 
     const totalPages = Math.ceil(totalBooks / limit);
     const nextPage = page < totalPages ? page + 1 : null;
-    const nextPageLink = nextPage ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}` : null;
+    const nextPageLink = nextPage
+      ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}`
+      : null;
 
     const info = {
       totalBooks,
@@ -54,7 +76,10 @@ async function getUserAndBooks(req: Request, res: Response): Promise<Response<IU
       nextPage: nextPage,
       prevPage: page > 1 ? page - 1 : null,
       nextPageLink: nextPageLink,
-      prevPageLink: page > 1 ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}` : null,
+      prevPageLink:
+        page > 1
+          ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}`
+          : null,
     };
 
     const response = {
@@ -63,15 +88,22 @@ async function getUserAndBooks(req: Request, res: Response): Promise<Response<IU
       results,
     };
 
-    return res.status(200)
-      // .cookie('acc_tk', token, {
-      //   httpOnly: true,
-      //   secure: process.env.NODE_ENV === 'production',
-      //   sameSite: 'lax',
-      // })
-      .json(response);
+    return (
+      res
+        .status(200)
+        // .cookie('acc_tk', token, {
+        //   httpOnly: true,
+        //   secure: process.env.NODE_ENV === 'production',
+        //   sameSite: 'lax',
+        // })
+        .json(response)
+    );
   } catch (error) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return res.status(500).json({
+      error: {
+        message: 'Error en el servidor',
+      },
+    });
   }
 }
 
@@ -79,7 +111,6 @@ async function deleteAccount(req: Request, res: Response): Promise<Response<void
   const { userId } = req.params;
 
   try {
-
     // const user = await usersModel.findOne({ uid: userId });
     // const books = await booksModel.find({ userId: userId });
 
@@ -97,15 +128,18 @@ async function deleteAccount(req: Request, res: Response): Promise<Response<void
 
     await UserService.deleteAccount(userId);
 
-    return res.status(200).json({ success: { message: 'Cuenta eliminada' } });
+    return res.status(200).json({
+      success: {
+        message: 'Cuenta eliminada',
+      },
+    });
   } catch (error) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return res.status(500).json({
+      error: {
+        message: 'Error en el servidor',
+      },
+    });
   }
 }
 
-export {
-  getUsers,
-  getCheckUser,
-  getUserAndBooks,
-  deleteAccount,
-};
+export { getUsers, getCheckUser, getUserAndBooks, deleteAccount };

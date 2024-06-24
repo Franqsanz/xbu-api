@@ -1,4 +1,4 @@
-import booksModel from "../models/books";
+import booksModel from '../models/books';
 import { IBook, IFindBooks, IDeleteBook } from '../types/types';
 import {
   qyGroupOptions,
@@ -8,22 +8,28 @@ import {
   qyBooksRandom,
   qyRelatedBooks,
   qyMoreBooksAuthors,
-  qyPutBook
+  qyPutBook,
 } from '../db/bookQueries';
 
 export const BookRepository = {
   async findBooks(limit: number, offset: number): Promise<IFindBooks> {
     // Aquí obtenemos los libros de la base de datos usando el método skip y limit
-    const results = await booksModel.find({}, 'title category language authors pathUrl image')
+    const results = await booksModel
+      .find({}, 'title category language authors pathUrl image')
       .skip(offset)
       .limit(limit)
-      .sort({ _id: -1 })
+      .sort({
+        _id: -1,
+      })
       .exec();
 
     // Aquí obtenemos el número total de libros en la base de datos
     const totalBooks = await booksModel.countDocuments();
 
-    return { results, totalBooks };
+    return {
+      results,
+      totalBooks,
+    };
   },
 
   async findOne(id: string): Promise<IBook | null> {
@@ -41,7 +47,13 @@ export const BookRepository = {
   async findSearch(q: object | string | undefined): Promise<IBook[]> {
     const { query, projection } = qySearch(q);
 
-    return await booksModel.find(query, projection).hint('_id_').sort({ _id: -1 }).exec();
+    return await booksModel
+      .find(query, projection)
+      .hint('_id_')
+      .sort({
+        _id: -1,
+      })
+      .exec();
   },
 
   async findByGroupFields(): Promise<IBook[]> {
@@ -86,9 +98,19 @@ export const BookRepository = {
 
   async findMostViewedBooks(detail: string | undefined): Promise<IBook[]> {
     if (detail === 'summary') {
-      return await booksModel.find({}, ' title pathUrl views').sort({ views: -1 }).limit(10);
+      return await booksModel
+        .find({}, ' title pathUrl views')
+        .sort({
+          views: -1,
+        })
+        .limit(10);
     } else if (detail === 'full') {
-      return await booksModel.find({}, 'title category language authors pathUrl image').sort({ views: -1 }).limit(10);
+      return await booksModel
+        .find({}, 'title category language authors pathUrl image')
+        .sort({
+          views: -1,
+        })
+        .limit(10);
     } else {
       throw new Error('Parámetro detail inválido');
     }
@@ -107,11 +129,16 @@ export const BookRepository = {
     }
 
     if (language) {
-      query.language = { $regex: language, $options: 'i' };
+      query.language = {
+        $regex: language,
+        $options: 'i',
+      };
     }
 
     if (Object.keys(query).length > 0) {
-      return await booksModel.find(query, projection).sort({ _id: -1 });
+      return await booksModel.find(query, projection).sort({
+        _id: -1,
+      });
     }
 
     return [];
@@ -133,6 +160,9 @@ export const BookRepository = {
     const book = await booksModel.findById(id);
     const deleteOne = await book?.deleteOne();
 
-    return { book, deleteOne };
+    return {
+      book,
+      deleteOne,
+    };
   },
 };

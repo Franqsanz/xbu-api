@@ -15,7 +15,12 @@ async function createUser(req: Request, res: Response) {
     const { existingUser, saveUser } = await UserService.createUser(username, decodedToken.uid);
 
     if (existingUser) {
-      return res.status(200).json({ info: { message: 'Usuario ya registrado', user: existingUser } });
+      return res.status(200).json({
+        info: {
+          message: 'Usuario ya registrado',
+          user: existingUser,
+        },
+      });
     }
 
     // const userToSave = {
@@ -29,7 +34,11 @@ async function createUser(req: Request, res: Response) {
 
     return res.status(200).json(saveUser);
   } catch (error) {
-    res.status(401).json({ error: { message: 'Token inválido' } });
+    res.status(401).json({
+      error: {
+        message: 'Token inválido',
+      },
+    });
   }
 }
 

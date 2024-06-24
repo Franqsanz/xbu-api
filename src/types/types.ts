@@ -50,11 +50,4 @@ interface IUserToSave extends DecodedIdToken {
   createdAt: Date;
 }
 
-export {
-  IBook,
-  IFindBooks,
-  IDeleteBook,
-  IUser,
-  IUserAndBooks,
-  IUserToSave
-};
+export { IBook, IFindBooks, IDeleteBook, IUser, IUserAndBooks, IUserToSave };

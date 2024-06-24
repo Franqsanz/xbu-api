@@ -4,14 +4,27 @@ import { PipelineStage } from 'mongoose';
 function qySearch(q: object | string | undefined) {
   const query = {
     $or: [
-      { title: { $regex: q, $options: 'i' } },
-      { authors: { $regex: q, $options: 'i' } }
-    ]
+      {
+        title: {
+          $regex: q,
+          $options: 'i',
+        },
+      },
+      {
+        authors: {
+          $regex: q,
+          $options: 'i',
+        },
+      },
+    ],
   };
 
   const projection = 'title authors pathUrl';
 
-  return { query, projection };
+  return {
+    query,
+    projection,
+  };
 }
 
 // GET Options
@@ -20,65 +33,100 @@ function qyGroupOptions(): PipelineStage[] {
     {
       $facet: {
         byCategory: [
-          { $unwind: "$category" },
+          {
+            $unwind: '$category',
+          },
           {
             $group: {
-              _id: "$category",
-              count: { $sum: 1 }
-            }
-          }, { $sort: { _id: 1 } }
+              _id: '$category',
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $sort: {
+              _id: 1,
+            },
+          },
         ],
         byLanguage: [
           {
             $group: {
-              _id: "$language",
-              count: { $sum: 1 }
-            }
-          }, { $sort: { _id: 1 } }
+              _id: '$language',
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $sort: {
+              _id: 1,
+            },
+          },
         ],
         byYear: [
           {
             $group: {
-              _id: "$year",
-              count: { $sum: 1 }
-            }
-          }, { $sort: { _id: 1 } }
-        ]
-      }
+              _id: '$year',
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+          {
+            $sort: {
+              _id: 1,
+            },
+          },
+        ],
+      },
     },
     {
       $group: {
         _id: null,
-        categories: { $push: "$byCategory" },
-        languages: { $push: "$byLanguage" },
-        years: { $push: "$byYear" }
-      }
+        categories: {
+          $push: '$byCategory',
+        },
+        languages: {
+          $push: '$byLanguage',
+        },
+        years: {
+          $push: '$byYear',
+        },
+      },
     },
     {
       $project: {
         _id: 0,
-      }
-    }
+      },
+    },
   ];
 }
 
 // GET BooksRandom
 function qyBooksRandom(): PipelineStage[] {
   return [
-    { $sample: { size: 3 } },
+    {
+      $sample: {
+        size: 3,
+      },
+    },
     {
       $project: {
         title: 1,
         pathUrl: 1,
         authors: {
           $cond: {
-            if: { $isArray: "$authors" },
-            then: "$authors",
-            else: ["$authors"]
-          }
-        }
-      }
-    }
+            if: {
+              $isArray: '$authors',
+            },
+            then: '$authors',
+            else: ['$authors'],
+          },
+        },
+      },
+    },
   ];
 }
 
@@ -87,12 +135,16 @@ function qyRelatedBooks(id: string, selectedCategory: string): PipelineStage[] {
   return [
     {
       $match: {
-        _id: { $ne: id },
+        _id: {
+          $ne: id,
+        },
         category: selectedCategory,
       },
     },
     {
-      $sample: { size: 3 }
+      $sample: {
+        size: 3,
+      },
     },
     {
       $project: {
@@ -100,13 +152,15 @@ function qyRelatedBooks(id: string, selectedCategory: string): PipelineStage[] {
         pathUrl: 1,
         authors: {
           $cond: {
-            if: { $isArray: "$authors" },
-            then: "$authors",
-            else: ["$authors"]
-          }
-        }
-      }
-    }
+            if: {
+              $isArray: '$authors',
+            },
+            then: '$authors',
+            else: ['$authors'],
+          },
+        },
+      },
+    },
   ];
 }
 
@@ -115,12 +169,19 @@ function qyMoreBooksAuthors(id: string, selectedAuthors: string): PipelineStage[
   return [
     {
       $match: {
-        _id: { $ne: id },
-        authors: { $regex: selectedAuthors, $options: 'i' },
+        _id: {
+          $ne: id,
+        },
+        authors: {
+          $regex: selectedAuthors,
+          $options: 'i',
+        },
       },
     },
     {
-      $sample: { size: 3 }
+      $sample: {
+        size: 3,
+      },
     },
     {
       $project: {
@@ -128,31 +189,49 @@ function qyMoreBooksAuthors(id: string, selectedAuthors: string): PipelineStage[
         pathUrl: 1,
         authors: {
           $cond: {
-            if: { $isArray: "$authors" },
-            then: "$authors",
-            else: ["$authors"]
-          }
-        }
-      }
-    }
+            if: {
+              $isArray: '$authors',
+            },
+            then: '$authors',
+            else: ['$authors'],
+          },
+        },
+      },
+    },
   ];
 }
 
 // GET OneBooks
 function qyOneBooks(id: string) {
   return [
-    { _id: id },
-    { $inc: { views: 1 } }, // Incrementa el contador de vistas en 1
-    { new: true } // Devuelve el documento actualizado
+    {
+      _id: id,
+    },
+    {
+      $inc: {
+        views: 1,
+      },
+    }, // Incrementa el contador de vistas en 1
+    {
+      new: true,
+    }, // Devuelve el documento actualizado
   ];
 }
 
 // GET PathUrlBooks
 function qyPathUrlBooks(pathUrl: string) {
   return [
-    { pathUrl: pathUrl },
-    { $inc: { views: 1 } },
-    { new: true }
+    {
+      pathUrl: pathUrl,
+    },
+    {
+      $inc: {
+        views: 1,
+      },
+    },
+    {
+      new: true,
+    },
   ];
 }
 
@@ -162,9 +241,11 @@ function qyPutBook(id: string, body: any, image: object) {
     id,
     {
       ...body,
-      image: image
+      image: image,
     },
-    { new: true }
+    {
+      new: true,
+    },
   ];
 }
 
@@ -176,5 +257,5 @@ export {
   qyMoreBooksAuthors,
   qyOneBooks,
   qyPathUrlBooks,
-  qyPutBook
+  qyPutBook,
 };

@@ -13,8 +13,8 @@ import {
   postBooks,
   putBooks,
   deleteBook,
-} from "../controllers/bookController";
-import { query } from "../middlewares/query";
+} from '../controllers/bookController';
+import { query } from '../middlewares/query';
 
 const router = express.Router();
 

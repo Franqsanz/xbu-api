@@ -2,7 +2,7 @@
 import pako from 'pako';
 
 import { cloudinary } from '../../config/cloudinary';
-import { BookRepository } from "../../repositories/bookRepository";
+import { BookRepository } from '../../repositories/bookRepository';
 import { bookSchema } from '../../utils/validation';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
@@ -97,21 +97,28 @@ export const BookService = {
 
     try {
       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader.upload_stream({
-          upload_preset: 'xbu-uploads',
-          format: 'webp',
-          transformation: { quality: 60 }
-        }, (error, result) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve(result);
-          }
-        }).end(buffer);
+        cloudinary.uploader
+          .upload_stream(
+            {
+              upload_preset: 'xbu-uploads',
+              format: 'webp',
+              transformation: {
+                quality: 60,
+              },
+            },
+            (error, result) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(result);
+              }
+            }
+          )
+          .end(buffer);
       });
 
       validateBook.image.url = cloudinaryResult.secure_url;
-      validateBook.image.public_id = cloudinaryResult.public_id;;
+      validateBook.image.public_id = cloudinaryResult.public_id;
 
       return await BookRepository.createBook(validateBook);
     } catch (error) {
@@ -127,7 +134,7 @@ export const BookService = {
       if (typeof body.image.url === 'string') {
         image = {
           url: url,
-          public_id: public_id
+          public_id: public_id,
         };
       } else {
         if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
@@ -138,23 +145,30 @@ export const BookService = {
 
         // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
         const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-          cloudinary.uploader.upload_stream({
-            upload_preset: 'xbu-uploads',
-            format: 'webp',
-            transformation: { quality: 60 },
-            public_id: public_id
-          }, (error, result) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          }).end(buffer);
+          cloudinary.uploader
+            .upload_stream(
+              {
+                upload_preset: 'xbu-uploads',
+                format: 'webp',
+                transformation: {
+                  quality: 60,
+                },
+                public_id: public_id,
+              },
+              (error, result) => {
+                if (error) {
+                  reject(error);
+                } else {
+                  resolve(result);
+                }
+              }
+            )
+            .end(buffer);
         });
 
         image = {
           url: cloudinaryResult.secure_url,
-          public_id: cloudinaryResult.public_id
+          public_id: cloudinaryResult.public_id,
         };
       }
 
@@ -174,7 +188,6 @@ export const BookService = {
       }
 
       return deleteOne;
-
     } catch (error) {
       throw error;
     }

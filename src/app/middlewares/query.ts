@@ -11,19 +11,27 @@ export async function query(req: Request, res: Response, next: NextFunction) {
   }
 
   try {
-    const results = await findOptionsFiltering(category as string, year as string, language as string);
+    const results = await findOptionsFiltering(
+      category as string,
+      year as string,
+      language as string
+    );
 
     if (!results || results.length < 1) {
       return res.status(404).json({
         info: {
           status: res.statusCode,
-          message: `No se han encontrado datos para ${req.originalUrl}.`
-        }
+          message: `No se han encontrado datos para ${req.originalUrl}.`,
+        },
       });
     }
 
     return res.status(200).json(results);
   } catch (error) {
-    res.status(500).json({ error: { message: 'Error en el servidor' } });
+    res.status(500).json({
+      error: {
+        message: 'Error en el servidor',
+      },
+    });
   }
-};
+}

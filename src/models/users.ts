@@ -3,33 +3,38 @@ const { Schema, model } = pkg;
 
 import { IUser } from '../types/types';
 
-const usersSchema = new Schema({
-  uid: {
-    type: String,
+const usersSchema = new Schema(
+  {
+    uid: {
+      type: String,
+    },
+    name: {
+      type: String,
+    },
+    username: {
+      type: String,
+    },
+    picture: {
+      type: String,
+    },
+    email: {
+      type: String,
+    },
+    createdAt: {
+      type: Date,
+    },
   },
-  name: {
-    type: String,
-  },
-  username: {
-    type: String,
-  },
-  picture: {
-    type: String,
-  },
-  email: {
-    type: String,
-  },
-  createdAt: {
-    type: Date,
+  {
+    versionKey: false,
   }
-}, { versionKey: false, });
+);
 
 usersSchema.set('toJSON', {
   transform: (_, returnedObject) => {
     returnedObject.id = returnedObject._id;
     delete returnedObject._v;
     delete returnedObject._id;
-  }
+  },
 });
 
 export default model<IUser>('users', usersSchema);

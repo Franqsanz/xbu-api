@@ -10,7 +10,11 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
 
     // Verificar si el token está presente
     if (!token) {
-      return res.status(401).json({ error: { message: 'Token no proporcionado' } });
+      return res.status(401).json({
+        error: {
+          message: 'Token no proporcionado',
+        },
+      });
     }
 
     // Verificar el token utilizando la API de autenticación de Firebase
@@ -20,10 +24,18 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
     if (decodedToken && userId === decodedToken.uid) {
       next();
     } else {
-      res.status(403).json({ error: { message: 'Acceso denegado' } });
+      res.status(403).json({
+        error: {
+          message: 'Acceso denegado',
+        },
+      });
     }
   } catch (error) {
     // Si hay un error al verificar el token, responde con un código de error
-    res.status(401).json({ error: { message: 'Token inválido' } });
+    res.status(401).json({
+      error: {
+        message: 'Token inválido',
+      },
+    });
   }
 }

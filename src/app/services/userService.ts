@@ -1,7 +1,7 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
 
-import { cloudinary } from "../../config/cloudinary";
-import { UserRepository } from "../../repositories/userRepository";
+import { cloudinary } from '../../config/cloudinary';
+import { UserRepository } from '../../repositories/userRepository';
 import { IBook, IUser, IUserAndBooks } from '../../types/types';
 
 export const UserService = {
@@ -40,7 +40,10 @@ export const UserService = {
       const existingUser = await UserRepository.findByUid(decodedToken.uid);
       const saveUser = await UserRepository.saveUser(userToSave);
 
-      return { existingUser, saveUser };
+      return {
+        existingUser,
+        saveUser,
+      };
     } catch (error) {
       throw error;
     }

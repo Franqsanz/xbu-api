@@ -3,80 +3,85 @@ const { Schema, model } = pkg;
 
 import { IBook } from '../types/types';
 
-const booksSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  authors: {
-    type: [String],
-    required: true,
-    trim: true,
-    default: []
-  },
-  synopsis: {
-    type: String,
-    required: true,
-  },
-  category: {
-    type: [String],
-    required: true,
-    default: []
-  },
-  sourceLink: {
-    type: String,
-    trim: true,
-  },
-  language: {
-    type: String,
-    required: true,
-  },
-  year: {
-    type: Number,
-    required: true,
-    min: 1800,
-    max: 2050,
-  },
-  numberPages: {
-    type: Number,
-    required: true,
-    min: 49,
-  },
-  format: {
-    type: String,
-    require: true,
-  },
-  pathUrl: {
-    type: String,
-    require: true,
-    trim: true,
-  },
-  image: {
-    url: {
+const booksSchema = new Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    authors: {
+      type: [String],
+      required: true,
+      trim: true,
+      default: [],
+    },
+    synopsis: {
       type: String,
       required: true,
     },
-    public_id: {
+    category: {
+      type: [String],
+      required: true,
+      default: [],
+    },
+    sourceLink: {
       type: String,
-    }
+      trim: true,
+    },
+    language: {
+      type: String,
+      required: true,
+    },
+    year: {
+      type: Number,
+      required: true,
+      min: 1800,
+      max: 2050,
+    },
+    numberPages: {
+      type: Number,
+      required: true,
+      min: 49,
+    },
+    format: {
+      type: String,
+      require: true,
+    },
+    pathUrl: {
+      type: String,
+      require: true,
+      trim: true,
+    },
+    image: {
+      url: {
+        type: String,
+        required: true,
+      },
+      public_id: {
+        type: String,
+      },
+    },
+    userId: {
+      type: String,
+      // required: true,
+    },
+    views: {
+      type: Number,
+      default: 0,
+    },
   },
-  userId: {
-    type: String,
-    // required: true,
-  },
-  views: {
-    type: Number,
-    default: 0
+  {
+    versionKey: false,
   }
-}, { versionKey: false, });
+);
 
 booksSchema.set('toJSON', {
   transform: (_, returnedObject) => {
     returnedObject.id = returnedObject._id;
     delete returnedObject._v;
     delete returnedObject._id;
-  }
+  },
 });
 
 export default model<IBook>('books', booksSchema);

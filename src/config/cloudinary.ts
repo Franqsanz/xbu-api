@@ -1,10 +1,6 @@
 import { v2 as cloudinary } from 'cloudinary';
 
-import {
-  CLOUDINARY_NAME,
-  CLOUDINARY_API_KEY,
-  CLOUDINARY_API_SECRET
-} from './env';
+import { CLOUDINARY_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } from './env';
 
 cloudinary.config({
   cloud_name: CLOUDINARY_NAME,

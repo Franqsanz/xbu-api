@@ -15,7 +15,7 @@
       "description": "Servidor en producción"
     }
   ],
-  "components":{
+  "components": {
     "securitySchemes": {
       "bearerAuth": {
         "type": "jwt",
@@ -141,13 +141,13 @@
     "bearerAuth": []
   },
   "paths": {
-    "/api":{
+    "/api": {
       "get": {
         "summary": "redirecciona a /api/books.",
         "tags": ["Books"]
       }
     },
-    "/api/books?page={page}&limit={limit}":{
+    "/api/books?page={page}&limit={limit}": {
       "get": {
         "summary": "Paginación y limite.",
         "tags": ["Books"],
@@ -209,7 +209,7 @@
                       "type": "array",
                       "items": {
                         "type": "object",
-                        "properties":{
+                        "properties": {
                           "image": {
                             "type": "object",
                             "properties": {
@@ -217,7 +217,7 @@
                                 "type": "string"
                               },
                               "public_id": {
-                                "type":"string"
+                                "type": "string"
                               }
                             }
                           },
@@ -256,7 +256,7 @@
         }
       }
     },
-    "/api/books/path/{pathUrl}":{
+    "/api/books/path/{pathUrl}": {
       "get": {
         "summary": "Exactamente igual que buscar un libro por ID pero esta vez buscarlo por su slug.",
         "tags": ["Books"],
@@ -337,7 +337,7 @@
         }
       }
     },
-    "/api/books/search?q={title / author}":{
+    "/api/books/search?q={title / author}": {
       "get": {
         "summary": "Buscar libros por titulo o autor.",
         "tags": ["Books"],
@@ -383,7 +383,7 @@
         }
       }
     },
-    "/api/books/options":{
+    "/api/books/options": {
       "get": {
         "summary": "Esta consulta agrupa y muestra: las categorias, lenguaje y años con su respectiva cantidad de cada uno.",
         "tags": ["Books"],
@@ -402,7 +402,7 @@
                         "items": {
                           "type": "array",
                           "items": {
-                            "type":"object",
+                            "type": "object",
                             "properties": {
                               "_id": {
                                 "type": "string"
@@ -419,7 +419,7 @@
                         "items": {
                           "type": "array",
                           "items": {
-                            "type":"object",
+                            "type": "object",
                             "properties": {
                               "_id": {
                                 "type": "string"
@@ -436,7 +436,7 @@
                         "items": {
                           "type": "array",
                           "items": {
-                            "type":"object",
+                            "type": "object",
                             "properties": {
                               "_id": {
                                 "type": "number"
@@ -457,7 +457,7 @@
         }
       }
     },
-    "/api/books/more-books":{
+    "/api/books/more-books": {
       "get": {
         "summary": "Muestra 3 libros aleatorios.",
         "tags": ["Books"],
@@ -492,7 +492,7 @@
         }
       }
     },
-    "/api/books/most-viewed-books?detail={query}":{
+    "/api/books/most-viewed-books?detail={query}": {
       "get": {
         "summary": "Muestra los 10 libros más vistos.",
         "description": "Esta consulta ofrece dos opciones para visualizar los datos de los libros: una con detalles mínimos y otra con casi todos los campos disponibles.",
@@ -546,15 +546,8 @@
                         "public_id": "xbu/ldnisxkqtkjddvwscs2g"
                       },
                       "title": "Un beso en París",
-                      "authors": [
-                        "Stephanie Perkins"
-                      ],
-                      "category": [
-                        "Novela Romantica",
-                        "Romance",
-                        "Ficción",
-                        "Literatura"
-                      ],
+                      "authors": ["Stephanie Perkins"],
+                      "category": ["Novela Romantica", "Romance", "Ficción", "Literatura"],
                       "language": "Español",
                       "pathUrl": "un-beso-en-paris-mg_q",
                       "id": "6621a92224ab0d31e9481302"
@@ -567,7 +560,7 @@
         }
       }
     },
-    "/api/books/related-books/{id}":{
+    "/api/books/related-books/{id}": {
       "get": {
         "summary": "Muestra tres libros relacionados de manera aleatoria, seleccionados en función de su categoría en relación con el libro actual.",
         "tags": ["Books"],
@@ -613,7 +606,7 @@
         }
       }
     },
-    "/api/books/more-books-authors/{id}":{
+    "/api/books/more-books-authors/{id}": {
       "get": {
         "summary": "Muestra tres libros relacionados del mismo autor de manera aleatoria, en relación con el libro actual.",
         "tags": ["Books"],
@@ -702,7 +695,7 @@
                       "type": "array",
                       "items": {
                         "type": "object",
-                        "properties":{
+                        "properties": {
                           "image": {
                             "type": "object",
                             "properties": {
@@ -710,7 +703,7 @@
                                 "type": "string"
                               },
                               "public_id": {
-                                "type":"string"
+                                "type": "string"
                               }
                             }
                           },
@@ -820,7 +813,7 @@
         }
       }
     },
-    "/api/books/{id}":{
+    "/api/books/{id}": {
       "get": {
         "summary": "Ver un libro con todos los detalles.",
         "tags": ["Books"],
@@ -1239,7 +1232,7 @@
                       "type": "array",
                       "items": {
                         "type": "object",
-                        "properties":{
+                        "properties": {
                           "image": {
                             "type": "object",
                             "properties": {
@@ -1247,7 +1240,7 @@
                                 "type": "string"
                               },
                               "public_id": {
-                                "type":"string"
+                                "type": "string"
                               }
                             }
                           },
@@ -1289,7 +1282,7 @@
         }
       }
     },
-    "/api/auth/register":{
+    "/api/auth/register": {
       "post": {
         "summary": "Crear un nuevo usuario",
         "description": "Registro de un nuevo usuario en firebase y base de datos.",
@@ -1345,7 +1338,7 @@
         }
       }
     },
-    "/api/users/{uid}":{
+    "/api/users/{uid}": {
       "delete": {
         "summary": "Borrar la cuenta.",
         "description": "Se eliminan, el usuario de Firebase, el perfil del usuario en la base de datos y todos los libros publicados por ese usuario.",

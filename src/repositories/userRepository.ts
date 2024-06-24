@@ -1,6 +1,6 @@
-import booksModel from "../models/books";
-import usersModel from "../models/users";
-import { qyCheckUser } from "../db/userQueries";
+import booksModel from '../models/books';
+import usersModel from '../models/users';
+import { qyCheckUser } from '../db/userQueries';
 import { IBook, IUser, IUserToSave, IUserAndBooks } from '../types/types';
 
 export const UserRepository = {
@@ -15,7 +15,9 @@ export const UserRepository = {
   },
 
   async findByUid(uid: string): Promise<IUser | null> {
-    return await usersModel.findOne({ uid });
+    return await usersModel.findOne({
+      uid,
+    });
   },
 
   async saveUser(userToSave: IUserToSave): Promise<IUser> {
@@ -25,20 +27,41 @@ export const UserRepository = {
   },
 
   async findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks> {
-    const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
-    const totalBooks = await booksModel.countDocuments({ userId: user?.uid });
-    const results = await booksModel.find({ userId: user?.uid }, 'title category language authors pathUrl image')
+    const user = await usersModel.findOne(
+      {
+        username: username,
+      },
+      'uid name picture createdAt'
+    );
+    const totalBooks = await booksModel.countDocuments({
+      userId: user?.uid,
+    });
+    const results = await booksModel
+      .find(
+        {
+          userId: user?.uid,
+        },
+        'title category language authors pathUrl image'
+      )
       .skip(offset)
       .limit(limit)
-      .sort({ _id: -1 })
+      .sort({
+        _id: -1,
+      })
       .exec();
 
-    return { user, results, totalBooks };
+    return {
+      user,
+      results,
+      totalBooks,
+    };
   },
 
   // Busca todos los libros de un usuario
   async findBooksByUserId(userId: string): Promise<IBook[]> {
-    return await booksModel.find({ userId });
+    return await booksModel.find({
+      userId,
+    });
   },
 
   async deleteUserBooks(id: any): Promise<any> {

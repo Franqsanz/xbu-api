@@ -1,13 +1,16 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-import { MONGODB_URI } from "../config/env";
+import { MONGODB_URI } from '../config/env';
 
 export default function connect() {
   const uri = MONGODB_URI || '';
-  const options = { autoIndex: true };
+  const options = {
+    autoIndex: true,
+  };
 
-  mongoose.set("strictQuery", false);
-  mongoose.connect(uri, options)
+  mongoose.set('strictQuery', false);
+  mongoose
+    .connect(uri, options)
     .then(() => {
       console.log('Connected to MongoDB');
     })
@@ -15,7 +18,7 @@ export default function connect() {
       console.log('Error connecting to MongoDB');
     });
 
-  process.on('exit', error => {
+  process.on('exit', (error) => {
     console.error(error);
     mongoose.disconnect();
   });

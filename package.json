@@ -7,9 +7,10 @@
   },
   "scripts": {
     "dev": "ts-node-dev -r dotenv/config src/server.ts",
-    "start": "node -r dotenv/config dist/server.js",
+    "start": "cross-env NODE_ENV=production node -r dotenv/config dist/server.js",
     "start-db": "mongod",
     "ts-lint": "tsc --noEmit",
+    "format": "prettier --write .",
     "build": "tsc -p ."
   },
   "keywords": [],
@@ -43,8 +44,12 @@
     "@types/morgan": "1.9.9",
     "@types/swagger-ui-dist": "3.30.4",
     "@types/swagger-ui-express": "4.1.6",
+    "cross-env": "7.0.3",
     "dotenv": "16.4.5",
+    "husky": "9.0.11",
+    "lint-staged": "15.2.7",
     "morgan": "1.10.0",
+    "prettier": "3.3.2",
     "ts-node-dev": "2.0.0",
     "typescript": "5.3.3"
   }

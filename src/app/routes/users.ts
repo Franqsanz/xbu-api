@@ -4,9 +4,9 @@ import {
   getUsers,
   getCheckUser,
   getUserAndBooks,
-  deleteAccount
-} from "../controllers/userController";
-import { verifyToken } from "../middlewares/verifyToken";
+  deleteAccount,
+} from '../controllers/userController';
+import { verifyToken } from '../middlewares/verifyToken';
 
 const router = express.Router();
 
