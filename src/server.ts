@@ -100,7 +100,9 @@ app.get('/', (req: Request, res: Response) => {
             </a>
           </h2>
         </li>
-        ${!isProduction ? `
+        ${
+          !isProduction
+            ? `
         <li>
           <h2 style="font-weight: 500;">
             Documentación (Swagger):
@@ -108,7 +110,9 @@ app.get('/', (req: Request, res: Response) => {
               ${req.protocol}://${req.get('host')}/api-docs
             </a>
           </h2>
-        </li>` : ''}
+        </li>`
+            : ''
+        }
       </ul>
     </section>
   `);

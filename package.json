@@ -1,5 +1,6 @@
 {
   "name": "xb-api",
+  "description": "",
   "version": "1.0.0",
   "main": "dist/server.js",
   "engines": {
@@ -11,12 +12,12 @@
     "start-db": "mongod",
     "ts-lint": "tsc --noEmit",
     "format": "prettier --write .",
-    "build": "tsc -p ."
+    "build": "tsc -p .",
+    "prepare": "husky"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
+  "author": "Franco Andrés Sánchez",
+  "license": "MIT",
   "dependencies": {
     "@sentry/node": "7.50.0",
     "@sentry/tracing": "7.50.0",
@@ -52,5 +53,10 @@
     "prettier": "3.3.2",
     "ts-node-dev": "2.0.0",
     "typescript": "5.3.3"
+  },
+  "lint-staged": {
+    "*.{json,ts}": [
+      "npm run format"
+    ]
   }
 }

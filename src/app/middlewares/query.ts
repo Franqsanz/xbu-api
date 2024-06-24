@@ -11,11 +11,7 @@ export async function query(req: Request, res: Response, next: NextFunction) {
   }
 
   try {
-    const results = await findOptionsFiltering(
-      category as string,
-      year as string,
-      language as string
-    );
+    const results = await findOptionsFiltering(category as string, year as string, language as string);
 
     if (!results || results.length < 1) {
       return res.status(404).json({

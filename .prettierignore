@@ -1,1 +1,11 @@
+node_modules
+dist
+.env
+.prettierrc
+README.md
+tsconfig.json
+.vscode
+package.json
 package-lock.json
+.husky
+vercel.json

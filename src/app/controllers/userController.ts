@@ -49,11 +49,7 @@ async function getUserAndBooks(req: Request, res: Response): Promise<Response<IU
   const offset = (page - 1) * limit;
 
   try {
-    const { user, results, totalBooks } = await UserService.findUserAndBooks(
-      username,
-      limit,
-      offset
-    );
+    const { user, results, totalBooks } = await UserService.findUserAndBooks(username, limit, offset);
 
     if (!user) {
       return res.status(404).json({
