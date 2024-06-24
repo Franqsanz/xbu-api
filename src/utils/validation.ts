@@ -24,7 +24,8 @@ export const bookSchema = z.object({
       return !isNaN(parsedValue) && parsedValue >= 49;
     },
     {
-      message: '"numberPages" debe tener un minimo o igual a 49, es el número minimo de paginas para un libro.',
+      message:
+        '"numberPages" debe tener un minimo o igual a 49, es el número minimo de paginas para un libro.',
     }
   ),
   sourceLink: z.string().optional(),

@@ -5,7 +5,8 @@ const rateLimitHandler = (req: Request, res: Response) => {
   res.status(429).json({
     error: {
       status: '429 Too Many Requests',
-      message: 'Demasiadas peticiones desde esta IP, por favor intenta de nuevo después de 20 minutos.',
+      message:
+        'Demasiadas peticiones desde esta IP, por favor intenta de nuevo después de 20 minutos.',
     },
   });
 };
