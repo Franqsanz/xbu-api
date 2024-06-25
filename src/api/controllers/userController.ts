@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 
-import { UserService } from '../services/userService';
+import { UserService } from '../../services/userService';
 import { IUser, IUserAndBooks } from '../../types/types';
 
 async function getUsers(req: Request, res: Response): Promise<Response<IUser[]>> {

@@ -50,4 +50,8 @@ interface IUserToSave extends DecodedIdToken {
   createdAt: Date;
 }
 
-export { IBook, IFindBooks, IDeleteBook, IUser, IUserAndBooks, IUserToSave };
+interface IHttpError extends Error {
+  statusCode: number;
+}
+
+export { IBook, IFindBooks, IDeleteBook, IUser, IUserAndBooks, IUserToSave, IHttpError };

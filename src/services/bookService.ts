@@ -1,10 +1,9 @@
-// import { v2 as cloudinary } from 'cloudinary';
 import pako from 'pako';
 
-import { cloudinary } from '../../config/cloudinary';
-import { BookRepository } from '../../repositories/bookRepository';
-import { bookSchema } from '../../utils/validation';
-import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
+import { cloudinary } from '../config/cloudinary';
+import { BookRepository } from '../repositories/bookRepository';
+import { bookSchema } from '../utils/validation';
+import { IBook, IDeleteBook, IFindBooks } from '../types/types';
 
 export const BookService = {
   async findAllBooks(limit: number, offset: number): Promise<IFindBooks> {
@@ -79,9 +78,14 @@ export const BookService = {
     }
   },
 
-  async findOptionsFiltering(category: string, year: string, language: string): Promise<IBook[]> {
+  async findOptionsFiltering(
+    authors: string,
+    category: string,
+    year: string,
+    language: string
+  ): Promise<IBook[]> {
     try {
-      return await BookRepository.findOptionsFiltering(category, year, language);
+      return await BookRepository.findOptionsFiltering(authors, category, year, language);
     } catch (error) {
       throw error;
     }

@@ -27,19 +27,19 @@
     "@sentry/node": "7.50.0",
     "@sentry/tracing": "7.50.0",
     "@types/pako": "2.0.3",
-    "cloudinary": "2.0.0",
+    "cloudinary": "2.2.0",
     "compression": "1.7.4",
     "cookie-parser": "1.4.6",
     "cors": "2.8.5",
     "express": "4.19.2",
-    "express-rate-limit": "7.2.0",
-    "firebase-admin": "12.0.0",
+    "express-rate-limit": "7.3.1",
+    "firebase-admin": "12.2.0",
     "helmet": "7.1.0",
-    "ioredis": "5.3.2",
-    "mongoose": "8.1.1",
+    "ioredis": "5.4.1",
+    "mongoose": "8.4.3",
     "pako": "2.1.0",
     "swagger-ui-express": "5.0.0",
-    "zod": "3.22.4"
+    "zod": "3.23.8"
   },
   "devDependencies": {
     "@types/compression": "1.7.5",
@@ -57,6 +57,6 @@
     "morgan": "1.10.0",
     "prettier": "3.3.2",
     "ts-node-dev": "2.0.0",
-    "typescript": "5.3.3"
+    "typescript": "5.5.2"
   }
 }

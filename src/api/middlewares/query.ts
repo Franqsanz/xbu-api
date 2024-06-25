@@ -1,17 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { BookService } from '../services/bookService';
+import { BookService } from '../../services/bookService';
 
 export async function query(req: Request, res: Response, next: NextFunction) {
   const { findOptionsFiltering } = BookService;
-  const { category, year, language } = req.query;
+  const { authors, category, year, language } = req.query;
 
-  if (!category && !year && !language) {
+  if (!authors && !category && !year && !language) {
     return next();
   }
 
   try {
     const results = await findOptionsFiltering(
+      authors as string,
       category as string,
       year as string,
       language as string

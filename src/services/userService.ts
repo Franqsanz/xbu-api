@@ -1,8 +1,8 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
 
-import { cloudinary } from '../../config/cloudinary';
-import { UserRepository } from '../../repositories/userRepository';
-import { IBook, IUser, IUserAndBooks } from '../../types/types';
+import { cloudinary } from '../config/cloudinary';
+import { UserRepository } from '../repositories/userRepository';
+import { IBook, IUser, IUserAndBooks } from '../types/types';
 
 export const UserService = {
   async findAllUsers(): Promise<IUser[]> {

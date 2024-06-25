@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 
 // import usersModel from '../../../models/users';
 import { authFirebase } from '../../../config/firebase';
-import { UserService } from '../../services/userService';
+import { UserService } from '../../../services/userService';
 
 const auth = authFirebase;
 

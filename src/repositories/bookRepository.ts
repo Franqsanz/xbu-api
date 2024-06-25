@@ -98,12 +98,7 @@ export const BookRepository = {
 
   async findMostViewedBooks(detail: string | undefined): Promise<IBook[]> {
     if (detail === 'summary') {
-      return await booksModel
-        .find({}, ' title pathUrl views')
-        .sort({
-          views: -1,
-        })
-        .limit(10);
+      return await booksModel.find({}, ' title pathUrl views').sort({ views: -1 }).limit(10);
     } else if (detail === 'full') {
       return await booksModel
         .find({}, 'title category language authors pathUrl image')
@@ -116,9 +111,21 @@ export const BookRepository = {
     }
   },
 
-  async findOptionsFiltering(category: string, year: string, language: string): Promise<IBook[]> {
+  async findOptionsFiltering(
+    authors: string,
+    category: string,
+    year: string,
+    language: string
+  ): Promise<IBook[]> {
     const projection = 'image title authors category language year pathUrl';
     let query: any = {};
+
+    if (authors) {
+      query.authors = {
+        $regex: authors,
+        $options: 'i',
+      };
+    }
 
     if (category) {
       query.category = category;

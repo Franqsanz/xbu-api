@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
-import { BookService } from '../services/bookService';
+import { BookService } from '../../services/bookService';
+import { NotFound } from '../../utils/errors';
 import { redis } from '../../config/redis';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
@@ -87,19 +88,23 @@ async function getBooks(req: Request, res: Response): Promise<Response<IFindBook
   }
 }
 
-async function getSearchBooks(req: Request, res: Response): Promise<Response<IBook[]>> {
+async function getSearchBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[]>> {
   const { q } = req.query;
 
   try {
     const results = await findSearch(q);
 
     if (results.length < 1) {
-      return res.status(404).json({ info: { message: `No se encontraron resultados para: ${q}` } });
+      throw NotFound(`No se encontraron resultados para: ${q}`);
     }
 
     return res.status(200).json(results);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
