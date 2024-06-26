@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { BookService } from '../../services/bookService';
-import { NotFound } from '../../utils/errors';
+import { BadRequest, NotFound } from '../../utils/errors';
 import { redis } from '../../config/redis';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
@@ -20,7 +20,11 @@ const {
   removeBook,
 } = BookService;
 
-async function getBooks(req: Request, res: Response): Promise<Response<IFindBooks>> {
+async function getBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IFindBooks>> {
   const { body } = req;
   const key = `books_${body}`;
   const limit = parseInt(req.query.limit as string);
@@ -79,12 +83,12 @@ async function getBooks(req: Request, res: Response): Promise<Response<IFindBook
     await redis.expire(key, 300);
 
     if (results.length < 1) {
-      return res.status(404).json({ info: { message: 'No se encontraron más libros' } });
+      throw NotFound('No se encontraron más libros');
     }
 
     return res.status(200).json(response);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
@@ -108,27 +112,39 @@ async function getSearchBooks(
   }
 }
 
-async function getAllOptions(req: Request, res: Response): Promise<Response<IBook[]>> {
+async function getAllOptions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[]>> {
   try {
     const result = await findByGroupFields();
 
     return res.status(200).json(result);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function getBooksRandom(req: Request, res: Response): Promise<Response<IBook[]>> {
+async function getBooksRandom(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[]>> {
   try {
     const result = await findBooksRandom();
 
     return res.status(200).json(result);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function getRelatedBooks(req: Request, res: Response): Promise<Response<IBook[]>> {
+async function getRelatedBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[]>> {
   const { id } = req.params;
 
   try {
@@ -136,11 +152,15 @@ async function getRelatedBooks(req: Request, res: Response): Promise<Response<IB
 
     return res.status(200).json(relatedBooks);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function getMoreBooksAuthors(req: Request, res: Response): Promise<Response<IBook[]>> {
+async function getMoreBooksAuthors(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[]>> {
   const { id } = req.params;
 
   try {
@@ -148,78 +168,96 @@ async function getMoreBooksAuthors(req: Request, res: Response): Promise<Respons
 
     return res.status(200).json(moreBooksAuthors);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function getOneBooks(req: Request, res: Response): Promise<Response<IBook[] | null>> {
+async function getOneBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[] | null>> {
   const { id } = req.params;
 
   try {
     const result = await findOne(id);
 
     if (!result) {
-      return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
+      throw NotFound('No se encuentra o no existe');
     }
 
     return res.status(200).json(result);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function getPathUrlBooks(req: Request, res: Response): Promise<Response<IBook[] | null>> {
+async function getPathUrlBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[] | null>> {
   const { pathUrl } = req.params;
 
   try {
     const result = await findBySlug(pathUrl);
 
     if (!result) {
-      return res.status(404).json({ info: { message: 'No se encuentra o no existe' } });
+      throw NotFound('No se encuentra o no existe');
     }
 
     return res.status(200).json(result);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function getMostViewedBooks(req: Request, res: Response): Promise<Response<IBook[]>> {
+async function getMostViewedBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook[]>> {
   const { detail } = req.query;
 
   try {
     if (!detail || (detail !== 'summary' && detail !== 'full')) {
-      return res.status(400).json({ error: { message: 'Parámetro detail inválido' } });
+      throw BadRequest('Parámetro detail inválido');
     }
 
     const result = await findMostViewedBooks(detail as string);
 
     return res.status(200).json(result);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function postBooks(req: Request, res: Response): Promise<Response<IBook>> {
+async function postBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook>> {
   const { body } = req;
 
   try {
     const resultBook = await createBook(body);
 
     if (!resultBook) {
-      return res.status(400).json({
-        error: { message: 'Error al publicar, la solicitud está vacia' },
-      });
+      throw BadRequest('Error al publicar, la solicitud está vacia');
     }
 
     redis.expire(`books_${req.body}`, 0);
     return res.status(201).json(resultBook);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function putBooks(req: Request, res: Response): Promise<Response<IBook | null>> {
+async function putBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook | null>> {
   const { id } = req.params;
   const { body } = req;
 
@@ -227,28 +265,32 @@ async function putBooks(req: Request, res: Response): Promise<Response<IBook | n
     const result = await updateBook(id, body);
 
     if (!result) {
-      return res.status(400).json({ error: { message: 'No se pudo actualizar' } });
+      throw BadRequest('No se pudo actualizar');
     }
 
     return res.status(201).json(result);
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 
-async function deleteBook(req: Request, res: Response): Promise<Response<IDeleteBook>> {
+async function deleteBook(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IDeleteBook>> {
   const { id } = req.params;
 
   try {
     const book = await removeBook(id);
 
     if (!book) {
-      return res.status(404).json({ info: { message: 'Libro no encontrado' } });
+      throw NotFound('Libro no encontrado');
     }
 
     return res.status(200).json({ success: { message: 'Libro eliminado' } });
   } catch (err) {
-    return res.status(500).json({ error: { message: 'Error en el servidor' } });
+    return next(err) as any;
   }
 }
 

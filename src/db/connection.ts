@@ -12,14 +12,13 @@ export default function connect() {
   mongoose
     .connect(uri, options)
     .then(() => {
-      console.log('Connected to MongoDB');
+      console.log('Connected to Data Base');
     })
-    .catch((err) => {
-      console.log('Error connecting to MongoDB');
+    .catch(() => {
+      console.log('Error connecting to Data Base');
     });
 
-  process.on('exit', (error) => {
-    console.error(error);
+  process.on('exit', () => {
     mongoose.disconnect();
   });
 }

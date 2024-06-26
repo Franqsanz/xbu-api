@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { BookService } from '../../services/bookService';
+import { NotFound } from '../../utils/errors';
 
 export async function query(req: Request, res: Response, next: NextFunction) {
   const { findOptionsFiltering } = BookService;
@@ -19,20 +20,11 @@ export async function query(req: Request, res: Response, next: NextFunction) {
     );
 
     if (!results || results.length < 1) {
-      return res.status(404).json({
-        info: {
-          status: res.statusCode,
-          message: `No se han encontrado datos para ${req.originalUrl}.`,
-        },
-      });
+      throw NotFound(`No se han encontrado datos para ${req.originalUrl}.`);
     }
 
     return res.status(200).json(results);
-  } catch (error) {
-    res.status(500).json({
-      error: {
-        message: 'Error en el servidor',
-      },
-    });
+  } catch (err) {
+    return next(err);
   }
 }

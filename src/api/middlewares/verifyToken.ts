@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
+
 import { authFirebase } from '../../config/firebase';
+import { Forbidden, UnauthorizedAccess } from '../../utils/errors';
 
 const auth = authFirebase;
 
@@ -10,11 +12,7 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
 
     // Verificar si el token está presente
     if (!token) {
-      return res.status(401).json({
-        error: {
-          message: 'Token no proporcionado',
-        },
-      });
+      throw UnauthorizedAccess('Token no proporcionado');
     }
 
     // Verificar el token utilizando la API de autenticación de Firebase
@@ -22,20 +20,18 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
 
     // Verificar si el usuario en la solicitud es el mismo que el del token
     if (decodedToken && userId === decodedToken.uid) {
-      next();
+      return next();
     } else {
-      res.status(403).json({
-        error: {
-          message: 'Acceso denegado',
-        },
-      });
+      throw Forbidden('Acceso denegado');
     }
-  } catch (error) {
+  } catch (err) {
     // Si hay un error al verificar el token, responde con un código de error
-    res.status(401).json({
-      error: {
-        message: 'Token inválido',
-      },
-    });
+    // res.status(401).json({
+    //   error: {
+    //     message: 'Token inválido',
+    //   },
+    // });
+    // throw UnauthorizedAccess('Token inválido');
+    return next(err);
   }
 }

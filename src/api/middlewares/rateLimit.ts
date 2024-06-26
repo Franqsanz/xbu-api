@@ -1,14 +1,12 @@
 import { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 
+import { TooManyRequests } from '../../utils/errors';
+
 const rateLimitHandler = (req: Request, res: Response) => {
-  res.status(429).json({
-    error: {
-      status: '429 Too Many Requests',
-      message:
-        'Demasiadas peticiones desde esta IP, por favor intenta de nuevo después de 20 minutos.',
-    },
-  });
+  throw TooManyRequests(
+    'Demasiadas peticiones desde esta IP, por favor intenta de nuevo después de 20 minutos'
+  );
 };
 
 const limiter = rateLimit({

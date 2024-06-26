@@ -1,47 +1,48 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
 import { UserService } from '../../services/userService';
 import { IUser, IUserAndBooks } from '../../types/types';
+import { NotFound } from '../../utils/errors';
 
-async function getUsers(req: Request, res: Response): Promise<Response<IUser[]>> {
+async function getUsers(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IUser[]>> {
   try {
     const users = await UserService.findAllUsers();
 
     return res.status(200).json(users);
-  } catch (error) {
-    return res.status(500).json({
-      error: {
-        message: 'Error en el servidor',
-      },
-    });
+  } catch (err) {
+    return next(err) as any;
   }
 }
 
-async function getCheckUser(req: Request, res: Response): Promise<Response<IUser | null>> {
+async function getCheckUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IUser | null>> {
   const { userId } = req.params;
 
   try {
     const user = await UserService.findCheckUser(userId);
 
     if (!user) {
-      return res.status(404).json({
-        error: {
-          message: 'Usuario no encontrado',
-        },
-      });
+      throw NotFound('Usuario no encontrado');
     }
 
     return res.status(200).json(user);
-  } catch (error) {
-    return res.status(500).json({
-      error: {
-        message: 'Error en el servidor',
-      },
-    });
+  } catch (err) {
+    return next(err) as any;
   }
 }
 
-async function getUserAndBooks(req: Request, res: Response): Promise<Response<IUserAndBooks>> {
+async function getUserAndBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IUserAndBooks>> {
   // const token = (req.headers['authorization'] || '').split(' ')[1];
   const { username } = req.params;
   const limit = parseInt(req.query.limit as string);
@@ -56,30 +57,28 @@ async function getUserAndBooks(req: Request, res: Response): Promise<Response<IU
     );
 
     if (!user) {
-      return res.status(404).json({
-        error: {
-          message: 'Usuario no encontrado',
-        },
-      });
+      throw NotFound('Usuario no encontrado');
     }
 
     const totalPages = Math.ceil(totalBooks / limit);
     const nextPage = page < totalPages ? page + 1 : null;
+    const prevPage = page > 1 ? page - 1 : null;
     const nextPageLink = nextPage
       ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}`
       : null;
+    const prevPageLink =
+      page > 1
+        ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}`
+        : null;
 
     const info = {
       totalBooks,
       totalPages,
       currentPage: page,
       nextPage: nextPage,
-      prevPage: page > 1 ? page - 1 : null,
+      prevPage: prevPage,
       nextPageLink: nextPageLink,
-      prevPageLink:
-        page > 1
-          ? `${req.protocol}://${req.get('host')}/api/users${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}`
-          : null,
+      prevPageLink: prevPageLink,
     };
 
     const response = {
@@ -98,16 +97,16 @@ async function getUserAndBooks(req: Request, res: Response): Promise<Response<IU
         // })
         .json(response)
     );
-  } catch (error) {
-    return res.status(500).json({
-      error: {
-        message: 'Error en el servidor',
-      },
-    });
+  } catch (err) {
+    return next(err) as any;
   }
 }
 
-async function deleteAccount(req: Request, res: Response): Promise<Response<void>> {
+async function deleteAccount(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
   const { userId } = req.params;
 
   try {
@@ -133,12 +132,8 @@ async function deleteAccount(req: Request, res: Response): Promise<Response<void
         message: 'Cuenta eliminada',
       },
     });
-  } catch (error) {
-    return res.status(500).json({
-      error: {
-        message: 'Error en el servidor',
-      },
-    });
+  } catch (err) {
+    return next(err) as any;
   }
 }
 
