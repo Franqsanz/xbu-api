@@ -69,7 +69,11 @@ export function registerMW(app: Application) {
     })
   );
   app.use((req, res, next) => {
-    res.header('Set-Cookie', `SameSite=None; Secure`);
+    res.header({
+      'Set-Cookie': 'SameSite=None; Secure',
+      // 'Cache-Control': 'public, max-age=100'
+    });
+
     next();
   });
 }

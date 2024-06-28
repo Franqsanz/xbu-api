@@ -7,13 +7,6 @@
       "runOptions": {
         "runOn": "folderOpen"
       }
-    },
-    {
-      "type": "npm",
-      "script": "start-db",
-      "runOptions": {
-        "runOn": "folderOpen"
-      }
     }
   ]
 }
