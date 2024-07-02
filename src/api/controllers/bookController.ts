@@ -40,11 +40,11 @@ async function getBooks(
     const nextPage = page < totalPages ? page + 1 : null;
     const prevPage = page > 1 ? page - 1 : null;
     const nextPageLink = nextPage
-      ? `${req.protocol}://${req.get('host')}/api${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}`
+      ? `${req.protocol}://${req.hostname}/api${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}`
       : null;
     const prevPageLink =
       page > 1
-        ? `${req.protocol}://${req.get('host')}/api${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}`
+        ? `${req.protocol}://${req.hostname}/api${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}`
         : null;
 
     // Aquí construimos el objeto de paginación para incluir en la respuesta

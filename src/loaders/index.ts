@@ -89,8 +89,8 @@ export function registerRoutes(app: Application) {
           <li>
             <h2 style="font-weight: 500;">
               Datos (JSON):
-              <a href="${req.protocol}://${req.get('host')}/api">
-                ${req.protocol}://${req.get('host')}/api
+              <a href="${req.protocol}://${req.hostname}/api">
+                ${req.protocol}://${req.hostname}/api
               </a>
             </h2>
           </li>
@@ -100,8 +100,8 @@ export function registerRoutes(app: Application) {
             <li>
               <h2 style="font-weight: 500;">
                 Documentación (Swagger):
-                <a href="${req.protocol}://${req.get('host')}/api-docs">
-                  ${req.protocol}://${req.get('host')}/api-docs
+                <a href="${req.protocol}://${req.hostname}/api-docs">
+                  ${req.protocol}://${req.hostname}/api-docs
                 </a>
               </h2>
             </li>`
