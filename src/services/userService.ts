@@ -8,24 +8,24 @@ export const UserService = {
   async findAllUsers(): Promise<IUser[]> {
     try {
       return await UserRepository.findUsers();
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findCheckUser(userId: string): Promise<IUser | null> {
     try {
       return await UserRepository.findOne(userId);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks> {
     try {
       return await UserRepository.findUserAndBooks(username, limit, offset);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
@@ -44,8 +44,8 @@ export const UserService = {
         existingUser,
         saveUser,
       };
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
@@ -66,8 +66,8 @@ export const UserService = {
       }
 
       return await UserRepository.deleteUser(user?.uid);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 };

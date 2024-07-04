@@ -9,72 +9,72 @@ export const BookService = {
   async findAllBooks(limit: number, offset: number): Promise<IFindBooks> {
     try {
       return await BookRepository.findBooks(limit, offset);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findOne(id: string): Promise<IBook | null> {
     try {
       return await BookRepository.findOne(id);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findBySlug(pathUrl: string): Promise<IBook | null> {
     try {
       return await BookRepository.findBySlug(pathUrl);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findSearch(q: object | string | undefined): Promise<IBook[]> {
     try {
       return await BookRepository.findSearch(q);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findByGroupFields(): Promise<IBook[]> {
     try {
       return await BookRepository.findByGroupFields();
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findBooksRandom(): Promise<IBook[]> {
     try {
       return await BookRepository.findBooksRandom();
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findRelatedBooks(id: string): Promise<IBook[]> {
     try {
       return await BookRepository.findRelatedBooks(id);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findMoreBooksAuthors(id: string): Promise<IBook[]> {
     try {
       return await BookRepository.findMoreBooksAuthors(id);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
   async findMostViewedBooks(detail: string | undefined): Promise<IBook[]> {
     try {
       return await BookRepository.findMostViewedBooks(detail);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
@@ -86,8 +86,8 @@ export const BookService = {
   ): Promise<IBook[]> {
     try {
       return await BookRepository.findOptionsFiltering(authors, category, year, language);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
@@ -110,9 +110,9 @@ export const BookService = {
                 quality: 60,
               },
             },
-            (error, result) => {
-              if (error) {
-                reject(error);
+            (err, result) => {
+              if (err) {
+                reject(err);
               } else {
                 resolve(result);
               }
@@ -125,8 +125,8 @@ export const BookService = {
       validateBook.image.public_id = cloudinaryResult.public_id;
 
       return await BookRepository.createBook(validateBook);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
@@ -159,9 +159,9 @@ export const BookService = {
                 },
                 public_id: public_id,
               },
-              (error, result) => {
-                if (error) {
-                  reject(error);
+              (err, result) => {
+                if (err) {
+                  reject(err);
                 } else {
                   resolve(result);
                 }
@@ -177,8 +177,8 @@ export const BookService = {
       }
 
       return await BookRepository.updateBook(id, body, image);
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 
@@ -192,8 +192,8 @@ export const BookService = {
       }
 
       return deleteOne;
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   },
 };

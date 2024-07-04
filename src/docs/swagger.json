@@ -747,9 +747,70 @@
       "post": {
         "summary": "Guardar un nuevo libro.",
         "tags": ["Books"],
+        "requestBody": {
+          "required": true,
+          "description": "Todos los campos son de tipo `string`, excepto el campo `url`, que es un binario (`ArrayBuffer`). Todos los campos son obligatorios, excepto `sourceLink`.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "image": {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "example": [255, 216, 255, 225, 14, 6]
+                      },
+                      "public_id": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "synopsis": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sourceLink": {
+                    "type": "string"
+                  },
+                  "language": {
+                    "type": "string"
+                  },
+                  "year": {
+                    "type": "string"
+                  },
+                  "numberPages": {
+                    "type": "string"
+                  },
+                  "format": {
+                    "type": "string"
+                  },
+                  "pathUrl": {
+                    "type": "string"
+                  },
+                  "authors": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "userId": "string"
+                }
+              }
+            }
+          }
+        },
         "responses": {
-          "200": {
-            "description": "Ok",
+          "201": {
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
@@ -917,7 +978,7 @@
                     "type": "object",
                     "properties": {
                       "url": {
-                        "type": "string"
+                        "example": [255, 216, 255, 225, 14, 6]
                       },
                       "public_id": {
                         "type": "string"
@@ -959,15 +1020,16 @@
                     "items": {
                       "type": "string"
                     }
-                  }
+                  },
+                  "userId": "string"
                 }
               }
             }
           }
         },
         "responses": {
-          "200": {
-            "description": "Ok",
+          "201": {
+            "description": "Created",
             "content": {
               "application/json": {
                 "schema": {
