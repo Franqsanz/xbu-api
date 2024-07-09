@@ -32,6 +32,31 @@ async function getBooks(
   const offset = (page - 1) * limit;
 
   try {
+    // Verifica si hay paginación
+    if (!limit || !page) {
+      // Eliminamos la cache
+      await redis.del(key);
+      // Si no hay paginación, simplemente llama al servicio y retorna la respuesta
+      const { results, totalBooks } = await findAllBooks(limit, offset);
+
+      return res.status(200).json({
+        totalBooks,
+        results,
+      });
+    }
+
+    // Se elimina la cache cuando se busca por paginación
+    if (limit && page) await redis.del(key);
+
+    // Se leen los datos almacenados en cache
+    const cachedData = await redis.get(key);
+
+    // Si hay datos en la cache se envian al cliente
+    if (cachedData) {
+      const cachedResponse = JSON.parse(cachedData);
+      return res.status(200).json(cachedResponse);
+    }
+
     // Llamar al servicio que ejecuta las consultas
     const { results, totalBooks } = await findAllBooks(limit, offset);
 
@@ -63,18 +88,6 @@ async function getBooks(
       info,
       results,
     };
-
-    // Se elimina la cache cuando se busca por paginación
-    if (limit && page) await redis.del(key);
-
-    // Se leen los datos almacenados en cache
-    const cachedData = await redis.get(key);
-
-    // Si hay datos en la cache se envian al cliente
-    if (cachedData) {
-      const cachedResponse = JSON.parse(cachedData);
-      return res.status(200).json(cachedResponse);
-    }
 
     // Si no hay datos en la cache, se envian a redis los datos de la base
     await redis.set(key, JSON.stringify(response));
