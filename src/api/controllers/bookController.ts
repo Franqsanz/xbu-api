@@ -6,8 +6,8 @@ import { redis } from '../../config/redis';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
 const {
-  findAllBooks,
-  findOne,
+  findBooks,
+  findById,
   findBySlug,
   findSearch,
   findByGroupFields,
@@ -37,7 +37,7 @@ async function getBooks(
       // Eliminamos la cache
       await redis.del(key);
       // Si no hay paginación, simplemente llama al servicio y retorna la respuesta
-      const { results, totalBooks } = await findAllBooks(limit, offset);
+      const { results, totalBooks } = await findBooks(limit, offset);
 
       return res.status(200).json({
         totalBooks,
@@ -58,7 +58,7 @@ async function getBooks(
     }
 
     // Llamar al servicio que ejecuta las consultas
-    const { results, totalBooks } = await findAllBooks(limit, offset);
+    const { results, totalBooks } = await findBooks(limit, offset);
 
     // Aquí calculamos el número total de páginas
     const totalPages = Math.ceil(totalBooks / limit);
@@ -193,7 +193,7 @@ async function getOneBooks(
   const { id } = req.params;
 
   try {
-    const result = await findOne(id);
+    const result = await findById(id);
 
     if (!result) {
       throw NotFound('No se encuentra o no existe');

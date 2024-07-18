@@ -1,32 +1,26 @@
 import booksModel from '../models/books';
 import usersModel from '../models/users';
 import { qyCheckUser } from '../db/userQueries';
-import { IBook, IUser, IUserToSave, IUserAndBooks } from '../types/types';
+import { IRepositoryUser } from '../types/IRepository';
 
-export const UserRepository = {
-  async findUsers(): Promise<IUser[]> {
+export const UserRepository: IRepositoryUser = {
+  async findUsers() {
     return await usersModel.find();
   },
 
-  async findOne(userId: string): Promise<IUser | null> {
+  async findById(userId) {
     const { query, projection } = qyCheckUser(userId);
 
     return await usersModel.findOne(query, projection);
   },
 
-  async findByUid(uid: string): Promise<IUser | null> {
+  async findByUid(uid) {
     return await usersModel.findOne({
       uid,
     });
   },
 
-  async saveUser(userToSave: IUserToSave): Promise<IUser> {
-    const newUser = new usersModel(userToSave);
-
-    return await newUser.save();
-  },
-
-  async findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks> {
+  async findUserAndBooks(username, limit, offset) {
     const user = await usersModel.findOne(
       {
         username: username,
@@ -58,17 +52,23 @@ export const UserRepository = {
   },
 
   // Busca todos los libros de un usuario
-  async findBooksByUserId(userId: string): Promise<IBook[]> {
+  async findBooksByUserId(userId) {
     return await booksModel.find({
       userId,
     });
   },
 
-  async deleteUserBooks(id: any): Promise<any> {
+  async createUser(userToSave) {
+    const newUser = new usersModel(userToSave);
+
+    return await newUser.save();
+  },
+
+  async deleteUserBooks(id) {
     return await booksModel.deleteOne(id);
   },
 
-  async deleteUser(userId: any): Promise<any> {
+  async deleteUser(userId) {
     return await usersModel.deleteOne(userId);
   },
 };

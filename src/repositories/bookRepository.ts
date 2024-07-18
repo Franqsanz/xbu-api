@@ -1,5 +1,5 @@
 import booksModel from '../models/books';
-import { IBook, IFindBooks, IDeleteBook } from '../types/types';
+import { IRepositoryBook } from '../types/IRepository';
 import {
   qyGroupOptions,
   qyOneBooks,
@@ -11,8 +11,8 @@ import {
   qyPutBook,
 } from '../db/bookQueries';
 
-export const BookRepository = {
-  async findBooks(limit: number, offset: number): Promise<IFindBooks> {
+export const BookRepository: IRepositoryBook = {
+  async findBooks(limit, offset) {
     // Aquí obtenemos los libros de la base de datos usando el método skip y limit
     const results = await booksModel
       .find({}, 'title category language authors pathUrl image')
@@ -32,19 +32,19 @@ export const BookRepository = {
     };
   },
 
-  async findOne(id: string): Promise<IBook | null> {
+  async findById(id) {
     const query = qyOneBooks(id);
 
     return await booksModel.findByIdAndUpdate(...query).hint('_id_');
   },
 
-  async findBySlug(slug: string): Promise<IBook | null> {
+  async findBySlug(slug) {
     const query = qyPathUrlBooks(slug);
 
     return await booksModel.findOneAndUpdate(...query);
   },
 
-  async findSearch(q: object | string | undefined): Promise<IBook[]> {
+  async findSearch(q) {
     const { query, projection } = qySearch(q);
 
     return await booksModel
@@ -56,19 +56,19 @@ export const BookRepository = {
       .exec();
   },
 
-  async findByGroupFields(): Promise<IBook[]> {
+  async findByGroupFields() {
     const query = qyGroupOptions();
 
     return await booksModel.aggregate(query).exec();
   },
 
-  async findBooksRandom(): Promise<IBook[]> {
+  async findBooksRandom() {
     const query = qyBooksRandom();
 
     return await booksModel.aggregate(query);
   },
 
-  async findRelatedBooks(id: string): Promise<IBook[]> {
+  async findRelatedBooks(id) {
     const currentBook = await booksModel.findById(id);
 
     if (currentBook) {
@@ -82,7 +82,7 @@ export const BookRepository = {
     return [];
   },
 
-  async findMoreBooksAuthors(id: string): Promise<IBook[]> {
+  async findMoreBooksAuthors(id) {
     const currentBook = await booksModel.findById(id);
 
     if (currentBook) {
@@ -96,7 +96,7 @@ export const BookRepository = {
     return [];
   },
 
-  async findMostViewedBooks(detail: string | undefined): Promise<IBook[]> {
+  async findMostViewedBooks(detail) {
     if (detail === 'summary') {
       return await booksModel.find({}, ' title pathUrl views').sort({ views: -1 }).limit(10);
     } else if (detail === 'full') {
@@ -111,12 +111,7 @@ export const BookRepository = {
     }
   },
 
-  async findOptionsFiltering(
-    authors: string,
-    category: string,
-    year: string,
-    language: string
-  ): Promise<IBook[]> {
+  async findOptionsFiltering(authors, category, year, language) {
     const projection = 'image title authors category language year pathUrl';
     let query: any = {};
 
@@ -151,19 +146,19 @@ export const BookRepository = {
     return [];
   },
 
-  async createBook(body: any): Promise<IBook> {
+  async createBook(body) {
     const newBook = new booksModel(body);
 
     return await newBook.save();
   },
 
-  async updateBook(id: string, body: any, image: any): Promise<IBook | null> {
+  async updateBook(id, body, image) {
     const query = qyPutBook(id, body, image);
 
     return await booksModel.findByIdAndUpdate(...query);
   },
 
-  async deleteBook(id: string): Promise<IDeleteBook> {
+  async removeBook(id) {
     const book = await booksModel.findById(id);
     const deleteOne = await book?.deleteOne();
 

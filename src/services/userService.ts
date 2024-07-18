@@ -1,11 +1,11 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
 
+import { UserRepository } from './../repositories/userRepository';
 import { cloudinary } from '../config/cloudinary';
-import { UserRepository } from '../repositories/userRepository';
-import { IBook, IUser, IUserAndBooks } from '../types/types';
+// import { IRepositoryUser, IUserService } from '../types/IRepository';
 
 export const UserService = {
-  async findAllUsers(): Promise<IUser[]> {
+  async findUsers() {
     try {
       return await UserRepository.findUsers();
     } catch (err) {
@@ -13,15 +13,15 @@ export const UserService = {
     }
   },
 
-  async findCheckUser(userId: string): Promise<IUser | null> {
+  async findById(userId: string) {
     try {
-      return await UserRepository.findOne(userId);
+      return await UserRepository.findById(userId);
     } catch (err) {
       throw err;
     }
   },
 
-  async findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks> {
+  async findUserAndBooks(username: string, limit: number, offset: number) {
     try {
       return await UserRepository.findUserAndBooks(username, limit, offset);
     } catch (err) {
@@ -29,7 +29,7 @@ export const UserService = {
     }
   },
 
-  async createUser(decodedToken: DecodedIdToken, username: string) {
+  async saveUser(decodedToken: DecodedIdToken, username: string) {
     const userToSave = {
       ...decodedToken,
       username: username,
@@ -38,7 +38,7 @@ export const UserService = {
 
     try {
       const existingUser = await UserRepository.findByUid(decodedToken.uid);
-      const saveUser = await UserRepository.saveUser(userToSave);
+      const saveUser = await UserRepository.createUser(userToSave);
 
       return {
         existingUser,
@@ -49,9 +49,9 @@ export const UserService = {
     }
   },
 
-  async deleteAccount(userId: string): Promise<void> {
+  async deleteAccount(userId: string) {
     try {
-      const user = await UserRepository.findOne(userId);
+      const user = await UserRepository.findById(userId);
       const books = await UserRepository.findBooksByUserId(userId);
 
       if (!user) {

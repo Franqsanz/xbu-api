@@ -10,7 +10,7 @@ async function getUsers(
   next: NextFunction
 ): Promise<Response<IUser[]>> {
   try {
-    const users = await UserService.findAllUsers();
+    const users = await UserService.findUsers();
 
     return res.status(200).json(users);
   } catch (err) {
@@ -26,7 +26,7 @@ async function getCheckUser(
   const { userId } = req.params;
 
   try {
-    const user = await UserService.findCheckUser(userId);
+    const user = await UserService.findById(userId);
 
     if (!user) {
       throw NotFound('Usuario no encontrado');
@@ -124,7 +124,6 @@ async function deleteAccount(
     // }
 
     // await user?.deleteOne();
-
     await UserService.deleteAccount(userId);
 
     return res.status(200).json({

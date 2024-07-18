@@ -13,7 +13,7 @@ async function createUser(req: Request, res: Response, next: NextFunction) {
 
   try {
     const decodedToken = await auth.verifyIdToken(token);
-    const { existingUser, saveUser } = await UserService.createUser(username, decodedToken.uid);
+    const { existingUser, saveUser } = await UserService.saveUser(username, decodedToken.uid);
 
     if (existingUser) {
       return res.status(200).json({

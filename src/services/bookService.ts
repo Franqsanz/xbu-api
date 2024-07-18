@@ -3,10 +3,10 @@ import pako from 'pako';
 import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
 import { bookSchema } from '../utils/validation';
-import { IBook, IDeleteBook, IFindBooks } from '../types/types';
+import { IRepositoryBook } from '../types/IRepository';
 
-export const BookService = {
-  async findAllBooks(limit: number, offset: number): Promise<IFindBooks> {
+export const BookService: IRepositoryBook = {
+  async findBooks(limit, offset) {
     try {
       return await BookRepository.findBooks(limit, offset);
     } catch (err) {
@@ -14,15 +14,15 @@ export const BookService = {
     }
   },
 
-  async findOne(id: string): Promise<IBook | null> {
+  async findById(id) {
     try {
-      return await BookRepository.findOne(id);
+      return await BookRepository.findById(id);
     } catch (err) {
       throw err;
     }
   },
 
-  async findBySlug(pathUrl: string): Promise<IBook | null> {
+  async findBySlug(pathUrl) {
     try {
       return await BookRepository.findBySlug(pathUrl);
     } catch (err) {
@@ -30,7 +30,7 @@ export const BookService = {
     }
   },
 
-  async findSearch(q: object | string | undefined): Promise<IBook[]> {
+  async findSearch(q) {
     try {
       return await BookRepository.findSearch(q);
     } catch (err) {
@@ -38,7 +38,7 @@ export const BookService = {
     }
   },
 
-  async findByGroupFields(): Promise<IBook[]> {
+  async findByGroupFields() {
     try {
       return await BookRepository.findByGroupFields();
     } catch (err) {
@@ -46,7 +46,7 @@ export const BookService = {
     }
   },
 
-  async findBooksRandom(): Promise<IBook[]> {
+  async findBooksRandom() {
     try {
       return await BookRepository.findBooksRandom();
     } catch (err) {
@@ -54,7 +54,7 @@ export const BookService = {
     }
   },
 
-  async findRelatedBooks(id: string): Promise<IBook[]> {
+  async findRelatedBooks(id) {
     try {
       return await BookRepository.findRelatedBooks(id);
     } catch (err) {
@@ -62,7 +62,7 @@ export const BookService = {
     }
   },
 
-  async findMoreBooksAuthors(id: string): Promise<IBook[]> {
+  async findMoreBooksAuthors(id) {
     try {
       return await BookRepository.findMoreBooksAuthors(id);
     } catch (err) {
@@ -70,7 +70,7 @@ export const BookService = {
     }
   },
 
-  async findMostViewedBooks(detail: string | undefined): Promise<IBook[]> {
+  async findMostViewedBooks(detail) {
     try {
       return await BookRepository.findMostViewedBooks(detail);
     } catch (err) {
@@ -78,12 +78,7 @@ export const BookService = {
     }
   },
 
-  async findOptionsFiltering(
-    authors: string,
-    category: string,
-    year: string,
-    language: string
-  ): Promise<IBook[]> {
+  async findOptionsFiltering(authors, category, year, language) {
     try {
       return await BookRepository.findOptionsFiltering(authors, category, year, language);
     } catch (err) {
@@ -91,7 +86,7 @@ export const BookService = {
     }
   },
 
-  async createBook(body: any): Promise<IBook> {
+  async createBook(body) {
     const validateBook = bookSchema.parse(body);
 
     let { url } = body.image;
@@ -130,7 +125,7 @@ export const BookService = {
     }
   },
 
-  async updateBook(id: string, body: any): Promise<IBook | null> {
+  async updateBook(id, body) {
     let { url, public_id } = body.image;
     let image;
 
@@ -182,9 +177,9 @@ export const BookService = {
     }
   },
 
-  async removeBook(id: string): Promise<IDeleteBook> {
+  async removeBook(id) {
     try {
-      const { book, deleteOne } = await BookRepository.deleteBook(id);
+      const { book, deleteOne } = await BookRepository.removeBook(id);
 
       if (book) {
         const public_id = book.image.public_id;
