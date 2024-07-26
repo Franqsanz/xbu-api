@@ -27,9 +27,7 @@ async function getBooks(
 ): Promise<Response<IFindBooks>> {
   const { body } = req;
   const key = `books_${body}`;
-  const limit = parseInt(req.query.limit as string);
-  const page = parseInt(req.query.page as string) || 1;
-  const offset = (page - 1) * limit;
+  const { page, limit, offset } = req.pagination!;
 
   try {
     // Verifica si hay paginación
@@ -60,32 +58,11 @@ async function getBooks(
     // Llamar al servicio que ejecuta las consultas
     const { results, totalBooks } = await findBooks(limit, offset);
 
-    // Aquí calculamos el número total de páginas
-    const totalPages = Math.ceil(totalBooks / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const prevPage = page > 1 ? page - 1 : null;
-    const nextPageLink = nextPage
-      ? `${req.protocol}://${req.hostname}/api${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}`
-      : null;
-    const prevPageLink =
-      page > 1
-        ? `${req.protocol}://${req.hostname}/api${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}`
-        : null;
-
-    // Aquí construimos el objeto de paginación para incluir en la respuesta
-    const info = {
-      totalBooks,
-      totalPages,
-      currentPage: page,
-      nextPage: nextPage,
-      prevPage: prevPage,
-      nextPageLink: nextPageLink,
-      prevPageLink: prevPageLink,
-    };
+    req.calculatePagination!(totalBooks);
 
     // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
     const response = {
-      info,
+      info: req.paginationInfo,
       results,
     };
 

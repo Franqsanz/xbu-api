@@ -54,4 +54,30 @@ interface IHttpError extends Error {
   statusCode: number;
 }
 
-export { IBook, IFindBooks, IDeleteBook, IUser, IUserAndBooks, IUserToSave, IHttpError };
+interface Pagination {
+  page: number;
+  limit: number;
+  offset: number;
+}
+
+interface PaginationInfo {
+  totalBooks: number;
+  totalPages: number;
+  currentPage: number;
+  nextPage: number | null;
+  prevPage: number | null;
+  nextPageLink: string | null;
+  prevPageLink: string | null;
+}
+
+export {
+  IBook,
+  IFindBooks,
+  IDeleteBook,
+  IUser,
+  IUserAndBooks,
+  IUserToSave,
+  IHttpError,
+  Pagination,
+  PaginationInfo,
+};

@@ -15,13 +15,14 @@ import {
   deleteBook,
 } from '../controllers/bookController';
 import { query } from '../middlewares/query';
+import { pagination } from '../middlewares/pagination';
 
 const router = express.Router();
 
 router.get('/', (req, res: Response) => {
   res.redirect('/api/books');
 });
-router.get('/books', query, getBooks);
+router.get('/books', query, pagination, getBooks);
 router.get('/books/search', getSearchBooks);
 router.get('/books/options', getAllOptions);
 router.get('/books/more-books', getBooksRandom);

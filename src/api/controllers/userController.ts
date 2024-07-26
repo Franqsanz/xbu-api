@@ -45,9 +45,7 @@ async function getUserAndBooks(
 ): Promise<Response<IUserAndBooks>> {
   // const token = (req.headers['authorization'] || '').split(' ')[1];
   const { username } = req.params;
-  const limit = parseInt(req.query.limit as string);
-  const page = parseInt(req.query.page as string) || 1;
-  const offset = (page - 1) * limit;
+  const { limit, offset } = req.pagination!;
 
   try {
     const { user, results, totalBooks } = await UserService.findUserAndBooks(
@@ -60,29 +58,10 @@ async function getUserAndBooks(
       throw NotFound('Usuario no encontrado');
     }
 
-    const totalPages = Math.ceil(totalBooks / limit);
-    const nextPage = page < totalPages ? page + 1 : null;
-    const prevPage = page > 1 ? page - 1 : null;
-    const nextPageLink = nextPage
-      ? `${req.protocol}://${req.hostname}/api/users${req.path}?page=${nextPage}${limit ? `&limit=${limit}` : ''}`
-      : null;
-    const prevPageLink =
-      page > 1
-        ? `${req.protocol}://${req.hostname}/api/users${req.path}?page=${page - 1}${limit ? `&limit=${limit}` : ''}`
-        : null;
-
-    const info = {
-      totalBooks,
-      totalPages,
-      currentPage: page,
-      nextPage: nextPage,
-      prevPage: prevPage,
-      nextPageLink: nextPageLink,
-      prevPageLink: prevPageLink,
-    };
+    req.calculatePagination!(totalBooks);
 
     const response = {
-      info,
+      info: req.paginationInfo,
       user,
       results,
     };
