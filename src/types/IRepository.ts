@@ -15,8 +15,10 @@ interface IReadBook {
     authors: string,
     category: string,
     year: string,
-    language: string
-  ): Promise<IBook[]>;
+    language: string,
+    limit: number,
+    offset: number
+  ): Promise<IFindBooks>;
 }
 
 interface IWriteBook {

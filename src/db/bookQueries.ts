@@ -104,6 +104,24 @@ function qyGroupOptions(): PipelineStage[] {
   ];
 }
 
+// GET Filters
+function qyBooksFiltering(query: any): PipelineStage[] {
+  return [
+    { $match: query },
+    {
+      $facet: {
+        results: [],
+        totalBooks: [{ $count: 'count' }],
+        languageCounts: [
+          { $group: { _id: '$language', count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+        ],
+        yearCounts: [{ $group: { _id: '$year', count: { $sum: 1 } } }, { $sort: { _id: -1 } }],
+      },
+    },
+  ];
+}
+
 // GET BooksRandom
 function qyBooksRandom(): PipelineStage[] {
   return [
@@ -252,6 +270,7 @@ function qyPutBook(id: string, body: any, image: object) {
 export {
   qySearch,
   qyGroupOptions,
+  qyBooksFiltering,
   qyBooksRandom,
   qyRelatedBooks,
   qyMoreBooksAuthors,

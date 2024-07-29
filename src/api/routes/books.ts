@@ -22,7 +22,7 @@ const router = express.Router();
 router.get('/', (req, res: Response) => {
   res.redirect('/api/books');
 });
-router.get('/books', query, pagination, getBooks);
+router.get('/books', pagination, query, getBooks);
 router.get('/books/search', getSearchBooks);
 router.get('/books/options', getAllOptions);
 router.get('/books/more-books', getBooksRandom);

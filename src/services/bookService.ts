@@ -78,9 +78,16 @@ export const BookService: IRepositoryBook = {
     }
   },
 
-  async findOptionsFiltering(authors, category, year, language) {
+  async findOptionsFiltering(authors, category, year, language, limit, offset) {
     try {
-      return await BookRepository.findOptionsFiltering(authors, category, year, language);
+      return await BookRepository.findOptionsFiltering(
+        authors,
+        category,
+        year,
+        language,
+        limit,
+        offset
+      );
     } catch (err) {
       throw err;
     }

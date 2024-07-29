@@ -2,6 +2,7 @@ import booksModel from '../models/books';
 import { IRepositoryBook } from '../types/IRepository';
 import {
   qyGroupOptions,
+  qyBooksFiltering,
   qyOneBooks,
   qyPathUrlBooks,
   qySearch,
@@ -111,7 +112,7 @@ export const BookRepository: IRepositoryBook = {
     }
   },
 
-  async findOptionsFiltering(authors, category, year, language) {
+  async findOptionsFiltering(authors, category, year, language, limit, offset) {
     const projection = 'image title authors category language year pathUrl';
     let query: any = {};
 
@@ -138,12 +139,42 @@ export const BookRepository: IRepositoryBook = {
     }
 
     if (Object.keys(query).length > 0) {
-      return await booksModel.find(query, projection).sort({
-        _id: -1,
-      });
+      const results = await booksModel
+        .find(query, projection)
+        .skip(offset)
+        .limit(limit)
+        .sort({
+          _id: -1,
+        })
+        .exec();
+
+      const totalBooks = await booksModel.countDocuments(query).exec();
+
+      // const result = await booksModel.aggregate(qyBooksFiltering).exec();
+      // const { results, totalBooks, languageCounts, yearCounts } = result[0];
+      // console.log({
+      //   total: result[0].totalBooks,
+      //   languages: result[0].languageCounts,
+      //   years: result[0].yearCounts,
+      // });
+
+      return {
+        results,
+        totalBooks,
+      };
+
+      // return {
+      //   results,
+      //   totalBooks,
+      //   languageCounts,
+      //   yearCounts
+      // };
     }
 
-    return [];
+    return {
+      results: [],
+      totalBooks: 0,
+    };
   },
 
   async createBook(body) {
