@@ -113,7 +113,7 @@ export const BookRepository: IRepositoryBook = {
   },
 
   async findOptionsFiltering(authors, category, year, language, limit, offset) {
-    const projection = 'image title authors category language year pathUrl';
+    // const projection = 'image title authors category language year pathUrl';
     let query: any = {};
 
     if (authors) {
@@ -128,7 +128,7 @@ export const BookRepository: IRepositoryBook = {
     }
 
     if (year) {
-      query.year = year;
+      query.year = parseInt(year);
     }
 
     if (language) {
@@ -139,36 +139,26 @@ export const BookRepository: IRepositoryBook = {
     }
 
     if (Object.keys(query).length > 0) {
-      const results = await booksModel
-        .find(query, projection)
-        .skip(offset)
-        .limit(limit)
-        .sort({
-          _id: -1,
-        })
-        .exec();
+      // const results = await booksModel
+      //   .find(query, projection)
+      //   .skip(offset)
+      //   .limit(limit)
+      //   .sort({
+      //     _id: -1,
+      //   })
+      //   .exec();
 
-      const totalBooks = await booksModel.countDocuments(query).exec();
+      // const totalBooks = await booksModel.countDocuments(query).exec();
 
-      // const result = await booksModel.aggregate(qyBooksFiltering).exec();
-      // const { results, totalBooks, languageCounts, yearCounts } = result[0];
-      // console.log({
-      //   total: result[0].totalBooks,
-      //   languages: result[0].languageCounts,
-      //   years: result[0].yearCounts,
-      // });
+      const pipeline = qyBooksFiltering(query, offset, limit);
+      const result = await booksModel.aggregate(pipeline).exec();
+
+      const { results, totalBooks, languageCounts, yearCounts } = result[0];
 
       return {
         results,
         totalBooks,
       };
-
-      // return {
-      //   results,
-      //   totalBooks,
-      //   languageCounts,
-      //   yearCounts
-      // };
     }
 
     return {

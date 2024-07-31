@@ -1,4 +1,4 @@
-import { PipelineStage } from 'mongoose';
+import { FilterQuery, PipelineStage } from 'mongoose';
 
 // GET Search
 function qySearch(q: object | string | undefined) {
@@ -105,18 +105,54 @@ function qyGroupOptions(): PipelineStage[] {
 }
 
 // GET Filters
-function qyBooksFiltering(query: any): PipelineStage[] {
+function qyBooksFiltering(query: FilterQuery<any>, offset: number, limit: number): PipelineStage[] {
   return [
     { $match: query },
     {
       $facet: {
-        results: [],
+        results: [
+          { $skip: offset },
+          { $limit: limit },
+          { $sort: { _id: -1 } },
+          {
+            $project: {
+              image: 1,
+              title: 1,
+              authors: {
+                $cond: {
+                  if: {
+                    $isArray: '$authors',
+                  },
+                  then: '$authors',
+                  else: ['$authors'],
+                },
+              },
+              category: {
+                $cond: {
+                  if: {
+                    $isArray: '$category',
+                  },
+                  then: '$category',
+                  else: ['$category'],
+                },
+              },
+              language: 1,
+              year: 1,
+              pathUrl: 1,
+            },
+          },
+        ],
         totalBooks: [{ $count: 'count' }],
         languageCounts: [
           { $group: { _id: '$language', count: { $sum: 1 } } },
           { $sort: { _id: 1 } },
         ],
         yearCounts: [{ $group: { _id: '$year', count: { $sum: 1 } } }, { $sort: { _id: -1 } }],
+      },
+    },
+    {
+      $addFields: {
+        totalBooks: { $arrayElemAt: ['$totalBooks.count', 0] },
       },
     },
   ];
