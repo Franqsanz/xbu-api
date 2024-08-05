@@ -5,7 +5,11 @@ import { Pagination, PaginationInfo } from '../../types/types';
 declare module 'express-serve-static-core' {
   interface Request {
     pagination?: Pagination;
-    calculatePagination?: (totalBooks: number) => void;
+    calculatePagination?: (
+      totalBooks: number,
+      yearCounts?: number | undefined,
+      languageCounts?: number | undefined
+    ) => void;
     paginationInfo?: PaginationInfo;
   }
 }
@@ -21,7 +25,11 @@ export function pagination(req: Request, res: Response, next: NextFunction) {
 
   req.pagination = { page, limit, offset };
 
-  req.calculatePagination = (totalBooks: number): void => {
+  req.calculatePagination = (
+    totalBooks: number,
+    yearCounts?: number,
+    languageCounts?: number
+  ): void => {
     const { page, limit } = req.pagination!;
 
     // Aquí calculamos el número total de páginas
@@ -44,6 +52,8 @@ export function pagination(req: Request, res: Response, next: NextFunction) {
       prevPage,
       nextPageLink,
       prevPageLink,
+      yearCounts, // El campo "yearCounts" es opcional.
+      languageCounts, // El campo "languageCounts" es opcional.
     };
   };
 

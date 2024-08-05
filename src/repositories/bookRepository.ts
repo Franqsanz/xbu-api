@@ -113,7 +113,6 @@ export const BookRepository: IRepositoryBook = {
   },
 
   async findOptionsFiltering(authors, category, year, language, limit, offset) {
-    // const projection = 'image title authors category language year pathUrl';
     let query: any = {};
 
     if (authors) {
@@ -139,17 +138,6 @@ export const BookRepository: IRepositoryBook = {
     }
 
     if (Object.keys(query).length > 0) {
-      // const results = await booksModel
-      //   .find(query, projection)
-      //   .skip(offset)
-      //   .limit(limit)
-      //   .sort({
-      //     _id: -1,
-      //   })
-      //   .exec();
-
-      // const totalBooks = await booksModel.countDocuments(query).exec();
-
       const pipeline = qyBooksFiltering(query, offset, limit);
       const result = await booksModel.aggregate(pipeline).exec();
 
@@ -158,12 +146,16 @@ export const BookRepository: IRepositoryBook = {
       return {
         results,
         totalBooks,
+        languageCounts,
+        yearCounts,
       };
     }
 
     return {
       results: [],
       totalBooks: 0,
+      languageCounts: 0,
+      yearCounts: 0,
     };
   },
 

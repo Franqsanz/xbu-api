@@ -23,6 +23,8 @@ interface IBook extends pkg.Document {
 interface IFindBooks {
   results: IBook[];
   totalBooks: number;
+  yearCounts?: number;
+  languageCounts?: number;
 }
 
 interface IDeleteBook {
@@ -63,6 +65,8 @@ interface Pagination {
 interface PaginationInfo {
   totalBooks: number;
   totalPages: number;
+  languageCounts?: number;
+  yearCounts?: number;
   currentPage: number;
   nextPage: number | null;
   prevPage: number | null;

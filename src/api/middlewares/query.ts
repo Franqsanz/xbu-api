@@ -12,20 +12,21 @@ export async function query(req: Request, res: Response, next: NextFunction) {
   }
 
   try {
-    const { results, totalBooks } = await BookService.findOptionsFiltering(
-      authors as string,
-      category as string,
-      year as string,
-      language as string,
-      limit,
-      offset
-    );
+    const { results, totalBooks, yearCounts, languageCounts } =
+      await BookService.findOptionsFiltering(
+        authors as string,
+        category as string,
+        year as string,
+        language as string,
+        limit,
+        offset
+      );
 
     if (!results || results.length < 1) {
       throw NotFound(`No se han encontrado datos para ${req.originalUrl}.`);
     }
 
-    req.calculatePagination!(totalBooks);
+    req.calculatePagination!(totalBooks, yearCounts, languageCounts);
 
     const response = {
       info: req.paginationInfo,

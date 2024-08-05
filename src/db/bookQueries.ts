@@ -146,8 +146,13 @@ function qyBooksFiltering(query: FilterQuery<any>, offset: number, limit: number
         languageCounts: [
           { $group: { _id: '$language', count: { $sum: 1 } } },
           { $sort: { _id: 1 } },
+          { $project: { _id: 0, language: '$_id', count: 1 } }, // Renombrar "_id" a "language".
         ],
-        yearCounts: [{ $group: { _id: '$year', count: { $sum: 1 } } }, { $sort: { _id: -1 } }],
+        yearCounts: [
+          { $group: { _id: '$year', count: { $sum: 1 } } },
+          { $sort: { _id: -1 } },
+          { $project: { _id: 0, year: '$_id', count: 1 } }, // Renombrar "_id" a "year".
+        ],
       },
     },
     {
