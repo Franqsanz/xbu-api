@@ -5,13 +5,31 @@ import { NotFound } from '../../utils/errors';
 
 export async function query(req: Request, res: Response, next: NextFunction) {
   const { authors, category, year, language } = req.query;
-  const { limit, offset } = req.pagination!;
+  const { limit, offset, page } = req.pagination! || {};
 
   if (!authors && !category && !year && !language) {
     return next();
   }
 
   try {
+    if (!limit || !page) {
+      // Si no hay paginación, llama al servicio para obtener todos los libros
+      const { results, totalBooks, yearCounts, languageCounts } =
+        await BookService.findOptionsFiltering(
+          authors as string,
+          category as string,
+          year as string,
+          language as string
+        );
+
+      return res.status(200).json({
+        totalBooks,
+        yearCounts,
+        languageCounts,
+        results,
+      });
+    }
+
     const { results, totalBooks, yearCounts, languageCounts } =
       await BookService.findOptionsFiltering(
         authors as string,

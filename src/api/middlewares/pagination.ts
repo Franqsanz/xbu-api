@@ -15,7 +15,7 @@ declare module 'express-serve-static-core' {
 }
 
 export function pagination(req: Request, res: Response, next: NextFunction) {
-  let limit = parseInt(req.query.limit as string) || 10;
+  let limit = parseInt(req.query.limit as string);
   let page = parseInt(req.query.page as string) || 1;
 
   if (page < 1) page = 1;

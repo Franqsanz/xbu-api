@@ -138,7 +138,7 @@ export const BookRepository: IRepositoryBook = {
     }
 
     if (Object.keys(query).length > 0) {
-      const pipeline = qyBooksFiltering(query, offset, limit);
+      const pipeline = qyBooksFiltering(query, offset ?? 0, limit ?? Number.MAX_SAFE_INTEGER);
       const result = await booksModel.aggregate(pipeline).exec();
 
       const { results, totalBooks, languageCounts, yearCounts } = result[0];
@@ -154,8 +154,8 @@ export const BookRepository: IRepositoryBook = {
     return {
       results: [],
       totalBooks: 0,
-      languageCounts: 0,
-      yearCounts: 0,
+      languageCounts: [],
+      yearCounts: [],
     };
   },
 

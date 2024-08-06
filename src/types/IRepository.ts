@@ -16,8 +16,8 @@ interface IReadBook {
     category: string,
     year: string,
     language: string,
-    limit: number,
-    offset: number
+    limit?: number,
+    offset?: number
   ): Promise<IFindBooks>;
 }
 
