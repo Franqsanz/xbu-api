@@ -33,52 +33,20 @@ function qyGroupOptions(): PipelineStage[] {
     {
       $facet: {
         byCategory: [
-          {
-            $unwind: '$category',
-          },
-          {
-            $group: {
-              _id: '$category',
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $sort: {
-              _id: 1,
-            },
-          },
+          { $unwind: '$category' },
+          { $group: { _id: '$category', count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+          { $project: { _id: 0, category: '$_id', count: 1 } }, // Renombrar "_id" a "category".
         ],
         byLanguage: [
-          {
-            $group: {
-              _id: '$language',
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $sort: {
-              _id: 1,
-            },
-          },
+          { $group: { _id: '$language', count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+          { $project: { _id: 0, language: '$_id', count: 1 } }, // Renombrar "_id" a "language".
         ],
         byYear: [
-          {
-            $group: {
-              _id: '$year',
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-          {
-            $sort: {
-              _id: 1,
-            },
-          },
+          { $group: { _id: '$year', count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+          { $project: { _id: 0, year: '$_id', count: 1 } }, // Renombrar "_id" a "year".
         ],
       },
     },
