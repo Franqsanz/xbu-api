@@ -22,6 +22,14 @@ export const BookService: IRepositoryBook = {
     }
   },
 
+  async findBySlugUpdateView(pathUrl) {
+    try {
+      return await BookRepository.findBySlugUpdateView(pathUrl);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async findBySlug(pathUrl) {
     try {
       return await BookRepository.findBySlug(pathUrl);

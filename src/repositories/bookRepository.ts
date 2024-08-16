@@ -4,6 +4,7 @@ import {
   qyGroupOptions,
   qyBooksFiltering,
   qyOneBooks,
+  qyPathUrlBooksUpdateView,
   qyPathUrlBooks,
   qySearch,
   qyBooksRandom,
@@ -39,10 +40,16 @@ export const BookRepository: IRepositoryBook = {
     return await booksModel.findByIdAndUpdate(...query).hint('_id_');
   },
 
+  async findBySlugUpdateView(slug) {
+    const query = qyPathUrlBooksUpdateView(slug);
+
+    return await booksModel.findOneAndUpdate(...query);
+  },
+
   async findBySlug(slug) {
     const query = qyPathUrlBooks(slug);
 
-    return await booksModel.findOneAndUpdate(...query);
+    return await booksModel.findOne(...query);
   },
 
   async findSearch(q) {

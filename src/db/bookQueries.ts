@@ -231,35 +231,20 @@ function qyMoreBooksAuthors(id: string, selectedAuthors: string): PipelineStage[
 // GET OneBooks
 function qyOneBooks(id: string) {
   return [
-    {
-      _id: id,
-    },
-    {
-      $inc: {
-        views: 1,
-      },
-    }, // Incrementa el contador de vistas en 1
-    {
-      new: true,
-    }, // Devuelve el documento actualizado
+    { _id: id },
+    { $inc: { views: 1 } }, // Incrementa el contador de vistas en 1
+    { new: true }, // Devuelve el documento actualizado
   ];
+}
+
+// GET PathUrlBooksUpdate
+function qyPathUrlBooksUpdateView(pathUrl: string) {
+  return [{ pathUrl: pathUrl }, { $inc: { views: 1 } }, { new: true }];
 }
 
 // GET PathUrlBooks
 function qyPathUrlBooks(pathUrl: string) {
-  return [
-    {
-      pathUrl: pathUrl,
-    },
-    {
-      $inc: {
-        views: 1,
-      },
-    },
-    {
-      new: true,
-    },
-  ];
+  return [{ pathUrl: pathUrl }];
 }
 
 // GET PutBook
@@ -284,6 +269,7 @@ export {
   qyRelatedBooks,
   qyMoreBooksAuthors,
   qyOneBooks,
+  qyPathUrlBooksUpdateView,
   qyPathUrlBooks,
   qyPutBook,
 };

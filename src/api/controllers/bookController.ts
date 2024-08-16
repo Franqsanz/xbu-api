@@ -8,6 +8,7 @@ import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 const {
   findBooks,
   findById,
+  findBySlugUpdateView,
   findBySlug,
   findSearch,
   findByGroupFields,
@@ -187,10 +188,16 @@ async function getPathUrlBooks(
   res: Response,
   next: NextFunction
 ): Promise<Response<IBook[] | null>> {
+  const token = (req.headers['authorization'] || '').split(' ')[1];
   const { pathUrl } = req.params;
+  let result;
 
   try {
-    const result = await findBySlug(pathUrl);
+    if (token) {
+      result = await findBySlugUpdateView(pathUrl);
+    } else {
+      result = await findBySlug(pathUrl);
+    }
 
     if (!result) {
       throw NotFound('No se encuentra o no existe');

@@ -4,6 +4,7 @@ import { IBook, IFindBooks, IDeleteBook, IUser, IUserAndBooks, IUserToSave } fro
 interface IReadBook {
   findBooks(limit: number, offset: number): Promise<IFindBooks>;
   findById(id: string): Promise<IBook | null>;
+  findBySlugUpdateView(id: string): Promise<IBook | null>;
   findBySlug(id: string): Promise<IBook | null>;
   findSearch(q: object | string | undefined): Promise<IBook[]>;
   findByGroupFields(): Promise<IBook[]>;
