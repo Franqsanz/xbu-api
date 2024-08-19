@@ -79,9 +79,9 @@ function qyBooksFiltering(query: FilterQuery<any>, offset: number, limit: number
     {
       $facet: {
         results: [
+          { $sort: { _id: -1 } },
           { $skip: offset },
           { $limit: limit },
-          { $sort: { _id: -1 } },
           {
             $project: {
               image: 1,
