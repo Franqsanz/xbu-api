@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Express } from 'express';
 
 import { PORT } from './config/env';
 import { initSentry } from './config/sentry';
@@ -7,7 +7,7 @@ import connectDB from './db/connection';
 
 connectDB(); // Ejecutar conexión a la base de datos.
 
-const app = express();
+const app: Express = express();
 
 initSentry(app);
 registerMW(app); // Registrar middlewares

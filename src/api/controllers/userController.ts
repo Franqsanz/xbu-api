@@ -29,7 +29,7 @@ async function getCheckUser(
 
   const memoryCache = await caching('memory', {
     max: 100,
-    ttl: 24 * 3600 * 1000
+    ttl: 24 * 3600 * 1000,
   });
 
   try {
