@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
 import { IUser, IUserAndBooks } from '../../types/types';
@@ -24,13 +25,31 @@ async function getCheckUser(
   next: NextFunction
 ): Promise<Response<IUser | null>> {
   const { userId } = req.params;
+  const key = `user:${userId}`;
+
+  const memoryCache = await caching('memory', {
+    max: 100,
+    ttl: 24 * 3600 * 1000
+  });
 
   try {
+    // Intentar obtener el usuario del caché
+    const cachedUser = await memoryCache.get<string>(key);
+
+    if (cachedUser) {
+      // Devolver el usuario almacenado
+      return res.status(200).json(JSON.parse(cachedUser));
+    }
+
+    // Obtener el usuario de la base de datos
     const user = await UserService.findById(userId);
 
     if (!user) {
-      throw NotFound('Usuario no encontrado');
+      return res.status(404).json({ message: 'Usuario no encontrado' });
     }
+
+    // Almacenar el usuario en caché como JSON
+    await memoryCache.set(key, JSON.stringify(user));
 
     return res.status(200).json(user);
   } catch (err) {
