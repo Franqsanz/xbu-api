@@ -17,7 +17,7 @@ export const BookRepository: IRepositoryBook = {
   async findBooks(limit, offset) {
     // Aquí obtenemos los libros de la base de datos usando el método skip y limit
     const results = await booksModel
-      .find({}, 'title category language authors pathUrl image')
+      .find({}, 'title category language authors pathUrl image views')
       .skip(offset)
       .limit(limit)
       .sort({
@@ -109,7 +109,7 @@ export const BookRepository: IRepositoryBook = {
       return await booksModel.find({}, ' title pathUrl views').sort({ views: -1 }).limit(10);
     } else if (detail === 'full') {
       return await booksModel
-        .find({}, 'title category language authors pathUrl image')
+        .find({}, 'title category language authors pathUrl image views')
         .sort({
           views: -1,
         })
