@@ -3,8 +3,10 @@ import { Request, Response, NextFunction } from 'express';
 import { BookService } from '../../services/bookService';
 import { BadRequest, NotFound } from '../../utils/errors';
 import { redis } from '../../config/redis';
+import { authFirebase } from '../../config/firebase';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
+const auth = authFirebase;
 const {
   findBooks,
   findById,
@@ -193,14 +195,19 @@ async function getPathUrlBooks(
   let result;
 
   try {
-    if (token) {
-      result = await findBySlugUpdateView(pathUrl);
-    } else {
-      result = await findBySlug(pathUrl);
-    }
+    result = await findBySlug(pathUrl);
 
     if (!result) {
       throw NotFound('No se encuentra o no existe');
+    }
+
+    if (token) {
+      const decodedToken = await auth.verifyIdToken(token);
+      const userId = decodedToken?.uid || null;
+
+      if (userId && result?.userId !== userId) {
+        result = await findBySlugUpdateView(pathUrl);
+      }
     }
 
     return res.status(200).json(result);
