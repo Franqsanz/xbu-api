@@ -37,6 +37,14 @@ export const bookSchema = z.object({
     public_id: z.string(),
   }),
   userId: z.string(),
+  views: z
+    .string()
+    .optional()
+    .refine((val) => !isNaN(Number(val)), {
+      message: 'El campo "views" debe ser un número',
+    })
+    .transform((val) => Number(val)),
+  isFavorite: z.boolean().optional(),
 });
 
 // export type Book = z.infer<typeof bookSchema>;

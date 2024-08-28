@@ -247,18 +247,14 @@ function qyPathUrlBooks(pathUrl: string) {
   return [{ pathUrl: pathUrl }];
 }
 
+// GET PathUrlBooks
+function qyUpdateFavorite(id: string, isFavorite: boolean) {
+  return [{ _id: id }, { $set: { isFavorite: isFavorite } }, { new: true }];
+}
+
 // GET PutBook
 function qyPutBook(id: string, body: any, image: object) {
-  return [
-    id,
-    {
-      ...body,
-      image: image,
-    },
-    {
-      new: true,
-    },
-  ];
+  return [id, { ...body, image: image }, { new: true }];
 }
 
 export {
@@ -271,5 +267,6 @@ export {
   qyOneBooks,
   qyPathUrlBooksUpdateView,
   qyPathUrlBooks,
+  qyUpdateFavorite,
   qyPutBook,
 };

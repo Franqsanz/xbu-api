@@ -18,6 +18,7 @@ interface IBook extends pkg.Document {
   };
   userId: string;
   views: number;
+  isFavorite: boolean;
 }
 
 interface IFindBooks {

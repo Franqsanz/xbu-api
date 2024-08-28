@@ -58,6 +58,13 @@ export const UserRepository: IRepositoryUser = {
     });
   },
 
+  async findFavoritesByUser(userId) {
+    return await booksModel.find({
+      userId: userId,
+      isFavorite: true,
+    });
+  },
+
   async createUser(userToSave) {
     const newUser = new usersModel(userToSave);
 

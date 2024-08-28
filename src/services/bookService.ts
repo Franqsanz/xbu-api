@@ -38,6 +38,14 @@ export const BookService: IRepositoryBook = {
     }
   },
 
+  async findUpdateFavorite(id, isFavorite) {
+    try {
+      return await BookRepository.findUpdateFavorite(id, isFavorite);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async findSearch(q) {
     try {
       return await BookRepository.findSearch(q);

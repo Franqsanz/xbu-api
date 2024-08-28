@@ -64,11 +64,14 @@ const booksSchema = new Schema(
     },
     userId: {
       type: String,
-      // required: true,
     },
     views: {
       type: Number,
       default: 0,
+    },
+    isFavorite: {
+      type: Boolean,
+      default: false,
     },
   },
   {

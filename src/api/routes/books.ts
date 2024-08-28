@@ -1,4 +1,4 @@
-import express, { Response } from 'express';
+import express, { Response, Router } from 'express';
 
 import {
   getBooks,
@@ -13,14 +13,15 @@ import {
   postBooks,
   putBooks,
   deleteBook,
+  updateFavorite,
 } from '../controllers/bookController';
 import { query } from '../middlewares/query';
 import { pagination } from '../middlewares/pagination';
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.get('/', (req, res: Response) => {
-  res.redirect('/api/books');
+  return res.redirect('/api/books');
 });
 router.get('/books', pagination, query, getBooks);
 router.get('/books/search', getSearchBooks);
@@ -30,6 +31,7 @@ router.get('/books/related-books/:id', getRelatedBooks);
 router.get('/books/more-books-authors/:id', getMoreBooksAuthors);
 router.get('/books/most-viewed-books', getMostViewedBooks);
 router.get('/books/path/:pathUrl', getPathUrlBooks);
+router.patch('/books/favorite/:id', updateFavorite);
 router.get('/books/:id', getOneBooks);
 router.post('/books', postBooks);
 router.patch('/books/:id', putBooks);

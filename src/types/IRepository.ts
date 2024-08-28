@@ -5,6 +5,7 @@ interface IReadBook {
   findBooks(limit: number, offset: number): Promise<IFindBooks>;
   findById(id: string): Promise<IBook | null>;
   findBySlugUpdateView(id: string): Promise<IBook | null>;
+  findUpdateFavorite(id: string, isFavorite: boolean): Promise<IBook | null>;
   findBySlug(id: string): Promise<IBook | null>;
   findSearch(q: object | string | undefined): Promise<IBook[]>;
   findByGroupFields(): Promise<IBook[]>;
@@ -34,6 +35,7 @@ interface IReadUser {
   findByUid(uid: string): Promise<IUser | null>;
   findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks>;
   findBooksByUserId(userId: string): Promise<IBook[]>;
+  findFavoritesByUser(userId: string): Promise<IBook[]>;
 }
 
 interface IWriteUser {

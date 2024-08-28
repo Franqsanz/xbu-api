@@ -12,6 +12,8 @@ const {
   findById,
   findBySlugUpdateView,
   findBySlug,
+  findUpdateFavorite,
+  // findOptionsFiltering,
   findSearch,
   findByGroupFields,
   findBooksRandom,
@@ -216,6 +218,26 @@ async function getPathUrlBooks(
   }
 }
 
+async function updateFavorite(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook | null>> {
+  const { id, isFavorite } = req.body;
+
+  try {
+    const result = await findUpdateFavorite(id, isFavorite);
+
+    if (!result) {
+      throw NotFound('Libro no encontrado');
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function getMostViewedBooks(
   req: Request,
   res: Response,
@@ -308,6 +330,7 @@ export {
   getOneBooks,
   getPathUrlBooks,
   getMostViewedBooks,
+  updateFavorite,
   postBooks,
   putBooks,
   deleteBook,

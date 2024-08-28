@@ -11,6 +11,7 @@ import {
   qyRelatedBooks,
   qyMoreBooksAuthors,
   qyPutBook,
+  qyUpdateFavorite,
 } from '../db/bookQueries';
 
 export const BookRepository: IRepositoryBook = {
@@ -42,6 +43,12 @@ export const BookRepository: IRepositoryBook = {
 
   async findBySlugUpdateView(slug) {
     const query = qyPathUrlBooksUpdateView(slug);
+
+    return await booksModel.findOneAndUpdate(...query);
+  },
+
+  async findUpdateFavorite(id, isFavorite) {
+    const query = qyUpdateFavorite(id, isFavorite);
 
     return await booksModel.findOneAndUpdate(...query);
   },

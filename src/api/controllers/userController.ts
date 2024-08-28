@@ -100,6 +100,26 @@ async function getUserAndBooks(
   }
 }
 
+async function getFavoritesByUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IUser | null>> {
+  const { userId } = req.params;
+
+  try {
+    const result = await UserService.findFavoritesByUser(userId);
+
+    if (!result) {
+      throw NotFound('Libro no encontrado');
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function deleteAccount(
   req: Request,
   res: Response,
@@ -134,4 +154,4 @@ async function deleteAccount(
   }
 }
 
-export { getUsers, getCheckUser, getUserAndBooks, deleteAccount };
+export { getUsers, getCheckUser, getUserAndBooks, getFavoritesByUser, deleteAccount };

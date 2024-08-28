@@ -29,6 +29,14 @@ export const UserService = {
     }
   },
 
+  async findFavoritesByUser(userId: string) {
+    try {
+      return await UserRepository.findFavoritesByUser(userId);
+    } catch (error) {
+      throw error;
+    }
+  },
+
   async saveUser(decodedToken: DecodedIdToken, username: string) {
     const userToSave = {
       ...decodedToken,
