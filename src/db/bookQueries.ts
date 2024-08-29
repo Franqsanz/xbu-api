@@ -289,6 +289,43 @@ function qyPathUrlBooksFavorite(pathUrl: string, userId: string | undefined): Pi
   ];
 }
 
+// GET qyFindAllBookFavorite
+function qyFindAllBookFavorite(userId: string): PipelineStage[] {
+  return [
+    {
+      $match: {
+        userId: userId,
+      },
+    },
+    {
+      $lookup: {
+        from: 'books',
+        localField: 'favoriteBooks', // Campo que contiene los IDs de los libros en la colección `favorites`
+        foreignField: '_id', // Campo que contiene los IDs en la colección `books`
+        as: 'bookDetails', // Nombre del campo que contendrá los detalles del libro
+      },
+    },
+    {
+      $unwind: '$bookDetails', // Desempaqueta el array `bookDetails`
+    },
+    {
+      $replaceRoot: {
+        newRoot: '$bookDetails', // Reemplaza la raíz con los detalles del libro
+      },
+    },
+    {
+      $addFields: {
+        id: '$_id',
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+      },
+    },
+  ];
+}
+
 // PATCH AddFavorite
 function qyAddFavorite(userId: string, id: string) {
   return [{ userId: userId }, { $addToSet: { favoriteBooks: id } }, { upsert: true, new: true }];
@@ -315,6 +352,7 @@ export {
   qyPathUrlBooksUpdateView,
   qyPathUrlBooks,
   qyPathUrlBooksFavorite,
+  qyFindAllBookFavorite,
   qyAddFavorite,
   qyRemoveFavorite,
   qyPutBook,

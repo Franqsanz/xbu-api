@@ -1,7 +1,9 @@
 import booksModel from '../models/books';
 import usersModel from '../models/users';
+import favoritesModel from '../models/favorites';
 import { qyCheckUser } from '../db/userQueries';
 import { IRepositoryUser } from '../types/IRepository';
+import { qyFindAllBookFavorite } from '../db/bookQueries';
 
 export const UserRepository: IRepositoryUser = {
   async findUsers() {
@@ -58,11 +60,10 @@ export const UserRepository: IRepositoryUser = {
     });
   },
 
-  async findFavoritesByUser(userId) {
-    return await booksModel.find({
-      userId: userId,
-      isFavorite: true,
-    });
+  async findAllBookFavoriteByUser(userId) {
+    const query = qyFindAllBookFavorite(userId);
+
+    return favoritesModel.aggregate(query).exec();
   },
 
   async createUser(userToSave) {

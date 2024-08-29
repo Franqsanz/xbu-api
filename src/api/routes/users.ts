@@ -4,7 +4,7 @@ import {
   getUsers,
   getCheckUser,
   getUserAndBooks,
-  getFavoritesByUser,
+  getFindAllBookFavoriteByUser,
   deleteAccount,
 } from '../controllers/userController';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -16,7 +16,7 @@ const router: Router = express.Router();
 router.get('/', getUsers);
 router.get('/check-user/:userId', getCheckUser);
 router.get('/:userId/:username/my-books', verifyToken, pagination, getUserAndBooks);
-router.get('/:userId/my-favorites', getFavoritesByUser);
+router.get('/:userId/my-favorites', getFindAllBookFavoriteByUser);
 router.delete('/:userId', deleteAccount);
 
 export default router;

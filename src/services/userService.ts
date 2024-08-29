@@ -29,9 +29,9 @@ export const UserService = {
     }
   },
 
-  async findFavoritesByUser(userId: string) {
+  async findAllBookFavoriteByUser(userId: string) {
     try {
-      return await UserRepository.findFavoritesByUser(userId);
+      return await UserRepository.findAllBookFavoriteByUser(userId);
     } catch (error) {
       throw error;
     }

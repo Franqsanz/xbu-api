@@ -100,19 +100,15 @@ async function getUserAndBooks(
   }
 }
 
-async function getFavoritesByUser(
+async function getFindAllBookFavoriteByUser(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<IUser | null>> {
+): Promise<Response<IUser>> {
   const { userId } = req.params;
 
   try {
-    const result = await UserService.findFavoritesByUser(userId);
-
-    if (!result) {
-      throw NotFound('Libro no encontrado');
-    }
+    const result = await UserService.findAllBookFavoriteByUser(userId);
 
     return res.status(200).json(result);
   } catch (err) {
@@ -154,4 +150,4 @@ async function deleteAccount(
   }
 }
 
-export { getUsers, getCheckUser, getUserAndBooks, getFavoritesByUser, deleteAccount };
+export { getUsers, getCheckUser, getUserAndBooks, getFindAllBookFavoriteByUser, deleteAccount };
