@@ -18,7 +18,6 @@ interface IBook extends pkg.Document {
   };
   userId: string;
   views: number;
-  isFavorite: boolean;
 }
 
 interface IFindBooks {
@@ -53,6 +52,11 @@ interface IUserToSave extends DecodedIdToken {
   createdAt: Date;
 }
 
+interface IFavorite {
+  userId: string;
+  favoriteBooks: pkg.Schema.Types.ObjectId[];
+}
+
 interface IHttpError extends Error {
   statusCode: number;
 }
@@ -82,6 +86,7 @@ export {
   IUser,
   IUserAndBooks,
   IUserToSave,
+  IFavorite,
   IHttpError,
   Pagination,
   PaginationInfo,

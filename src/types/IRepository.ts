@@ -4,9 +4,9 @@ import { IBook, IFindBooks, IDeleteBook, IUser, IUserAndBooks, IUserToSave } fro
 interface IReadBook {
   findBooks(limit: number, offset: number): Promise<IFindBooks>;
   findById(id: string): Promise<IBook | null>;
-  findBySlugUpdateView(id: string): Promise<IBook | null>;
-  findUpdateFavorite(id: string, isFavorite: boolean): Promise<IBook | null>;
-  findBySlug(id: string): Promise<IBook | null>;
+  findBySlug(slug: string): Promise<IBook | null>;
+  findBySlugUpdateViewFavorite(slug: string, userId: string): Promise<IBook[] | null>;
+  findBySlugFavorite(slug: string, userId?: string | undefined): Promise<IBook[] | null>;
   findSearch(q: object | string | undefined): Promise<IBook[]>;
   findByGroupFields(): Promise<IBook[]>;
   findBooksRandom(): Promise<IBook[]>;
@@ -21,6 +21,8 @@ interface IReadBook {
     limit?: number,
     offset?: number
   ): Promise<IFindBooks>;
+  addFavorite(userId: string, id: string): Promise<IBook | null>;
+  removeFavorite(userId: string, id: string): Promise<IBook | null>;
 }
 
 interface IWriteBook {

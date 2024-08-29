@@ -44,7 +44,6 @@ export const bookSchema = z.object({
       message: 'El campo "views" debe ser un número',
     })
     .transform((val) => Number(val)),
-  isFavorite: z.boolean().optional(),
 });
 
 // export type Book = z.infer<typeof bookSchema>;

@@ -247,9 +247,56 @@ function qyPathUrlBooks(pathUrl: string) {
   return [{ pathUrl: pathUrl }];
 }
 
-// GET PathUrlBooks
-function qyUpdateFavorite(id: string, isFavorite: boolean) {
-  return [{ _id: id }, { $set: { isFavorite: isFavorite } }, { new: true }];
+// GET PathUrlBooksFavorite
+function qyPathUrlBooksFavorite(pathUrl: string, userId: string | undefined): PipelineStage[] {
+  return [
+    {
+      $match: { pathUrl: pathUrl },
+    },
+    {
+      $lookup: {
+        from: 'favorites',
+        localField: '_id', // ID del libro
+        foreignField: 'favoriteBooks', // Campo en favoritos que contiene los IDs de los libros
+        as: 'favoriteInfo',
+        pipeline: [
+          {
+            $match: {
+              userId: userId, // Coincide solo con los favoritos del usuario actual
+            },
+          },
+        ],
+      },
+    },
+    {
+      $addFields: {
+        isFavorite: {
+          $cond: {
+            if: { $gt: [{ $size: '$favoriteInfo' }, 0] },
+            then: true,
+            else: false,
+          },
+        },
+        id: '$_id',
+      },
+    },
+    {
+      $project: {
+        favoriteInfo: 0,
+        _id: 0,
+      },
+    },
+  ];
+}
+
+// PATCH AddFavorite
+function qyAddFavorite(userId: string, id: string) {
+  return [{ userId: userId }, { $addToSet: { favoriteBooks: id } }, { upsert: true, new: true }];
+}
+
+// PATCH RemoveFavorite
+function qyRemoveFavorite(userId: string, id: string) {
+  return [{ userId: userId }, { $pull: { favoriteBooks: id } }, { new: true }];
 }
 
 // GET PutBook
@@ -267,6 +314,8 @@ export {
   qyOneBooks,
   qyPathUrlBooksUpdateView,
   qyPathUrlBooks,
-  qyUpdateFavorite,
+  qyPathUrlBooksFavorite,
+  qyAddFavorite,
+  qyRemoveFavorite,
   qyPutBook,
 };

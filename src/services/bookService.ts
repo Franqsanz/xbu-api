@@ -22,14 +22,6 @@ export const BookService: IRepositoryBook = {
     }
   },
 
-  async findBySlugUpdateView(pathUrl) {
-    try {
-      return await BookRepository.findBySlugUpdateView(pathUrl);
-    } catch (err) {
-      throw err;
-    }
-  },
-
   async findBySlug(pathUrl) {
     try {
       return await BookRepository.findBySlug(pathUrl);
@@ -38,9 +30,33 @@ export const BookService: IRepositoryBook = {
     }
   },
 
-  async findUpdateFavorite(id, isFavorite) {
+  async findBySlugUpdateViewFavorite(pathUrl, userId) {
     try {
-      return await BookRepository.findUpdateFavorite(id, isFavorite);
+      return await BookRepository.findBySlugUpdateViewFavorite(pathUrl, userId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async findBySlugFavorite(pathUrl, userId) {
+    try {
+      return await BookRepository.findBySlugFavorite(pathUrl, userId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async addFavorite(userId, id) {
+    try {
+      return await BookRepository.addFavorite(userId, id);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async removeFavorite(userId, id) {
+    try {
+      return await BookRepository.removeFavorite(userId, id);
     } catch (err) {
       throw err;
     }

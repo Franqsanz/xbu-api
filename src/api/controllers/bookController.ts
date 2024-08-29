@@ -7,23 +7,6 @@ import { authFirebase } from '../../config/firebase';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
 const auth = authFirebase;
-const {
-  findBooks,
-  findById,
-  findBySlugUpdateView,
-  findBySlug,
-  findUpdateFavorite,
-  // findOptionsFiltering,
-  findSearch,
-  findByGroupFields,
-  findBooksRandom,
-  findRelatedBooks,
-  findMoreBooksAuthors,
-  findMostViewedBooks,
-  createBook,
-  updateBook,
-  removeBook,
-} = BookService;
 
 async function getBooks(
   req: Request,
@@ -40,7 +23,7 @@ async function getBooks(
       // Eliminamos la cache
       await redis.del(key);
       // Si no hay paginación, simplemente llama al servicio y retorna la respuesta
-      const { results, totalBooks } = await findBooks(limit, offset);
+      const { results, totalBooks } = await BookService.findBooks(limit, offset);
 
       return res.status(200).json({
         totalBooks,
@@ -61,7 +44,7 @@ async function getBooks(
     }
 
     // Llamar al servicio que ejecuta las consultas
-    const { results, totalBooks } = await findBooks(limit, offset);
+    const { results, totalBooks } = await BookService.findBooks(limit, offset);
 
     req.calculatePagination!(totalBooks);
 
@@ -95,7 +78,7 @@ async function getSearchBooks(
   const { q } = req.query;
 
   try {
-    const results = await findSearch(q);
+    const results = await BookService.findSearch(q);
 
     if (results.length < 1) {
       throw NotFound(`No se encontraron resultados para: ${q}`);
@@ -113,7 +96,7 @@ async function getAllOptions(
   next: NextFunction
 ): Promise<Response<IBook[]>> {
   try {
-    const result = await findByGroupFields();
+    const result = await BookService.findByGroupFields();
 
     return res.status(200).json(result);
   } catch (err) {
@@ -127,7 +110,7 @@ async function getBooksRandom(
   next: NextFunction
 ): Promise<Response<IBook[]>> {
   try {
-    const result = await findBooksRandom();
+    const result = await BookService.findBooksRandom();
 
     return res.status(200).json(result);
   } catch (err) {
@@ -143,7 +126,7 @@ async function getRelatedBooks(
   const { id } = req.params;
 
   try {
-    const relatedBooks = await findRelatedBooks(id);
+    const relatedBooks = await BookService.findRelatedBooks(id);
 
     return res.status(200).json(relatedBooks);
   } catch (err) {
@@ -159,7 +142,7 @@ async function getMoreBooksAuthors(
   const { id } = req.params;
 
   try {
-    const moreBooksAuthors = await findMoreBooksAuthors(id);
+    const moreBooksAuthors = await BookService.findMoreBooksAuthors(id);
 
     return res.status(200).json(moreBooksAuthors);
   } catch (err) {
@@ -175,7 +158,7 @@ async function getOneBooks(
   const { id } = req.params;
 
   try {
-    const result = await findById(id);
+    const result = await BookService.findById(id);
 
     if (!result) {
       throw NotFound('No se encuentra o no existe');
@@ -194,22 +177,31 @@ async function getPathUrlBooks(
 ): Promise<Response<IBook[] | null>> {
   const token = (req.headers['authorization'] || '').split(' ')[1];
   const { pathUrl } = req.params;
+  let decodedToken;
   let result;
 
   try {
-    result = await findBySlug(pathUrl);
+    if (token) {
+      decodedToken = await auth.verifyIdToken(token);
+    }
+
+    const userId = decodedToken?.uid;
+
+    // Terrible espagueti pero asi fue la unica forma que funcione :(
+    if (!userId) {
+      result = await BookService.findBySlug(pathUrl);
+    } else {
+      result = await BookService.findBySlugFavorite(pathUrl, userId);
+
+      if (result) {
+        if (userId && result[0]?.userId !== userId) {
+          result = await BookService.findBySlugUpdateViewFavorite(pathUrl, userId);
+        }
+      }
+    }
 
     if (!result) {
       throw NotFound('No se encuentra o no existe');
-    }
-
-    if (token) {
-      const decodedToken = await auth.verifyIdToken(token);
-      const userId = decodedToken?.uid || null;
-
-      if (userId && result?.userId !== userId) {
-        result = await findBySlugUpdateView(pathUrl);
-      }
     }
 
     return res.status(200).json(result);
@@ -218,15 +210,20 @@ async function getPathUrlBooks(
   }
 }
 
-async function updateFavorite(
+async function patchToggleFavorite(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<Response<IBook | null>> {
-  const { id, isFavorite } = req.body;
+  const { userId, id, isFavorite } = req.body;
+  let result;
 
   try {
-    const result = await findUpdateFavorite(id, isFavorite);
+    if (isFavorite) {
+      result = await BookService.addFavorite(userId, id);
+    } else {
+      result = await BookService.removeFavorite(userId, id);
+    }
 
     if (!result) {
       throw NotFound('Libro no encontrado');
@@ -250,7 +247,7 @@ async function getMostViewedBooks(
       throw BadRequest('Parámetro detail inválido');
     }
 
-    const result = await findMostViewedBooks(detail as string);
+    const result = await BookService.findMostViewedBooks(detail as string);
 
     return res.status(200).json(result);
   } catch (err) {
@@ -266,7 +263,7 @@ async function postBooks(
   const { body } = req;
 
   try {
-    const resultBook = await createBook(body);
+    const resultBook = await BookService.createBook(body);
 
     if (!resultBook) {
       throw BadRequest('Error al publicar, la solicitud está vacia');
@@ -288,7 +285,7 @@ async function putBooks(
   const { body } = req;
 
   try {
-    const result = await updateBook(id, body);
+    const result = await BookService.updateBook(id, body);
 
     if (!result) {
       throw BadRequest('No se pudo actualizar');
@@ -308,7 +305,7 @@ async function deleteBook(
   const { id } = req.params;
 
   try {
-    const book = await removeBook(id);
+    const book = await BookService.removeBook(id);
 
     if (!book) {
       throw NotFound('Libro no encontrado');
@@ -330,7 +327,7 @@ export {
   getOneBooks,
   getPathUrlBooks,
   getMostViewedBooks,
-  updateFavorite,
+  patchToggleFavorite,
   postBooks,
   putBooks,
   deleteBook,

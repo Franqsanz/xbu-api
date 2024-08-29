@@ -1,4 +1,5 @@
 import booksModel from '../models/books';
+import favoritesModel from '../models/favorites';
 import { IRepositoryBook } from '../types/IRepository';
 import {
   qyGroupOptions,
@@ -11,7 +12,9 @@ import {
   qyRelatedBooks,
   qyMoreBooksAuthors,
   qyPutBook,
-  qyUpdateFavorite,
+  qyAddFavorite,
+  qyRemoveFavorite,
+  qyPathUrlBooksFavorite,
 } from '../db/bookQueries';
 
 export const BookRepository: IRepositoryBook = {
@@ -41,22 +44,36 @@ export const BookRepository: IRepositoryBook = {
     return await booksModel.findByIdAndUpdate(...query).hint('_id_');
   },
 
-  async findBySlugUpdateView(slug) {
-    const query = qyPathUrlBooksUpdateView(slug);
+  async addFavorite(userId, id) {
+    const query = qyAddFavorite(userId, id);
 
-    return await booksModel.findOneAndUpdate(...query);
+    return await favoritesModel.findOneAndUpdate(...query);
   },
 
-  async findUpdateFavorite(id, isFavorite) {
-    const query = qyUpdateFavorite(id, isFavorite);
+  async removeFavorite(userId, id) {
+    const query = qyRemoveFavorite(userId, id);
 
-    return await booksModel.findOneAndUpdate(...query);
+    return await favoritesModel.findOneAndUpdate(...query);
   },
 
   async findBySlug(slug) {
     const query = qyPathUrlBooks(slug);
+    return await booksModel.findOne(...query).exec();
+  },
 
-    return await booksModel.findOne(...query);
+  async findBySlugUpdateViewFavorite(slug, userId) {
+    const query = qyPathUrlBooksUpdateView(slug);
+    const queryAggregate = qyPathUrlBooksFavorite(slug, userId);
+
+    await booksModel.findOneAndUpdate(...query).exec();
+
+    return booksModel.aggregate(queryAggregate).exec();
+  },
+
+  async findBySlugFavorite(slug, userId) {
+    const queryAggregate = qyPathUrlBooksFavorite(slug, userId);
+
+    return booksModel.aggregate(queryAggregate).exec();
   },
 
   async findSearch(q) {
