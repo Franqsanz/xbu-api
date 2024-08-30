@@ -290,12 +290,10 @@ function qyPathUrlBooksFavorite(pathUrl: string, userId: string | undefined): Pi
 }
 
 // GET qyFindAllBookFavorite
-function qyFindAllBookFavorite(userId: string): PipelineStage[] {
+function qyFindAllBookFavorite(userId: string, limit: number, offset: number): PipelineStage[] {
   return [
     {
-      $match: {
-        userId: userId,
-      },
+      $match: { userId: userId },
     },
     {
       $lookup: {
@@ -305,24 +303,31 @@ function qyFindAllBookFavorite(userId: string): PipelineStage[] {
         as: 'bookDetails', // Nombre del campo que contendrá los detalles del libro
       },
     },
+    { $unwind: '$bookDetails' }, // Desempaqueta el array `bookDetails`
+    { $replaceRoot: { newRoot: '$bookDetails' } }, // Reemplaza la raíz con los detalles del libro
+    // {
+    //   $facet: {
+    //     totalBooks: [{ $count: 'count' }],
+    //     results: [
+    //       { $sort: { id: -1 } },
+    //       { $skip: offset },
+    //       { $limit: limit },
+    //     ]
+    //   }
+    // },
     {
-      $unwind: '$bookDetails', // Desempaqueta el array `bookDetails`
-    },
-    {
-      $replaceRoot: {
-        newRoot: '$bookDetails', // Reemplaza la raíz con los detalles del libro
+      $facet: {
+        totalBooks: [{ $count: 'count' }],
+        results: [{ $skip: offset }, { $limit: limit }],
       },
     },
     {
       $addFields: {
         id: '$_id',
+        totalBooks: { $arrayElemAt: ['$totalBooks.count', 0] },
       },
     },
-    {
-      $project: {
-        _id: 0,
-      },
-    },
+    { $project: { _id: 0 } },
   ];
 }
 

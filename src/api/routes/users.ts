@@ -16,7 +16,7 @@ const router: Router = express.Router();
 router.get('/', getUsers);
 router.get('/check-user/:userId', getCheckUser);
 router.get('/:userId/:username/my-books', verifyToken, pagination, getUserAndBooks);
-router.get('/:userId/my-favorites', getFindAllBookFavoriteByUser);
+router.get('/:userId/my-favorites', pagination, getFindAllBookFavoriteByUser);
 router.delete('/:userId', deleteAccount);
 
 export default router;

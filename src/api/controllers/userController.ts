@@ -104,13 +104,25 @@ async function getFindAllBookFavoriteByUser(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<IUser>> {
+): Promise<Response<IUserAndBooks>> {
   const { userId } = req.params;
+  const { limit, offset } = req.pagination!;
 
   try {
-    const result = await UserService.findAllBookFavoriteByUser(userId);
+    const { results, totalBooks } = await UserService.findAllBookFavoriteByUser(
+      userId,
+      limit,
+      offset
+    );
 
-    return res.status(200).json(result);
+    req.calculatePagination!(totalBooks);
+
+    const response = {
+      info: req.paginationInfo,
+      results,
+    };
+
+    return res.status(200).json(response);
   } catch (err) {
     return next(err) as any;
   }

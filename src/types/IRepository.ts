@@ -37,7 +37,7 @@ interface IReadUser {
   findByUid(uid: string): Promise<IUser | null>;
   findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks>;
   findBooksByUserId(userId: string): Promise<IBook[]>;
-  findAllBookFavoriteByUser(userId: string): Promise<IBook[] | null>;
+  findAllBookFavoriteByUser(userId: string, limit: number, offset: number): Promise<IFindBooks>;
 }
 
 interface IWriteUser {

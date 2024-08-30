@@ -23,27 +23,17 @@ export const UserRepository: IRepositoryUser = {
   },
 
   async findUserAndBooks(username, limit, offset) {
-    const user = await usersModel.findOne(
-      {
-        username: username,
-      },
-      'uid name picture createdAt'
-    );
+    const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
+
     const totalBooks = await booksModel.countDocuments({
       userId: user?.uid,
     });
+
     const results = await booksModel
-      .find(
-        {
-          userId: user?.uid,
-        },
-        'title category language authors pathUrl image'
-      )
+      .find({ userId: user?.uid }, 'title category language authors pathUrl image')
       .skip(offset)
       .limit(limit)
-      .sort({
-        _id: -1,
-      })
+      .sort({ _id: -1 })
       .exec();
 
     return {
@@ -60,10 +50,15 @@ export const UserRepository: IRepositoryUser = {
     });
   },
 
-  async findAllBookFavoriteByUser(userId) {
-    const query = qyFindAllBookFavorite(userId);
+  async findAllBookFavoriteByUser(userId, limit, offset) {
+    const query = qyFindAllBookFavorite(userId, limit, offset);
 
-    return favoritesModel.aggregate(query).exec();
+    const [result] = await favoritesModel.aggregate(query).exec();
+
+    return {
+      totalBooks: result.totalBooks,
+      results: result.results,
+    };
   },
 
   async createUser(userToSave) {
