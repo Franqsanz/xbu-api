@@ -3,7 +3,7 @@ import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
 import { IUser, IUserAndBooks } from '../../types/types';
-import { NotFound } from '../../utils/errors';
+import { NotFound, BadRequest } from '../../utils/errors';
 
 async function getUsers(
   req: Request,
@@ -106,9 +106,22 @@ async function getFindAllBookFavoriteByUser(
   next: NextFunction
 ): Promise<Response<IUserAndBooks>> {
   const { userId } = req.params;
-  const { limit, offset } = req.pagination!;
+  const { limit, offset, page } = req.pagination! || {};
 
   try {
+    // if (!limit || !page) {
+    //   const { results, totalBooks } = await UserService.findAllBookFavoriteByUser(userId);
+
+    //   return res.status(200).json({
+    //     totalBooks,
+    //     results,
+    //   });
+    // }
+
+    if (!limit || !page) {
+      throw BadRequest('Faltan los parametros "page" y "limit"');
+    }
+
     const { results, totalBooks } = await UserService.findAllBookFavoriteByUser(
       userId,
       limit,

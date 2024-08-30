@@ -305,16 +305,6 @@ function qyFindAllBookFavorite(userId: string, limit: number, offset: number): P
     },
     { $unwind: '$bookDetails' }, // Desempaqueta el array `bookDetails`
     { $replaceRoot: { newRoot: '$bookDetails' } }, // Reemplaza la raíz con los detalles del libro
-    // {
-    //   $facet: {
-    //     totalBooks: [{ $count: 'count' }],
-    //     results: [
-    //       { $sort: { id: -1 } },
-    //       { $skip: offset },
-    //       { $limit: limit },
-    //     ]
-    //   }
-    // },
     {
       $facet: {
         totalBooks: [{ $count: 'count' }],
