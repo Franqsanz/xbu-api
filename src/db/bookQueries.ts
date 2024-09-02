@@ -308,22 +308,47 @@ function qyFindAllBookFavorite(userId: string, limit: number, offset: number): P
     {
       $facet: {
         totalBooks: [{ $count: 'count' }],
-        results: [{ $skip: offset }, { $limit: limit }],
+        results: [
+          {
+            $project: {
+              _id: 0,
+              id: '$_id',
+              title: 1,
+              authors: 1,
+              category: 1,
+              pathUrl: 1,
+              image: 1,
+              language: 1,
+              views: 1,
+            },
+          },
+          { $skip: offset },
+          { $limit: limit },
+        ],
       },
     },
     {
       $addFields: {
-        id: '$_id',
         totalBooks: { $arrayElemAt: ['$totalBooks.count', 0] },
       },
     },
-    { $project: { _id: 0 } },
   ];
 }
 
 // PATCH AddFavorite
 function qyAddFavorite(userId: string, id: string) {
-  return [{ userId: userId }, { $addToSet: { favoriteBooks: id } }, { upsert: true, new: true }];
+  return [
+    { userId: userId },
+    {
+      $push: {
+        favoriteBooks: {
+          $each: [id], // Permite especificar un array de elementos a agregar.
+          $position: 0, // Inserta al principio del array.
+        },
+      },
+    },
+    { upsert: true, new: true },
+  ];
 }
 
 // PATCH RemoveFavorite
