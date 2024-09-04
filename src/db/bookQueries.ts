@@ -1,4 +1,4 @@
-import { FilterQuery, PipelineStage } from 'mongoose';
+import { FilterQuery, PipelineStage, Types } from 'mongoose';
 
 // GET Search
 function qySearch(q: object | string | undefined) {
@@ -65,9 +65,7 @@ function qyGroupOptions(): PipelineStage[] {
       },
     },
     {
-      $project: {
-        _id: 0,
-      },
+      $project: { _id: 0 },
     },
   ];
 }
@@ -88,18 +86,14 @@ function qyBooksFiltering(query: FilterQuery<any>, offset: number, limit: number
               title: 1,
               authors: {
                 $cond: {
-                  if: {
-                    $isArray: '$authors',
-                  },
+                  if: { $isArray: '$authors' },
                   then: '$authors',
                   else: ['$authors'],
                 },
               },
               category: {
                 $cond: {
-                  if: {
-                    $isArray: '$category',
-                  },
+                  if: { $isArray: '$category' },
                   then: '$category',
                   else: ['$category'],
                 },
@@ -132,22 +126,17 @@ function qyBooksFiltering(query: FilterQuery<any>, offset: number, limit: number
 }
 
 // GET BooksRandom
-function qyBooksRandom(): PipelineStage[] {
+function qyBooksRandom(id: string): PipelineStage[] {
   return [
-    {
-      $sample: {
-        size: 3,
-      },
-    },
+    { $match: { _id: { $ne: new Types.ObjectId(id) } } },
+    { $sample: { size: 3 } },
     {
       $project: {
         title: 1,
         pathUrl: 1,
         authors: {
           $cond: {
-            if: {
-              $isArray: '$authors',
-            },
+            if: { $isArray: '$authors' },
             then: '$authors',
             else: ['$authors'],
           },
@@ -162,26 +151,18 @@ function qyRelatedBooks(id: string, selectedCategory: string): PipelineStage[] {
   return [
     {
       $match: {
-        _id: {
-          $ne: id,
-        },
+        _id: { $ne: new Types.ObjectId(id) },
         category: selectedCategory,
       },
     },
-    {
-      $sample: {
-        size: 3,
-      },
-    },
+    { $sample: { size: 3 } },
     {
       $project: {
         title: 1,
         pathUrl: 1,
         authors: {
           $cond: {
-            if: {
-              $isArray: '$authors',
-            },
+            if: { $isArray: '$authors' },
             then: '$authors',
             else: ['$authors'],
           },
@@ -196,29 +177,21 @@ function qyMoreBooksAuthors(id: string, selectedAuthors: string): PipelineStage[
   return [
     {
       $match: {
-        _id: {
-          $ne: id,
-        },
+        _id: { $ne: new Types.ObjectId(id) },
         authors: {
           $regex: selectedAuthors,
           $options: 'i',
         },
       },
     },
-    {
-      $sample: {
-        size: 3,
-      },
-    },
+    { $sample: { size: 3 } },
     {
       $project: {
         title: 1,
         pathUrl: 1,
         authors: {
           $cond: {
-            if: {
-              $isArray: '$authors',
-            },
+            if: { $isArray: '$authors' },
             then: '$authors',
             else: ['$authors'],
           },
@@ -231,7 +204,7 @@ function qyMoreBooksAuthors(id: string, selectedAuthors: string): PipelineStage[
 // GET OneBooks
 function qyOneBooks(id: string) {
   return [
-    { _id: id },
+    { _id: new Types.ObjectId(id) },
     { $inc: { views: 1 } }, // Incrementa el contador de vistas en 1
     { new: true }, // Devuelve el documento actualizado
   ];
@@ -303,12 +276,38 @@ function qyFindAllBookFavorite(userId: string, limit: number, offset: number): P
         as: 'bookDetails', // Nombre del campo que contendrá los detalles del libro
       },
     },
+    {
+      // $addFields + $map: Recorre favoriteBooks y para cada libro favorito,
+      // filtra 'bookDetails' para encontrar la coincidencia exacta por '_id', manteniendo el orden original.
+      $addFields: {
+        bookDetails: {
+          $map: {
+            input: '$favoriteBooks',
+            as: 'favoriteBookId',
+            in: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: '$bookDetails',
+                    as: 'bookDetail',
+                    cond: { $eq: ['$$bookDetail._id', '$$favoriteBookId'] },
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
+      },
+    },
     { $unwind: '$bookDetails' }, // Desempaqueta el array `bookDetails`
     { $replaceRoot: { newRoot: '$bookDetails' } }, // Reemplaza la raíz con los detalles del libro
     {
       $facet: {
         totalBooks: [{ $count: 'count' }],
         results: [
+          { $skip: offset },
+          { $limit: limit },
           {
             $project: {
               _id: 0,
@@ -322,8 +321,6 @@ function qyFindAllBookFavorite(userId: string, limit: number, offset: number): P
               views: 1,
             },
           },
-          { $skip: offset },
-          { $limit: limit },
         ],
       },
     },

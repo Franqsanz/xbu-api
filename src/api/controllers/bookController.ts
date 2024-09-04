@@ -109,8 +109,10 @@ async function getBooksRandom(
   res: Response,
   next: NextFunction
 ): Promise<Response<IBook[]>> {
+  const { id } = req.params;
+
   try {
-    const result = await BookService.findBooksRandom();
+    const result = await BookService.findBooksRandom(id);
 
     return res.status(200).json(result);
   } catch (err) {

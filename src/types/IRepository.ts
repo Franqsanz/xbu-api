@@ -9,7 +9,7 @@ interface IReadBook {
   findBySlugFavorite(slug: string, userId?: string | undefined): Promise<IBook[] | null>;
   findSearch(q: object | string | undefined): Promise<IBook[]>;
   findByGroupFields(): Promise<IBook[]>;
-  findBooksRandom(): Promise<IBook[]>;
+  findBooksRandom(id: string): Promise<IBook[]>;
   findRelatedBooks(id: string): Promise<IBook[]>;
   findMoreBooksAuthors(id: string): Promise<IBook[]>;
   findMostViewedBooks(detail: string | undefined): Promise<IBook[]>;

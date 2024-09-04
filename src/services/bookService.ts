@@ -78,9 +78,9 @@ export const BookService: IRepositoryBook = {
     }
   },
 
-  async findBooksRandom() {
+  async findBooksRandom(id) {
     try {
-      return await BookRepository.findBooksRandom();
+      return await BookRepository.findBooksRandom(id);
     } catch (err) {
       throw err;
     }

@@ -79,13 +79,7 @@ export const BookRepository: IRepositoryBook = {
   async findSearch(q) {
     const { query, projection } = qySearch(q);
 
-    return await booksModel
-      .find(query, projection)
-      .hint('_id_')
-      .sort({
-        _id: -1,
-      })
-      .exec();
+    return await booksModel.find(query, projection).hint('_id_').sort({ _id: -1 }).exec();
   },
 
   async findByGroupFields() {
@@ -94,8 +88,8 @@ export const BookRepository: IRepositoryBook = {
     return await booksModel.aggregate(query).exec();
   },
 
-  async findBooksRandom() {
-    const query = qyBooksRandom();
+  async findBooksRandom(id) {
+    const query = qyBooksRandom(id);
 
     return await booksModel.aggregate(query);
   },

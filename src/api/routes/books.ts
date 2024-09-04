@@ -26,7 +26,7 @@ router.get('/', (req, res: Response) => {
 router.get('/books', pagination, query, getBooks);
 router.get('/books/search', getSearchBooks);
 router.get('/books/options', getAllOptions);
-router.get('/books/more-books', getBooksRandom);
+router.get('/books/more-books/:id', getBooksRandom);
 router.get('/books/related-books/:id', getRelatedBooks);
 router.get('/books/more-books-authors/:id', getMoreBooksAuthors);
 router.get('/books/most-viewed-books', getMostViewedBooks);
