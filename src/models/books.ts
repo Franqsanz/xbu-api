@@ -69,9 +69,16 @@ const booksSchema = new Schema(
       type: Number,
       default: 0,
     },
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0,
+    },
   },
   {
     versionKey: false,
+    timestamps: true,
   }
 );
 

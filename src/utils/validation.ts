@@ -37,6 +37,7 @@ export const bookSchema = z.object({
     public_id: z.string(),
   }),
   userId: z.string(),
+  rating: z.number().optional(),
 });
 
 // export type Book = z.infer<typeof bookSchema>;
