@@ -101,10 +101,18 @@ function qyBooksFiltering(query: FilterQuery<any>, offset: number, limit: number
               language: 1,
               year: 1,
               pathUrl: 1,
+              numberPages: 1,
             },
           },
         ],
         totalBooks: [{ $count: 'count' }],
+        authorsCounts: [
+          { $unwind: '$authors' },
+          { $project: { authors: { $toLower: '$authors' } } }, // Convertir a minúsculas para normalizar.
+          { $group: { _id: '$authors', count: { $sum: 1 } } },
+          { $sort: { _id: -1 } },
+          { $project: { _id: 0, authors: '$_id', count: 1 } }, // Renombrar "_id" a "authors".
+        ],
         languageCounts: [
           { $group: { _id: '$language', count: { $sum: 1 } } },
           { $sort: { _id: 1 } },
@@ -114,6 +122,11 @@ function qyBooksFiltering(query: FilterQuery<any>, offset: number, limit: number
           { $group: { _id: '$year', count: { $sum: 1 } } },
           { $sort: { _id: -1 } },
           { $project: { _id: 0, year: '$_id', count: 1 } }, // Renombrar "_id" a "year".
+        ],
+        pagesCounts: [
+          { $group: { _id: '$numberPages', count: { $sum: 1 } } },
+          { $sort: { _id: 1 } },
+          { $project: { _id: 0, numberPages: '$_id', count: 1 } }, // Renombrar "_id" a "numberPages".
         ],
       },
     },

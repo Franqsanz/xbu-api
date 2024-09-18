@@ -8,7 +8,9 @@ declare module 'express-serve-static-core' {
     calculatePagination?: (
       totalBooks: number,
       yearCounts?: number | undefined,
-      languageCounts?: number | undefined
+      languageCounts?: number | undefined,
+      pagesCounts?: number | undefined,
+      authorsCounts?: number | undefined
     ) => void;
     paginationInfo?: PaginationInfo;
   }
@@ -28,7 +30,9 @@ export function pagination(req: Request, res: Response, next: NextFunction) {
   req.calculatePagination = (
     totalBooks: number,
     yearCounts?: number,
-    languageCounts?: number
+    languageCounts?: number,
+    pagesCounts?: number,
+    authorsCounts?: number
   ): void => {
     const { page, limit } = req.pagination!;
 
@@ -54,6 +58,8 @@ export function pagination(req: Request, res: Response, next: NextFunction) {
       prevPageLink,
       yearCounts, // El campo "yearCounts" es opcional.
       languageCounts, // El campo "languageCounts" es opcional.
+      pagesCounts, // El campo "languageCounts" es opcional.
+      authorsCounts, // El campo "languageCounts" es opcional.
     };
   };
 

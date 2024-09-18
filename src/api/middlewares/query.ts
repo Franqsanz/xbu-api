@@ -14,7 +14,7 @@ export async function query(req: Request, res: Response, next: NextFunction) {
   try {
     if (!limit || !page) {
       // Si no hay paginación, llama al servicio para obtener todos los libros
-      const { results, totalBooks, yearCounts, languageCounts } =
+      const { results, totalBooks, yearCounts, languageCounts, pagesCounts, authorsCounts } =
         await BookService.findOptionsFiltering(
           authors as string,
           category as string,
@@ -26,11 +26,13 @@ export async function query(req: Request, res: Response, next: NextFunction) {
         totalBooks,
         yearCounts,
         languageCounts,
+        pagesCounts,
+        authorsCounts,
         results,
       });
     }
 
-    const { results, totalBooks, yearCounts, languageCounts } =
+    const { results, totalBooks, yearCounts, languageCounts, pagesCounts, authorsCounts } =
       await BookService.findOptionsFiltering(
         authors as string,
         category as string,
@@ -44,7 +46,7 @@ export async function query(req: Request, res: Response, next: NextFunction) {
       throw NotFound(`No se han encontrado datos para ${req.originalUrl}.`);
     }
 
-    req.calculatePagination!(totalBooks, yearCounts, languageCounts);
+    req.calculatePagination!(totalBooks, yearCounts, languageCounts, pagesCounts, authorsCounts);
 
     const response = {
       info: req.paginationInfo,

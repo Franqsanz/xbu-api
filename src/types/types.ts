@@ -25,6 +25,8 @@ interface IFindBooks {
   totalBooks: number;
   yearCounts?: number;
   languageCounts?: number;
+  pagesCounts?: number;
+  authorsCounts?: number;
 }
 
 interface IDeleteBook {
@@ -72,6 +74,8 @@ interface PaginationInfo {
   totalPages: number;
   languageCounts?: number;
   yearCounts?: number;
+  pagesCounts?: number;
+  authorsCounts?: number;
   currentPage: number;
   nextPage: number | null;
   prevPage: number | null;
