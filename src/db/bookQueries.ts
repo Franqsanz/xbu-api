@@ -314,26 +314,40 @@ function qyFindAllBookFavorite(userId: string, limit: number, offset: number): P
       },
     },
     { $unwind: '$bookDetails' }, // Desempaqueta el array `bookDetails`
-    { $replaceRoot: { newRoot: '$bookDetails' } }, // Reemplaza la raíz con los detalles del libro
+    { $match: { bookDetails: { $ne: null } } }, // Asegurarse de que solo se devuelvan documentos con información de libro
+    // { $replaceRoot: { newRoot: '$bookDetails' } }, // Reemplaza la raíz con los detalles del libro
+    {
+      $project: {
+        _id: 0,
+        id: '$bookDetails._id', // Cambiado para acceder directamente a bookDetails
+        title: '$bookDetails.title',
+        authors: '$bookDetails.authors',
+        category: '$bookDetails.category',
+        pathUrl: '$bookDetails.pathUrl',
+        image: '$bookDetails.image',
+        language: '$bookDetails.language',
+        views: '$bookDetails.views',
+      },
+    },
     {
       $facet: {
         totalBooks: [{ $count: 'count' }],
         results: [
           { $skip: offset },
           { $limit: limit },
-          {
-            $project: {
-              _id: 0,
-              id: '$_id',
-              title: 1,
-              authors: 1,
-              category: 1,
-              pathUrl: 1,
-              image: 1,
-              language: 1,
-              views: 1,
-            },
-          },
+          // {
+          //   $project: {
+          //     _id: 0,
+          //     id: '$_id',
+          //     title: 1,
+          //     authors: 1,
+          //     category: 1,
+          //     pathUrl: 1,
+          //     image: 1,
+          //     language: 1,
+          //     views: 1,
+          //   },
+          // },
         ],
       },
     },
