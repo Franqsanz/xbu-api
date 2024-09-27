@@ -275,22 +275,44 @@ function qyPathUrlBooksFavorite(pathUrl: string, userId: string | undefined): Pi
   ];
 }
 
-// GET qyFindAllBookFavorite
 function qyFindAllBookFavorite(userId: string, limit: number, offset: number): PipelineStage[] {
   return [
-    {
-      $match: { userId: userId },
-    },
+    { $match: { userId: userId } },
     {
       $lookup: {
         from: 'books',
-        localField: 'favoriteBooks', // Campo que contiene los IDs de los libros en la colección `favorites`
+        localField: 'favoriteBooks', // IDs de los libros en favoritos
         foreignField: '_id', // Campo que contiene los IDs en la colección `books`
-        as: 'bookDetails', // Nombre del campo que contendrá los detalles del libro
+        as: 'bookDetails', // Campo que contendrá los detalles del libro
       },
     },
     {
-      // $addFields + $map: Recorre favoriteBooks y para cada libro favorito,
+      // Añadimos temporalmente para inspeccionar los datos
+      $addFields: {
+        allFavoriteBookIds: '$favoriteBooks', // Para verificar IDs de favoritos
+        allBookDetailIds: { $map: { input: '$bookDetails', as: 'book', in: '$$book._id' } }, // Para verificar IDs de libros
+      },
+    },
+    {
+      // Aquí se filtran los libros faltantes que no están en `bookDetails`
+      $addFields: {
+        missingBooks: {
+          $filter: {
+            input: '$favoriteBooks',
+            as: 'favoriteBookId',
+            cond: {
+              $not: {
+                $in: [
+                  '$$favoriteBookId',
+                  { $map: { input: '$bookDetails', as: 'book', in: '$$book._id' } },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    {
       // filtra 'bookDetails' para encontrar la coincidencia exacta por '_id', manteniendo el orden original.
       $addFields: {
         bookDetails: {
@@ -313,13 +335,12 @@ function qyFindAllBookFavorite(userId: string, limit: number, offset: number): P
         },
       },
     },
-    { $unwind: '$bookDetails' }, // Desempaqueta el array `bookDetails`
+    { $unwind: '$bookDetails' },
     { $match: { bookDetails: { $ne: null } } }, // Asegurarse de que solo se devuelvan documentos con información de libro
-    // { $replaceRoot: { newRoot: '$bookDetails' } }, // Reemplaza la raíz con los detalles del libro
     {
       $project: {
         _id: 0,
-        id: '$bookDetails._id', // Cambiado para acceder directamente a bookDetails
+        id: '$bookDetails._id',
         title: '$bookDetails.title',
         authors: '$bookDetails.authors',
         category: '$bookDetails.category',
@@ -327,33 +348,20 @@ function qyFindAllBookFavorite(userId: string, limit: number, offset: number): P
         image: '$bookDetails.image',
         language: '$bookDetails.language',
         views: '$bookDetails.views',
+        missingBooks: 1, // Verificar si `missingBooks` tiene valores
       },
     },
     {
       $facet: {
         totalBooks: [{ $count: 'count' }],
-        results: [
-          { $skip: offset },
-          { $limit: limit },
-          // {
-          //   $project: {
-          //     _id: 0,
-          //     id: '$_id',
-          //     title: 1,
-          //     authors: 1,
-          //     category: 1,
-          //     pathUrl: 1,
-          //     image: 1,
-          //     language: 1,
-          //     views: 1,
-          //   },
-          // },
-        ],
+        results: [{ $skip: offset }, { $limit: limit }, { $unset: 'missingBooks' }],
+        missingBooks: [{ $project: { missingBooks: 1 } }],
       },
     },
     {
       $addFields: {
         totalBooks: { $arrayElemAt: ['$totalBooks.count', 0] },
+        missingBooks: { $arrayElemAt: ['$missingBooks.missingBooks', 0] },
       },
     },
   ];

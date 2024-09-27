@@ -52,8 +52,21 @@ export const UserRepository: IRepositoryUser = {
 
   async findAllBookFavoriteByUser(userId, limit, offset) {
     const query = qyFindAllBookFavorite(userId, limit, offset);
-
     const [result] = await favoritesModel.aggregate(query).exec();
+
+    const missingBooks = result.missingBooks;
+    // Verifica si hay libros eliminados en el resultado
+    if (missingBooks && missingBooks.length > 0) {
+      // Si hay libros eliminados, los eliminamos de la lista de favoritos
+      await favoritesModel.updateMany(
+        { userId }, // Encuentra el documento por el userId
+        {
+          $pull: {
+            favoriteBooks: { $in: missingBooks }, // Elimina los libros que están en missingBooks
+          },
+        }
+      );
+    }
 
     return {
       totalBooks: result.totalBooks,
