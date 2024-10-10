@@ -4,6 +4,7 @@ import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
 import { bookSchema } from '../utils/validation';
 import { IRepositoryBook } from '../types/IRepository';
+import { BadRequest } from '../utils/errors';
 
 export const BookService: IRepositoryBook = {
   async findBooks(limit, offset) {
@@ -132,6 +133,7 @@ export const BookService: IRepositoryBook = {
     const uint8Array = new Uint8Array(url);
     const decompressedImage = pako.inflate(uint8Array);
     const buffer = Buffer.from(decompressedImage);
+    const folderUploads = process.env.NODE_ENV === 'production' ? 'xbu' : 'xbu_dev';
 
     try {
       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
@@ -139,6 +141,7 @@ export const BookService: IRepositoryBook = {
           .upload_stream(
             {
               upload_preset: 'xbu-uploads',
+              folder: folderUploads,
               format: 'webp',
               transformation: {
                 quality: 60,
@@ -180,6 +183,7 @@ export const BookService: IRepositoryBook = {
         const uint8Array = new Uint8Array(url);
         const decompressedImage = pako.inflate(uint8Array);
         const buffer = Buffer.from(decompressedImage);
+        const folderUploads = process.env.NODE_ENV === 'production' ? 'xbu' : 'xbu_dev';
 
         // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
         const cloudinaryResult = await new Promise<any>((resolve, reject) => {
@@ -187,6 +191,7 @@ export const BookService: IRepositoryBook = {
             .upload_stream(
               {
                 upload_preset: 'xbu-uploads',
+                folder: folderUploads,
                 format: 'webp',
                 transformation: {
                   quality: 60,
