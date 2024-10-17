@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { ZodError } from 'zod';
 
 import { BookService } from '../../services/bookService';
 import { BadRequest, NotFound } from '../../utils/errors';
@@ -274,6 +275,17 @@ async function postBooks(
     redis.expire(`books_${req.body}`, 0);
     return res.status(201).json(resultBook);
   } catch (err) {
+    if (err instanceof ZodError) {
+      const errorMessages = err.errors.map((error) => error.message);
+
+      return res.status(400).json({
+        error: {
+          status: 400,
+          message: errorMessages,
+        },
+      });
+    }
+
     return next(err) as any;
   }
 }

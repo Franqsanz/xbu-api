@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 export const bookSchema = z.object({
-  title: z.string().min(0, 'title es requerido.'),
+  title: z.string().min(1, 'title es requerido.'),
   authors: z.array(z.string().refine((item) => item.trim() !== '')).nonempty({
     message: 'El array authors es requerido.',
   }),
-  synopsis: z.string().min(0, 'synopsis es requerido.'),
+  synopsis: z.string().min(1, 'synopsis es requerido.'),
   year: z.string().refine(
     (value) => {
       const parsedValue = parseInt(value);
@@ -29,9 +29,9 @@ export const bookSchema = z.object({
     }
   ),
   sourceLink: z.string().optional(),
-  language: z.string().min(0, 'language es requerido.'),
-  format: z.string().min(0, 'format es requerido.'),
-  pathUrl: z.string().min(0),
+  language: z.string().min(1, 'language es requerido.'),
+  format: z.string().min(1, 'format es requerido.'),
+  pathUrl: z.string().min(1),
   image: z.object({
     url: z.union([z.string(), z.array(z.number())]),
     public_id: z.string(),
