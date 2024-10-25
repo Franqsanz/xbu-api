@@ -1,5 +1,14 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
-import { IBook, IFindBooks, IDeleteBook, IUser, IUserAndBooks, IUserToSave } from './types';
+
+import {
+  IBook,
+  IFindBooks,
+  IDeleteBook,
+  IUser,
+  IUserAndBooks,
+  IUserToSave,
+  ICollections,
+} from './types';
 
 interface IReadBook {
   findBooks(limit: number, offset: number): Promise<IFindBooks>;
@@ -38,14 +47,17 @@ interface IReadUser {
   findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks>;
   findBooksByUserId(userId: string): Promise<IBook[]>;
   findAllBookFavoriteByUser(userId: string, limit: number, offset: number): Promise<IFindBooks>;
+  findAllCollections(userId: string): Promise<any>;
 }
 
 interface IWriteUser {
   createUser(userToSave: IUserToSave): Promise<IUser>;
+  createCollections(userId: string, name: string): Promise<ICollections>;
   saveUser?(
     decodedToken: DecodedIdToken,
     username: string
   ): Promise<{ existingUser: IUser | null; saveUser: IUser }>;
+  deleteCollections(userId: string, collectionId: string): Promise<any>;
   deleteUserBooks(id: any): Promise<any>;
   deleteUser(userId: any): Promise<any>;
   deleteAccount?(userId: string): Promise<void>;

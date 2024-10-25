@@ -141,6 +141,55 @@ async function getFindAllBookFavoriteByUser(
   }
 }
 
+async function getAllCollections(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { userId } = req.params;
+
+  try {
+    const findAllCollections = await UserService.findAllCollections(userId);
+
+    return res.status(200).json(findAllCollections);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function postCreateCollections(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { userId } = req.params;
+  const { name } = req.body;
+
+  try {
+    const createCollections = await UserService.saveCollections(userId, name);
+
+    return res.status(201).json(createCollections);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function deleteCollections(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { userId, collectionId } = req.params;
+
+  try {
+    const deleteCollections = await UserService.deleteCollections(userId, collectionId);
+
+    return res.status(200).json(deleteCollections);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function deleteAccount(
   req: Request,
   res: Response,
@@ -175,4 +224,13 @@ async function deleteAccount(
   }
 }
 
-export { getUsers, getCheckUser, getUserAndBooks, getFindAllBookFavoriteByUser, deleteAccount };
+export {
+  getUsers,
+  getCheckUser,
+  getUserAndBooks,
+  getFindAllBookFavoriteByUser,
+  getAllCollections,
+  postCreateCollections,
+  deleteCollections,
+  deleteAccount,
+};

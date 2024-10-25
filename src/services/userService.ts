@@ -57,6 +57,30 @@ export const UserService = {
     }
   },
 
+  async findAllCollections(userId: string) {
+    try {
+      return await UserRepository.findAllCollections(userId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async saveCollections(userId: string, name: string) {
+    try {
+      return await UserRepository.createCollections(userId, name);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async deleteCollections(userId: string, collectionId: string) {
+    try {
+      return await UserRepository.deleteCollections(userId, collectionId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async deleteAccount(userId: string) {
     try {
       const user = await UserRepository.findById(userId);

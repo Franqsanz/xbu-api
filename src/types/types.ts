@@ -59,6 +59,16 @@ interface IFavorite {
   favoriteBooks: pkg.Schema.Types.ObjectId[];
 }
 
+interface ICollections {
+  userId: string;
+  collections: {
+    name: string;
+    id?: pkg.Schema.Types.ObjectId;
+    books: pkg.Schema.Types.ObjectId[];
+    createdAt?: Date;
+  }[];
+}
+
 interface IHttpError extends Error {
   statusCode: number;
 }
@@ -91,6 +101,7 @@ export {
   IUserAndBooks,
   IUserToSave,
   IFavorite,
+  ICollections,
   IHttpError,
   Pagination,
   PaginationInfo,
