@@ -8,6 +8,7 @@ import {
   getAllCollections,
   postCreateCollections,
   deleteCollections,
+  getOneCollection,
   deleteAccount,
 } from '../controllers/userController';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -19,10 +20,17 @@ const router: Router = express.Router();
 router.get('/', getUsers);
 router.get('/check-user/:userId', getCheckUser);
 router.get('/:userId/:username/my-books', verifyToken, pagination, getUserAndBooks);
+router.delete('/:userId', deleteAccount);
+
+// Favoritos
 router.get('/:userId/my-favorites', pagination, getFindAllBookFavoriteByUser);
+
+// Colecciones
 router.get('/:userId/my-collections', getAllCollections);
 router.post('/:userId/my-collections', postCreateCollections);
 router.delete('/:userId/my-collections/:collectionId', deleteCollections);
-router.delete('/:userId', deleteAccount);
+
+// Coleccion
+router.get('/my-collections/:collectionId', getOneCollection);
 
 export default router;

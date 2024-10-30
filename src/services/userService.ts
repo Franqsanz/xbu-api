@@ -73,6 +73,14 @@ export const UserService = {
     }
   },
 
+  async findOneCollection(collectionId: string) {
+    try {
+      return await UserRepository.findOneCollection(collectionId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async deleteCollections(userId: string, collectionId: string) {
     try {
       return await UserRepository.deleteCollections(userId, collectionId);

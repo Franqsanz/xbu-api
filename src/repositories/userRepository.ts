@@ -5,6 +5,7 @@ import collectionsModel from '../models/collections';
 import { qyCheckUser } from '../db/userQueries';
 import { IRepositoryUser } from '../types/IRepository';
 import { qyFindAllBookFavorite } from '../db/bookQueries';
+import { qyBooksByCollectionId } from '../db/userQueries';
 
 export const UserRepository: IRepositoryUser = {
   async findUsers() {
@@ -121,6 +122,26 @@ export const UserRepository: IRepositoryUser = {
       { userId },
       { $pull: { collections: { _id: collectionId } } }
     );
+  },
+
+  async findOneCollection(collectionId) {
+    const query = qyBooksByCollectionId(collectionId);
+    const [result] = await collectionsModel.aggregate(query).exec();
+    const missingBooks = result.missingBooks;
+
+    if (missingBooks && missingBooks.length > 0) {
+      // Si hay libros eliminados, los eliminamos de la colección
+      await collectionsModel.updateMany(
+        { collectionId }, // Encuentra el documento por el collectionId
+        {
+          $pull: {
+            books: { $in: missingBooks }, // Elimina los libros que están en missingBooks
+          },
+        }
+      );
+    }
+
+    return result.results || null;
   },
 
   async createUser(userToSave) {

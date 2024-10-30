@@ -182,9 +182,34 @@ async function deleteCollections(
   const { userId, collectionId } = req.params;
 
   try {
-    const deleteCollections = await UserService.deleteCollections(userId, collectionId);
+    await UserService.deleteCollections(userId, collectionId);
 
-    return res.status(200).json(deleteCollections);
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Colección eliminada',
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function getOneCollection(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { collectionId } = req.params;
+
+  try {
+    const findOneCollection = await UserService.findOneCollection(collectionId);
+
+    if (!findOneCollection) {
+      throw NotFound('Esta colección no existe');
+    }
+
+    return res.status(200).json(findOneCollection[0]);
   } catch (err) {
     return next(err) as any;
   }
@@ -216,6 +241,7 @@ async function deleteAccount(
 
     return res.status(200).json({
       success: {
+        status: 200,
         message: 'Cuenta eliminada',
       },
     });
@@ -232,5 +258,6 @@ export {
   getAllCollections,
   postCreateCollections,
   deleteCollections,
+  getOneCollection,
   deleteAccount,
 };

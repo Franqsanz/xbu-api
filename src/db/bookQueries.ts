@@ -236,9 +236,7 @@ function qyPathUrlBooks(pathUrl: string) {
 // GET PathUrlBooksFavorite
 function qyPathUrlBooksFavorite(pathUrl: string, userId: string | undefined): PipelineStage[] {
   return [
-    {
-      $match: { pathUrl: pathUrl },
-    },
+    { $match: { pathUrl: pathUrl } },
     {
       $lookup: {
         from: 'favorites',
