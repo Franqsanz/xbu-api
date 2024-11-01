@@ -22,9 +22,9 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
     {
       $lookup: {
         from: 'books',
-        localField: 'collections.books._id', // IDs de los libros en la colección
-        foreignField: '_id', // Campo que contiene los IDs en la colección `books`
-        as: 'bookDetails', // Campo que contendrá los detalles del libro
+        localField: 'collections.books._id',
+        foreignField: '_id',
+        as: 'bookDetails',
       },
     },
     {
@@ -46,28 +46,6 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
       },
     },
     {
-      $addFields: {
-        bookDetails: {
-          $map: {
-            input: '$collections.books',
-            as: 'bookId',
-            in: {
-              $arrayElemAt: [
-                {
-                  $filter: {
-                    input: '$bookDetails',
-                    as: 'book',
-                    cond: { $eq: ['$$book._id', '$$bookId._id'] },
-                  },
-                },
-                0,
-              ],
-            },
-          },
-        },
-      },
-    },
-    {
       $group: {
         _id: '$collections._id',
         collectionName: { $first: '$collections.name' },
@@ -75,19 +53,19 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
         missingBooks: { $first: '$missingBooks' },
         books: {
           $push: {
-            $cond: {
-              if: { $ne: [{ $size: '$bookDetails' }, 0] },
-              then: {
-                id: { $first: '$bookDetails._id' },
-                title: { $first: '$bookDetails.title' },
-                authors: { $first: '$bookDetails.authors' },
-                category: { $first: '$bookDetails.category' },
-                pathUrl: { $first: '$bookDetails.pathUrl' },
-                image: { $first: '$bookDetails.image' },
-                language: { $first: '$bookDetails.language' },
-                views: { $first: '$bookDetails.views' },
+            $map: {
+              input: '$bookDetails',
+              as: 'book',
+              in: {
+                id: '$$book._id',
+                title: '$$book.title',
+                authors: '$$book.authors',
+                category: '$$book.category',
+                pathUrl: '$$book.pathUrl',
+                image: '$$book.image',
+                language: '$$book.language',
+                views: '$$book.views',
               },
-              else: null,
             },
           },
         },
@@ -101,10 +79,10 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
         createdAt: 1,
         missingBooks: 1,
         books: {
-          $filter: {
+          $reduce: {
             input: '$books',
-            as: 'book',
-            cond: { $ne: ['$$book', null] }, // Filtrar nulos
+            initialValue: [],
+            in: { $concatArrays: ['$$value', '$$this'] },
           },
         },
       },
