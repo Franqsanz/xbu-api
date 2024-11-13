@@ -9,6 +9,7 @@ import {
   postCreateCollections,
   deleteCollections,
   getOneCollection,
+  patchToggleBookInCollection,
   deleteAccount,
 } from '../controllers/userController';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -32,5 +33,6 @@ router.delete('/:userId/my-collections/:collectionId', deleteCollections);
 
 // Coleccion
 router.get('/my-collections/:collectionId', getOneCollection);
+router.patch('/my-collections/books/toggle', patchToggleBookInCollection);
 
 export default router;

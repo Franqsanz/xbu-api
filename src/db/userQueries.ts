@@ -22,7 +22,7 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
     {
       $lookup: {
         from: 'books',
-        localField: 'collections.books._id',
+        localField: 'collections.books',
         foreignField: '_id',
         as: 'bookDetails',
       },
@@ -31,14 +31,11 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
       $addFields: {
         missingBooks: {
           $filter: {
-            input: '$collections.books._id',
+            input: '$collections.books',
             as: 'bookId',
             cond: {
               $not: {
-                $in: [
-                  '$$bookId',
-                  { $map: { input: '$bookDetails', as: 'book', in: '$$book._id' } },
-                ],
+                $in: ['$$bookId', { $map: { input: '$bookDetails', as: 'book', in: '$$book' } }],
               },
             },
           },
@@ -101,4 +98,31 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
   ];
 }
 
-export { qyCheckUser, qyBooksByCollectionId };
+// PATCH AddBookToCollection
+function qyAddBookToCollection(userId: string, collectionId: string, bookId: string) {
+  return [
+    { userId: userId, 'collections._id': new Types.ObjectId(collectionId) },
+    {
+      $push: {
+        'collections.$.books': {
+          $each: [bookId],
+          $position: 0,
+        },
+      },
+    },
+    { upsert: false, new: true },
+  ];
+}
+
+// PATCH RemoveBookFromCollection
+function qyRemoveBookFromCollection(userId: string, collectionId: string, bookId: string) {
+  return [
+    { userId: userId, 'collections._id': collectionId },
+    {
+      $pull: { 'collections.$.books': bookId },
+    },
+    { new: true },
+  ];
+}
+
+export { qyCheckUser, qyBooksByCollectionId, qyAddBookToCollection, qyRemoveBookFromCollection };

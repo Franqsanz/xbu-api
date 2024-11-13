@@ -37,6 +37,22 @@ export const UserService = {
     }
   },
 
+  async addBookToCollection(userId: string, collectionId: string, id: string) {
+    try {
+      return await UserRepository.addBookToCollection(userId, collectionId, id);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async removeBookFromCollection(userId: string, collectionId: string, id: string) {
+    try {
+      return await UserRepository.removeBookFromCollection(userId, collectionId, id);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async saveUser(decodedToken: DecodedIdToken, username: string) {
     const userToSave = {
       ...decodedToken,

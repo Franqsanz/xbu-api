@@ -5,7 +5,11 @@ import collectionsModel from '../models/collections';
 import { qyCheckUser } from '../db/userQueries';
 import { IRepositoryUser } from '../types/IRepository';
 import { qyFindAllBookFavorite } from '../db/bookQueries';
-import { qyBooksByCollectionId } from '../db/userQueries';
+import {
+  qyBooksByCollectionId,
+  qyAddBookToCollection,
+  qyRemoveBookFromCollection,
+} from '../db/userQueries';
 
 export const UserRepository: IRepositoryUser = {
   async findUsers() {
@@ -86,7 +90,6 @@ export const UserRepository: IRepositoryUser = {
     const collections = userCollections.collections.map((collection) => ({
       id: collection.id,
       name: collection.name,
-      books: collection.books,
       createdAt: collection.createdAt,
     }));
 
@@ -142,6 +145,18 @@ export const UserRepository: IRepositoryUser = {
     }
 
     return result.results || null;
+  },
+
+  async addBookToCollection(userId: string, collectionId: string, bookId: string) {
+    const query = qyAddBookToCollection(userId, collectionId, bookId);
+
+    return await collectionsModel.findOneAndUpdate(...query);
+  },
+
+  async removeBookFromCollection(userId: string, collectionId: string, bookId: string) {
+    const query = qyRemoveBookFromCollection(userId, collectionId, bookId);
+
+    return await collectionsModel.findOneAndUpdate(...query);
   },
 
   async createUser(userToSave) {

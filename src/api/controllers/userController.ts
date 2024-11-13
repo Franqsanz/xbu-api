@@ -215,6 +215,31 @@ async function getOneCollection(
   }
 }
 
+async function patchToggleBookInCollection(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<any>> {
+  const { userId, collectionId, bookId, isInCollection } = req.body;
+  let result;
+
+  try {
+    if (isInCollection) {
+      result = await UserService.addBookToCollection(userId, collectionId, bookId);
+    } else {
+      result = await UserService.removeBookFromCollection(userId, collectionId, bookId);
+    }
+
+    if (!result) {
+      throw NotFound('Colección o libro no encontrado');
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function deleteAccount(
   req: Request,
   res: Response,
@@ -259,5 +284,6 @@ export {
   postCreateCollections,
   deleteCollections,
   getOneCollection,
+  patchToggleBookInCollection,
   deleteAccount,
 };
