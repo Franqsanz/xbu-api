@@ -56,6 +56,7 @@ interface IReadUser {
 interface IWriteUser {
   createUser(userToSave: IUserToSave): Promise<IUser>;
   createCollections(userId: string, name: string): Promise<ICollections>;
+  updateCollectionName(userId: string, collectionId: string, name: string): Promise<any>;
   saveUser?(
     decodedToken: DecodedIdToken,
     username: string

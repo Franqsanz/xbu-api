@@ -97,6 +97,14 @@ export const UserService = {
     }
   },
 
+  async updateCollectionName(userId: string, collectionId: string, name: string) {
+    try {
+      return await UserRepository.updateCollectionName(userId, collectionId, name);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async deleteCollections(userId: string, collectionId: string) {
     try {
       return await UserRepository.deleteCollections(userId, collectionId);

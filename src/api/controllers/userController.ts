@@ -166,9 +166,14 @@ async function postCreateCollections(
   const { name } = req.body;
 
   try {
-    const createCollections = await UserService.saveCollections(userId, name);
+    await UserService.saveCollections(userId, name);
 
-    return res.status(201).json(createCollections);
+    return res.status(201).json({
+      success: {
+        status: 201,
+        message: 'Colección creada',
+      },
+    });
   } catch (err) {
     return next(err) as any;
   }
@@ -210,6 +215,28 @@ async function getOneCollection(
     }
 
     return res.status(200).json(findOneCollection[0]);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function patchCollectionName(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { collectionId } = req.params;
+  const { userId, name } = req.body;
+
+  try {
+    await UserService.updateCollectionName(userId, collectionId, name);
+
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Nombre actualizado',
+      },
+    });
   } catch (err) {
     return next(err) as any;
   }
@@ -284,6 +311,7 @@ export {
   postCreateCollections,
   deleteCollections,
   getOneCollection,
+  patchCollectionName,
   patchToggleBookInCollection,
   deleteAccount,
 };

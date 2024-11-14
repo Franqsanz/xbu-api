@@ -117,7 +117,7 @@ function qyAddBookToCollection(userId: string, collectionId: string, bookId: str
 // PATCH RemoveBookFromCollection
 function qyRemoveBookFromCollection(userId: string, collectionId: string, bookId: string) {
   return [
-    { userId: userId, 'collections._id': collectionId },
+    { userId: userId, 'collections._id': new Types.ObjectId(collectionId) },
     {
       $pull: { 'collections.$.books': bookId },
     },
@@ -125,4 +125,19 @@ function qyRemoveBookFromCollection(userId: string, collectionId: string, bookId
   ];
 }
 
-export { qyCheckUser, qyBooksByCollectionId, qyAddBookToCollection, qyRemoveBookFromCollection };
+// PATCH UpdateNameCollection
+function qyUpdateCollectionName(userId: string, collectionId: string, name: string) {
+  return [
+    { userId: userId, 'collections._id': new Types.ObjectId(collectionId) },
+    { $set: { 'collections.$.name': name } },
+    { new: true },
+  ];
+}
+
+export {
+  qyCheckUser,
+  qyBooksByCollectionId,
+  qyAddBookToCollection,
+  qyRemoveBookFromCollection,
+  qyUpdateCollectionName,
+};

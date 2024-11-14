@@ -9,6 +9,7 @@ import {
   postCreateCollections,
   deleteCollections,
   getOneCollection,
+  patchCollectionName,
   patchToggleBookInCollection,
   deleteAccount,
 } from '../controllers/userController';
@@ -34,5 +35,6 @@ router.delete('/:userId/my-collections/:collectionId', deleteCollections);
 // Coleccion
 router.get('/my-collections/:collectionId', getOneCollection);
 router.patch('/my-collections/books/toggle', patchToggleBookInCollection);
+router.patch('/my-collections/:collectionId', patchCollectionName);
 
 export default router;

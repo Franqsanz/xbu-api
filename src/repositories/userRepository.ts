@@ -2,14 +2,15 @@ import booksModel from '../models/books';
 import usersModel from '../models/users';
 import favoritesModel from '../models/favorites';
 import collectionsModel from '../models/collections';
-import { qyCheckUser } from '../db/userQueries';
-import { IRepositoryUser } from '../types/IRepository';
-import { qyFindAllBookFavorite } from '../db/bookQueries';
 import {
+  qyCheckUser,
   qyBooksByCollectionId,
   qyAddBookToCollection,
   qyRemoveBookFromCollection,
+  qyUpdateCollectionName,
 } from '../db/userQueries';
+import { IRepositoryUser } from '../types/IRepository';
+import { qyFindAllBookFavorite } from '../db/bookQueries';
 
 export const UserRepository: IRepositoryUser = {
   async findUsers() {
@@ -145,6 +146,12 @@ export const UserRepository: IRepositoryUser = {
     }
 
     return result.results || null;
+  },
+
+  async updateCollectionName(userId: string, collectionId: string, name: string) {
+    const query = qyUpdateCollectionName(userId, collectionId, name);
+
+    return await collectionsModel.findOneAndUpdate(...query);
   },
 
   async addBookToCollection(userId: string, collectionId: string, bookId: string) {
