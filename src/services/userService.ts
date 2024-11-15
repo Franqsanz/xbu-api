@@ -97,6 +97,14 @@ export const UserService = {
     }
   },
 
+  async findCollectionsForUser(userId: string) {
+    try {
+      return await UserRepository.findCollectionsForUser(userId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async updateCollectionName(userId: string, collectionId: string, name: string) {
     try {
       return await UserRepository.updateCollectionName(userId, collectionId, name);

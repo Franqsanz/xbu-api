@@ -220,6 +220,22 @@ async function getOneCollection(
   }
 }
 
+async function getCollectionsForUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { userId } = req.params;
+
+  try {
+    const findCollections = await UserService.findCollectionsForUser(userId);
+
+    return res.status(200).json(findCollections);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function patchCollectionName(
   req: Request,
   res: Response,
@@ -311,6 +327,7 @@ export {
   postCreateCollections,
   deleteCollections,
   getOneCollection,
+  getCollectionsForUser,
   patchCollectionName,
   patchToggleBookInCollection,
   deleteAccount,

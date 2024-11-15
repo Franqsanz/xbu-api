@@ -9,6 +9,7 @@ import {
   postCreateCollections,
   deleteCollections,
   getOneCollection,
+  getCollectionsForUser,
   patchCollectionName,
   patchToggleBookInCollection,
   deleteAccount,
@@ -29,10 +30,11 @@ router.get('/:userId/my-favorites', pagination, getFindAllBookFavoriteByUser);
 
 // Colecciones
 router.get('/:userId/my-collections', getAllCollections);
+router.get('/:userId/my-collections/summary', getCollectionsForUser);
 router.post('/:userId/my-collections', postCreateCollections);
 router.delete('/:userId/my-collections/:collectionId', deleteCollections);
 
-// Coleccion
+// Colección
 router.get('/my-collections/:collectionId', getOneCollection);
 router.patch('/my-collections/books/toggle', patchToggleBookInCollection);
 router.patch('/my-collections/:collectionId', patchCollectionName);

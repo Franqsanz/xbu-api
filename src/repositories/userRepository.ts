@@ -97,8 +97,6 @@ export const UserRepository: IRepositoryUser = {
     const totalCollections = collections.length;
 
     return {
-      userId: userCollections.userId,
-      id: userCollections.id,
       totalCollections,
       collections,
     };
@@ -146,6 +144,13 @@ export const UserRepository: IRepositoryUser = {
     }
 
     return result.results || null;
+  },
+
+  async findCollectionsForUser(userId: string) {
+    return await collectionsModel.findOne(
+      { userId: userId },
+      { _id: 0, 'collections._id': 1, 'collections.name': 1 }
+    );
   },
 
   async updateCollectionName(userId: string, collectionId: string, name: string) {
