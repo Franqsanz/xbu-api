@@ -15,7 +15,7 @@ const collectionsSchema = new Schema(
         name: {
           type: String,
           required: true,
-          max: 30,
+          maxlength: 25,
         },
         books: {
           type: [Schema.Types.ObjectId],
