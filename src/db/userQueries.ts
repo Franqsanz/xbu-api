@@ -99,29 +99,58 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
 }
 
 // PATCH AddBookToCollection
-function qyAddBookToCollection(userId: string, collectionId: string, bookId: string) {
+function qyAddBookToCollection(userId: string, collectionId: string[], bookId: string) {
   return [
-    { userId: userId, 'collections._id': new Types.ObjectId(collectionId) },
+    {
+      userId: userId,
+      'collections._id': {
+        $in: collectionId.map((id) => new Types.ObjectId(id)),
+      },
+    },
     {
       $push: {
-        'collections.$.books': {
+        'collections.$[elem].books': {
           $each: [bookId],
           $position: 0,
         },
       },
     },
-    { upsert: false, new: true },
+    {
+      arrayFilters: [
+        {
+          'elem._id': {
+            $in: collectionId.map((id) => new Types.ObjectId(id)),
+          },
+        },
+      ],
+      upsert: false,
+      new: true,
+    },
   ];
 }
 
 // PATCH RemoveBookFromCollection
-function qyRemoveBookFromCollection(userId: string, collectionId: string, bookId: string) {
+function qyRemoveBookFromCollection(userId: string, collectionId: string[], bookId: string) {
   return [
-    { userId: userId, 'collections._id': new Types.ObjectId(collectionId) },
     {
-      $pull: { 'collections.$.books': bookId },
+      userId: userId,
+      'collections._id': {
+        $in: collectionId.map((id) => new Types.ObjectId(id)),
+      },
     },
-    { new: true },
+    {
+      $pull: { 'collections.$[elem].books': bookId },
+    },
+    {
+      arrayFilters: [
+        {
+          'elem._id': {
+            $in: collectionId.map((id) => new Types.ObjectId(id)),
+          },
+        },
+      ],
+      new: true,
+    },
   ];
 }
 

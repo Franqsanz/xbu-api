@@ -37,7 +37,7 @@ export const UserService = {
     }
   },
 
-  async addBookToCollection(userId: string, collectionId: string, id: string) {
+  async addBookToCollection(userId: string, collectionId: string[], id: string) {
     try {
       return await UserRepository.addBookToCollection(userId, collectionId, id);
     } catch (err) {
@@ -45,7 +45,7 @@ export const UserService = {
     }
   },
 
-  async removeBookFromCollection(userId: string, collectionId: string, id: string) {
+  async removeBookFromCollection(userId: string, collectionId: string[], id: string) {
     try {
       return await UserRepository.removeBookFromCollection(userId, collectionId, id);
     } catch (err) {

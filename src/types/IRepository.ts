@@ -50,8 +50,8 @@ interface IReadUser {
   findAllCollections(userId: string): Promise<any>;
   findOneCollection(collectionId: string): Promise<any>;
   findCollectionsForUser(userId: string): Promise<any>;
-  addBookToCollection(userId: string, collectionId: string, bookId: string): Promise<any>;
-  removeBookFromCollection(userId: string, collectionId: string, bookId: string): Promise<any>;
+  addBookToCollection(userId: string, collectionId: string[], bookId: string): Promise<any>;
+  removeBookFromCollection(userId: string, collectionId: string[], bookId: string): Promise<any>;
 }
 
 interface IWriteUser {

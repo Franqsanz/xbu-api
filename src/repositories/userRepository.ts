@@ -159,13 +159,13 @@ export const UserRepository: IRepositoryUser = {
     return await collectionsModel.findOneAndUpdate(...query);
   },
 
-  async addBookToCollection(userId: string, collectionId: string, bookId: string) {
+  async addBookToCollection(userId: string, collectionId: string[], bookId: string) {
     const query = qyAddBookToCollection(userId, collectionId, bookId);
 
     return await collectionsModel.findOneAndUpdate(...query);
   },
 
-  async removeBookFromCollection(userId: string, collectionId: string, bookId: string) {
+  async removeBookFromCollection(userId: string, collectionId: string[], bookId: string) {
     const query = qyRemoveBookFromCollection(userId, collectionId, bookId);
 
     return await collectionsModel.findOneAndUpdate(...query);
