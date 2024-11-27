@@ -17,10 +17,19 @@ const collectionsSchema = new Schema(
           required: true,
           maxlength: 25,
         },
-        books: {
-          type: [Schema.Types.ObjectId],
-          default: [],
-        },
+        books: [
+          {
+            _id: false,
+            bookId: {
+              type: Schema.Types.ObjectId,
+              required: true,
+            },
+            checked: {
+              type: Boolean,
+              default: false,
+            },
+          },
+        ],
         createdAt: {
           type: Date,
           default: Date.now,
@@ -46,7 +55,10 @@ collectionsSchema.set('toJSON', {
         return {
           id: collection._id,
           name: collection.name,
-          books: collection.books,
+          books: collection.books.map((book: any) => ({
+            bookId: book.bookId,
+            checked: book.checked,
+          })),
           createdAt: collection.createdAt,
         };
       });

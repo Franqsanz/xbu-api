@@ -30,7 +30,7 @@ router.get('/:userId/my-favorites', pagination, getFindAllBookFavoriteByUser);
 
 // Colecciones
 router.get('/:userId/my-collections', getAllCollections);
-router.get('/:userId/my-collections/summary', getCollectionsForUser);
+router.get('/:userId/my-collections/summary/:bookId', getCollectionsForUser);
 router.post('/:userId/my-collections', postCreateCollections);
 router.delete('/:userId/my-collections/:collectionId', deleteCollections);
 

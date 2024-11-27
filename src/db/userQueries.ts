@@ -22,7 +22,7 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
     {
       $lookup: {
         from: 'books',
-        localField: 'collections.books',
+        localField: 'collections.books.bookId',
         foreignField: '_id',
         as: 'bookDetails',
       },
@@ -32,10 +32,13 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
         missingBooks: {
           $filter: {
             input: '$collections.books',
-            as: 'bookId',
+            as: 'book',
             cond: {
               $not: {
-                $in: ['$$bookId', { $map: { input: '$bookDetails', as: 'book', in: '$$book' } }],
+                $in: [
+                  '$$book.bookId',
+                  { $map: { input: '$bookDetails', as: 'book', in: '$$book._id' } },
+                ],
               },
             },
           },
@@ -62,6 +65,22 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
                 image: '$$book.image',
                 language: '$$book.language',
                 views: '$$book.views',
+                checked: {
+                  $let: {
+                    vars: {
+                      matchedBook: {
+                        $first: {
+                          $filter: {
+                            input: '$collections.books',
+                            as: 'collectionBook',
+                            cond: { $eq: ['$$collectionBook.bookId', '$$book._id'] },
+                          },
+                        },
+                      },
+                    },
+                    in: { $ifNull: ['$$matchedBook.checked', false] },
+                  },
+                },
               },
             },
           },
@@ -99,7 +118,12 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
 }
 
 // PATCH AddBookToCollection
-function qyAddBookToCollection(userId: string, collectionId: string[], bookId: string) {
+function qyAddBookToCollection(
+  userId: string,
+  collectionId: string[],
+  bookId: string,
+  checked: boolean = false
+) {
   return [
     {
       userId: userId,
@@ -110,7 +134,12 @@ function qyAddBookToCollection(userId: string, collectionId: string[], bookId: s
     {
       $push: {
         'collections.$[elem].books': {
-          $each: [bookId],
+          $each: [
+            {
+              bookId: new Types.ObjectId(bookId),
+              checked: checked,
+            },
+          ],
           $position: 0,
         },
       },
@@ -163,10 +192,48 @@ function qyUpdateCollectionName(userId: string, collectionId: string, name: stri
   ];
 }
 
+// GET CollectionsForUser
+function qyGetCollectionsForUser(userId: string, bookId: string) {
+  return [
+    { $match: { userId: userId } },
+    { $unwind: '$collections' },
+    {
+      $project: {
+        _id: 0,
+        id: '$collections._id',
+        name: '$collections.name',
+        checked: bookId
+          ? {
+              $cond: {
+                if: {
+                  $gt: [
+                    {
+                      $size: {
+                        $filter: {
+                          input: '$collections.books',
+                          as: 'book',
+                          cond: { $eq: ['$$book.bookId', new Types.ObjectId(bookId)] },
+                        },
+                      },
+                    },
+                    0,
+                  ],
+                },
+                then: true,
+                else: false,
+              },
+            }
+          : false,
+      },
+    },
+  ];
+}
+
 export {
   qyCheckUser,
   qyBooksByCollectionId,
   qyAddBookToCollection,
   qyRemoveBookFromCollection,
   qyUpdateCollectionName,
+  qyGetCollectionsForUser,
 };

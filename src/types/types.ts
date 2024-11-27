@@ -64,7 +64,10 @@ interface ICollections {
   collections: {
     name: string;
     id?: pkg.Schema.Types.ObjectId;
-    books: pkg.Schema.Types.ObjectId[];
+    books: {
+      bookId: pkg.Schema.Types.ObjectId;
+      checked: boolean;
+    }[];
     createdAt?: Date;
   }[];
 }

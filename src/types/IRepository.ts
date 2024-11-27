@@ -49,8 +49,13 @@ interface IReadUser {
   findAllBookFavoriteByUser(userId: string, limit: number, offset: number): Promise<IFindBooks>;
   findAllCollections(userId: string): Promise<any>;
   findOneCollection(collectionId: string): Promise<any>;
-  findCollectionsForUser(userId: string): Promise<any>;
-  addBookToCollection(userId: string, collectionId: string[], bookId: string): Promise<any>;
+  findCollectionsForUser(userId: string, bookId: string): Promise<any>;
+  addBookToCollection(
+    userId: string,
+    collectionId: string[],
+    bookId: string,
+    checked: boolean
+  ): Promise<any>;
   removeBookFromCollection(userId: string, collectionId: string[], bookId: string): Promise<any>;
 }
 

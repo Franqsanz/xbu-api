@@ -225,10 +225,10 @@ async function getCollectionsForUser(
   res: Response,
   next: NextFunction
 ): Promise<Response<void>> {
-  const { userId } = req.params;
+  const { userId, bookId } = req.params;
 
   try {
-    const findCollections = await UserService.findCollectionsForUser(userId);
+    const findCollections = await UserService.findCollectionsForUser(userId, bookId);
 
     return res.status(200).json(findCollections);
   } catch (err) {
@@ -263,12 +263,14 @@ async function patchToggleBookInCollection(
   res: Response,
   next: NextFunction
 ): Promise<Response<any>> {
-  const { userId, collectionId, bookId, isInCollection } = req.body;
+  const { userId, collectionId, bookId, isInCollection, checked } = req.body;
   let result;
+
+  console.log(req.body);
 
   try {
     if (isInCollection) {
-      result = await UserService.addBookToCollection(userId, collectionId, bookId);
+      result = await UserService.addBookToCollection(userId, collectionId, bookId, checked);
     } else {
       result = await UserService.removeBookFromCollection(userId, collectionId, bookId);
     }

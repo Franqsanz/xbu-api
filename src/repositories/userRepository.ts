@@ -8,6 +8,7 @@ import {
   qyAddBookToCollection,
   qyRemoveBookFromCollection,
   qyUpdateCollectionName,
+  qyGetCollectionsForUser,
 } from '../db/userQueries';
 import { IRepositoryUser } from '../types/IRepository';
 import { qyFindAllBookFavorite } from '../db/bookQueries';
@@ -146,11 +147,11 @@ export const UserRepository: IRepositoryUser = {
     return result.results || null;
   },
 
-  async findCollectionsForUser(userId: string) {
-    return await collectionsModel.findOne(
-      { userId: userId },
-      { _id: 0, 'collections._id': 1, 'collections.name': 1 }
-    );
+  async findCollectionsForUser(userId: string, bookId: string) {
+    const query = qyGetCollectionsForUser(userId, bookId);
+    const result = await collectionsModel.aggregate(query).exec();
+
+    return result;
   },
 
   async updateCollectionName(userId: string, collectionId: string, name: string) {
@@ -159,15 +160,24 @@ export const UserRepository: IRepositoryUser = {
     return await collectionsModel.findOneAndUpdate(...query);
   },
 
-  async addBookToCollection(userId: string, collectionId: string[], bookId: string) {
-    const query = qyAddBookToCollection(userId, collectionId, bookId);
+  async addBookToCollection(
+    userId: string,
+    collectionId: string[],
+    bookId: string,
+    checked: boolean = false
+  ) {
+    const query = qyAddBookToCollection(userId, collectionId, bookId, checked);
 
     return await collectionsModel.findOneAndUpdate(...query);
   },
 
-  async removeBookFromCollection(userId: string, collectionId: string[], bookId: string) {
+  async removeBookFromCollection(
+    userId: string,
+    collectionId: string[],
+    bookId: string,
+    checked: boolean = false
+  ) {
     const query = qyRemoveBookFromCollection(userId, collectionId, bookId);
-
     return await collectionsModel.findOneAndUpdate(...query);
   },
 

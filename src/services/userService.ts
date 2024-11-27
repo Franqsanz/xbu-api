@@ -37,17 +37,22 @@ export const UserService = {
     }
   },
 
-  async addBookToCollection(userId: string, collectionId: string[], id: string) {
+  async addBookToCollection(
+    userId: string,
+    collectionId: string[],
+    bookId: string,
+    checked: boolean
+  ) {
     try {
-      return await UserRepository.addBookToCollection(userId, collectionId, id);
+      return await UserRepository.addBookToCollection(userId, collectionId, bookId, checked);
     } catch (err) {
       throw err;
     }
   },
 
-  async removeBookFromCollection(userId: string, collectionId: string[], id: string) {
+  async removeBookFromCollection(userId: string, collectionId: string[], bookId: string) {
     try {
-      return await UserRepository.removeBookFromCollection(userId, collectionId, id);
+      return await UserRepository.removeBookFromCollection(userId, collectionId, bookId);
     } catch (err) {
       throw err;
     }
@@ -97,9 +102,9 @@ export const UserService = {
     }
   },
 
-  async findCollectionsForUser(userId: string) {
+  async findCollectionsForUser(userId: string, bookId: string) {
     try {
-      return await UserRepository.findCollectionsForUser(userId);
+      return await UserRepository.findCollectionsForUser(userId, bookId);
     } catch (err) {
       throw err;
     }
