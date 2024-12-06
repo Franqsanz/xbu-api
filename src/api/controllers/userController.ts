@@ -266,8 +266,6 @@ async function patchToggleBookInCollection(
   const { userId, collectionId, bookId, isInCollection, checked } = req.body;
   let result;
 
-  console.log(req.body);
-
   try {
     if (isInCollection) {
       result = await UserService.addBookToCollection(userId, collectionId, bookId, checked);
