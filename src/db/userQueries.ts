@@ -130,19 +130,12 @@ function qyAddBookToCollection(
       'collections._id': {
         $in: collectionId.map((id) => new Types.ObjectId(id)),
       },
-      // Condición para verificar que el libro no existe en la colección
-      'collections.$[elem].books.bookId': { $ne: new Types.ObjectId(bookId) },
     },
     {
-      $push: {
+      $addToSet: {
         'collections.$[elem].books': {
-          $each: [
-            {
-              bookId: new Types.ObjectId(bookId),
-              checked: checked,
-            },
-          ],
-          $position: 0,
+          bookId: new Types.ObjectId(bookId),
+          checked: checked,
         },
       },
     },
@@ -152,8 +145,6 @@ function qyAddBookToCollection(
           'elem._id': {
             $in: collectionId.map((id) => new Types.ObjectId(id)),
           },
-          // Filtro adicional para asegurar que el libro no existe
-          'elem.books.bookId': { $ne: new Types.ObjectId(bookId) },
         },
       ],
       upsert: false,

@@ -263,21 +263,32 @@ async function patchToggleBookInCollection(
   res: Response,
   next: NextFunction
 ): Promise<Response<any>> {
-  const { userId, collectionId, bookId, isInCollection, checked } = req.body;
-  let result;
+  const { userId, collections, bookId, checked } = req.body;
 
   try {
-    if (isInCollection) {
-      result = await UserService.addBookToCollection(userId, collectionId, bookId, checked);
-    } else {
-      result = await UserService.removeBookFromCollection(userId, collectionId, bookId);
-    }
+    const actions = collections.map(async (collection: any) => {
+      const { collectionId, collectionName, isInCollection } = collection;
 
-    if (!result) {
-      throw NotFound('Colección o libro no encontrado');
-    }
+      if (isInCollection) {
+        await UserService.addBookToCollection(userId, [collectionId], bookId, checked);
 
-    return res.status(200).json(result);
+        return `Libro agregado a la colección ${collectionName}`;
+      } else {
+        await UserService.removeBookFromCollection(userId, [collectionId], bookId);
+
+        return `Libro eliminado de la colección ${collectionName}`;
+      }
+    });
+
+    // Ejecuta todas las operaciones en paralelo
+    const messages = await Promise.all(actions);
+
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: messages,
+      },
+    });
   } catch (err) {
     return next(err) as any;
   }
