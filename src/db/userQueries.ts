@@ -43,45 +43,27 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
             },
           },
         },
+        // Invertir el orden de los libros
+        reversedBooks: { $reverseArray: '$collections.books' },
       },
     },
     {
-      $group: {
-        _id: '$collections._id',
-        collectionName: { $first: '$collections.name' },
-        createdAt: { $first: '$collections.createdAt' },
-        missingBooks: { $first: '$missingBooks' },
-        books: {
-          $push: {
-            $map: {
-              input: '$bookDetails',
-              as: 'book',
-              in: {
-                id: '$$book._id',
-                title: '$$book.title',
-                authors: '$$book.authors',
-                category: '$$book.category',
-                pathUrl: '$$book.pathUrl',
-                image: '$$book.image',
-                language: '$$book.language',
-                views: '$$book.views',
-                checked: {
-                  $let: {
-                    vars: {
-                      matchedBook: {
-                        $first: {
-                          $filter: {
-                            input: '$collections.books',
-                            as: 'collectionBook',
-                            cond: { $eq: ['$$collectionBook.bookId', '$$book._id'] },
-                          },
-                        },
-                      },
-                    },
-                    in: { $ifNull: ['$$matchedBook.checked', false] },
+      $addFields: {
+        bookDetails: {
+          $map: {
+            input: '$reversedBooks',
+            as: 'collectionBook',
+            in: {
+              $arrayElemAt: [
+                {
+                  $filter: {
+                    input: '$bookDetails',
+                    as: 'bookDetail',
+                    cond: { $eq: ['$$bookDetail._id', '$$collectionBook.bookId'] },
                   },
                 },
-              },
+                0,
+              ],
             },
           },
         },
@@ -89,18 +71,40 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
     },
     {
       $project: {
-        _id: 0,
-        id: '$_id',
-        name: '$collectionName',
-        createdAt: 1,
-        missingBooks: 1,
+        name: '$collections.name',
         books: {
-          $reduce: {
-            input: '$books',
-            initialValue: [],
-            in: { $concatArrays: ['$$value', '$$this'] },
+          $map: {
+            input: '$bookDetails',
+            as: 'book',
+            in: {
+              id: '$$book._id',
+              title: '$$book.title',
+              authors: '$$book.authors',
+              category: '$$book.category',
+              pathUrl: '$$book.pathUrl',
+              image: '$$book.image',
+              language: '$$book.language',
+              views: '$$book.views',
+              checked: {
+                $let: {
+                  vars: {
+                    matchedBook: {
+                      $first: {
+                        $filter: {
+                          input: '$collections.books',
+                          as: 'collectionBook',
+                          cond: { $eq: ['$$collectionBook.bookId', '$$book._id'] },
+                        },
+                      },
+                    },
+                  },
+                  in: { $ifNull: ['$$matchedBook.checked', false] },
+                },
+              },
+            },
           },
         },
+        missingBooks: 1,
       },
     },
     {
