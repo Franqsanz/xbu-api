@@ -35,7 +35,7 @@ router.post('/:userId/my-collections', postCreateCollections);
 router.delete('/:userId/my-collections/:collectionId', deleteCollections);
 
 // Colección
-router.get('/my-collections/:collectionId', getOneCollection);
+router.get('/my-collections/collection/:collectionId', getOneCollection);
 router.patch('/my-collections/books/toggle', patchToggleBookInCollection);
 router.patch('/my-collections/:collectionId', patchCollectionName);
 

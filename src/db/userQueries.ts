@@ -71,6 +71,9 @@ function qyBooksByCollectionId(collectionId: string): PipelineStage[] {
     },
     {
       $project: {
+        _id: 0,
+        id: '$_id',
+        userId: 1,
         name: '$collections.name',
         books: {
           $map: {

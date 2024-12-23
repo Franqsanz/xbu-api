@@ -89,11 +89,13 @@ export const UserRepository: IRepositoryUser = {
       return { userId, collections: [], collectionCount: 0 };
     }
 
-    const collections = userCollections.collections.map((collection) => ({
-      id: collection.id,
-      name: collection.name,
-      createdAt: collection.createdAt,
-    }));
+    const collections = userCollections.collections
+      .map((collection) => ({
+        id: collection.id,
+        name: collection.name,
+        createdAt: collection.createdAt || new Date(0), // Usar fecha mínima si es undefined
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const totalCollections = collections.length;
 
