@@ -79,9 +79,9 @@ export function registerMW(app: Application) {
 }
 
 export function registerRoutes(app: Application) {
-  app.get('/', (req: Request, res: Response) => {
-    const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === 'production';
 
+  app.get('/', (req: Request, res: Response) => {
     res.status(200).send(`
       <section style="margin-top: 30px;">
         <h1 style="font-size: 32px; padding-left: 22px;">API REST de XBuniverse</h1>
@@ -114,7 +114,15 @@ export function registerRoutes(app: Application) {
   app.use('/api', books);
   app.use('/api/auth', auth);
   app.use('/api/users', users);
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+  if (isProduction) {
+    app.use('/api-docs', (req, res) => {
+      res.status(200).redirect('/');
+    });
+  } else {
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+  }
+
   app.all('*', (req, res: Response) =>
     res.status(404).json({
       error: 'Not found',
