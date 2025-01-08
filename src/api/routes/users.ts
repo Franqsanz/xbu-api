@@ -12,6 +12,7 @@ import {
   getCollectionsForUser,
   patchCollectionName,
   patchToggleBookInCollection,
+  patchRemoveBookFromCollection,
   deleteAccount,
 } from '../controllers/userController';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -38,5 +39,6 @@ router.delete('/:userId/my-collections/:collectionId', deleteCollections);
 router.get('/my-collections/collection/:collectionId', getOneCollection);
 router.patch('/my-collections/books/toggle', patchToggleBookInCollection);
 router.patch('/my-collections/:collectionId', patchCollectionName);
+router.patch('/my-collections/collection/remove-book', patchRemoveBookFromCollection);
 
 export default router;

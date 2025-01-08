@@ -12,6 +12,7 @@ import {
 } from '../db/userQueries';
 import { IRepositoryUser } from '../types/IRepository';
 import { qyFindAllBookFavorite } from '../db/bookQueries';
+import { PipelineStage, Types } from 'mongoose';
 
 export const UserRepository: IRepositoryUser = {
   async findUsers() {
@@ -176,11 +177,26 @@ export const UserRepository: IRepositoryUser = {
   async removeBookFromCollection(
     userId: string,
     collectionId: string[],
-    bookId: string,
-    checked: boolean = false
+    bookId: string
+    // checked: boolean = false
   ) {
     const query = qyRemoveBookFromCollection(userId, collectionId, bookId);
-    return await collectionsModel.findOneAndUpdate(...query);
+    const result = await collectionsModel.findOneAndUpdate(...query);
+
+    // Verificar si el libro todavía existe en la colección
+    // const stillExists = await collectionsModel.findOne({
+    //   userId,
+    //   'collections._id': { $in: collectionId.map((id) => new Types.ObjectId(id)) },
+    //   'collections.books.bookId': new Types.ObjectId(bookId),
+    // });
+
+    // if (stillExists) {
+    //   throw new Error(
+    //     'El libro no se encuentra en la colección especificada o no pertenece al usuario.'
+    //   );
+    // }
+
+    return result;
   },
 
   async createUser(userToSave) {

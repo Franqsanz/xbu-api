@@ -294,6 +294,34 @@ async function patchToggleBookInCollection(
   }
 }
 
+async function patchRemoveBookFromCollection(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<any>> {
+  const { userId, collectionId, bookId } = req.body;
+
+  try {
+    // Convertir el collectionId en un Array.
+    const collectionIds = collectionId
+      ? Array.isArray(collectionId)
+        ? collectionId
+        : [collectionId]
+      : [];
+
+    await UserService.removeBookFromCollection(userId, collectionIds, bookId);
+
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Libro eliminado de la colección exitosamente',
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function deleteAccount(
   req: Request,
   res: Response,
@@ -341,5 +369,6 @@ export {
   getCollectionsForUser,
   patchCollectionName,
   patchToggleBookInCollection,
+  patchRemoveBookFromCollection,
   deleteAccount,
 };
