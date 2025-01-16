@@ -199,10 +199,11 @@ function qyUpdateCollectionName(userId: string, collectionId: string, name: stri
 }
 
 // GET CollectionsForUser
-function qyGetCollectionsForUser(userId: string, bookId: string) {
+function qyGetCollectionsForUser(userId: string, bookId: string): PipelineStage[] {
   return [
     { $match: { userId: userId } },
     { $unwind: '$collections' },
+    { $sort: { 'collections.createdAt': -1 } },
     {
       $project: {
         _id: 0,
