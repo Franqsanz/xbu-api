@@ -12,7 +12,7 @@ import {
 } from '../db/userQueries';
 import { IRepositoryUser } from '../types/IRepository';
 import { qyFindAllBookFavorite } from '../db/bookQueries';
-import { PipelineStage, Types } from 'mongoose';
+// import { PipelineStage, Types } from 'mongoose';
 
 export const UserRepository: IRepositoryUser = {
   async findUsers() {
@@ -207,6 +207,18 @@ export const UserRepository: IRepositoryUser = {
 
   async deleteUserBooks(id) {
     return await booksModel.deleteOne(id);
+  },
+
+  async deleteUserFavorites(userId) {
+    const result = await favoritesModel.deleteOne({ userId: userId });
+
+    return result.deletedCount > 0;
+  },
+
+  async deleteUserCollections(userId) {
+    const result = await collectionsModel.deleteOne({ userId: userId });
+
+    return result.deletedCount > 0;
   },
 
   async deleteUser(userId) {

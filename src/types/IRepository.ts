@@ -68,6 +68,8 @@ interface IWriteUser {
     username: string
   ): Promise<{ existingUser: IUser | null; saveUser: IUser }>;
   deleteCollections(userId: string, collectionId: string): Promise<any>;
+  deleteUserCollections(userId: string): Promise<any>;
+  deleteUserFavorites(userId: string): Promise<any>;
   deleteUserBooks(id: any): Promise<any>;
   deleteUser(userId: any): Promise<any>;
   deleteAccount?(userId: string): Promise<void>;

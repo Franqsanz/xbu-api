@@ -11,3 +11,43 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 * **Buscar libros**: Ofrece capacidades de búsqueda y filtrado por título, autor, categoria/género, año de publicación.
 * **Agregar libros a favoritos**: Permite marcar libros como favoritos para un acceso rápido.
 * **Crear colecciones de libros**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
+
+## Esquema de la API
+
+Rutas de libros
+
+| Ruta | Método | Descripción |
+| --- | --- | --- |
+| `/books` | GET | Recupera una lista de libros. |
+| `/books/:id` | GET | Recupera un libro específico por su ID. |
+| `/books` | POST | Crea un nuevo libro. |
+| `/books/:id` | PATCH | Actualiza la información de un libro existente. |
+| `/books/:id` | DELETE | Elimina un libro. |
+| `/books/search` | GET | Busca libros por título y autor. |
+| `/books/options` | GET | Recupera una lista de opciones de filtrado para la búsqueda de libros. |
+| `/books/more-books/:id` | GET | Recupera un libro aleatorio de una colección de libros. |
+| `/books/related-books/:id` | GET | Recupera un libro relacionado con otro libro. |
+| `/books/more-books-authors/:id` | GET | Recupera un libro aleatorio de un autor específico. |
+| `/books/most-viewed-books` | GET | Recupera un lista de libros más vistos. |
+| `/books/path/:pathUrl` | GET | Recupera un libro por su URL de ruta (slug). |
+
+Rutas de usuarios
+
+| Ruta | Método | Descripción |
+| --- | --- | --- |
+| `/users` | GET | Recupera una lista de usuarios. |
+| `/users/check-user/:userId` | GET | Verifica si un usuario existe. |
+| `/users/:userId/:username/my-books` | GET | Recupera una lista de libros de un usuario. |
+| `/users/:userId` | DELETE | Elimina la cuenta del usuario. |
+| `/users/:userId/my-favorites` | GET | Recupera una lista de libros favoritos de un usuario. |
+| `/users/favorites` | PATCH | Agrega o elimina un libro en favoritos. |
+| `/users/:userId/favorites` | DELETE | Elimina todos los favoritos. |
+| `/users/:userId/my-collections` | GET | Recupera una lista de colecciones de un usuario. |
+| `/users/:userId/my-collections/summary/:bookId` | GET | Recupera una lista de libros de una colección de un usuario. |
+| `/users/:userId/my-collections` | POST | Crea una nueva colección de un usuario. |
+| `/users/:userId/my-collections/:collectionId` | DELETE | Elimina una colección de un usuario. |
+| `/users/:userId/collecctions` | DELETE | Elimina todas las colecciones de un usuario. |
+| `/users/my-collections/collection/:collectionId` | GET | Recupera una colección de un usuario. |
+| `/users/my-collections/books/toggle` | PATCH | Agrega o elimina un libro de una colección. |
+| `/users/my-collections/:collectionId` | PATCH | Actualiza el nombre de una colección. |
+| `/users/my-collections/collection/remove-book` | PATCH | Elimina un libro de una colección. |

@@ -126,6 +126,22 @@ export const UserService = {
     }
   },
 
+  async deleteUserFavorites(userId: string) {
+    try {
+      return await UserRepository.deleteUserFavorites(userId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async deleteUserCollections(userId: string) {
+    try {
+      return await UserRepository.deleteUserCollections(userId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async deleteAccount(userId: string) {
     try {
       const user = await UserRepository.findById(userId);
@@ -141,6 +157,9 @@ export const UserService = {
 
         return await UserRepository.deleteUserBooks(book.userId);
       }
+
+      await UserRepository.deleteUserCollections(userId);
+      await UserRepository.deleteUserFavorites(userId);
 
       return await UserRepository.deleteUser(user?.uid);
     } catch (err) {

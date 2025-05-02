@@ -13,6 +13,8 @@ import {
   patchCollectionName,
   patchToggleBookInCollection,
   patchRemoveBookFromCollection,
+  deleteUserFavorites,
+  deleteUserCollections,
   deleteAccount,
 } from '../controllers/userController';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -28,12 +30,14 @@ router.delete('/:userId', deleteAccount);
 
 // Favoritos
 router.get('/:userId/my-favorites', pagination, getFindAllBookFavoriteByUser);
+router.delete('/:userId/favorites', deleteUserFavorites);
 
 // Colecciones
 router.get('/:userId/my-collections', getAllCollections);
 router.get('/:userId/my-collections/summary/:bookId', getCollectionsForUser);
 router.post('/:userId/my-collections', postCreateCollections);
 router.delete('/:userId/my-collections/:collectionId', deleteCollections);
+router.delete('/:userId/collecctions', deleteUserCollections);
 
 // Colección
 router.get('/my-collections/collection/:collectionId', getOneCollection);

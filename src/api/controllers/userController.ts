@@ -322,6 +322,48 @@ async function patchRemoveBookFromCollection(
   }
 }
 
+async function deleteUserFavorites(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { userId } = req.params;
+
+  try {
+    await UserService.deleteUserFavorites(userId);
+
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Favoritos eliminados',
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function deleteUserCollections(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const { userId } = req.params;
+
+  try {
+    await UserService.deleteUserCollections(userId);
+
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Colecciones eliminadas',
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function deleteAccount(
   req: Request,
   res: Response,
@@ -370,5 +412,7 @@ export {
   patchCollectionName,
   patchToggleBookInCollection,
   patchRemoveBookFromCollection,
+  deleteUserCollections,
+  deleteUserFavorites,
   deleteAccount,
 };
