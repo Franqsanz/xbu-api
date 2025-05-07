@@ -13,7 +13,7 @@
       "methods": ["GET", "HEAD", "OPTIONS", "POST", "PUT", "PATCH", "DELETE"],
       "headers": {
         "Access-Control-Allow-Origin": "https://xbu.vercel.app",
-        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Authorization, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin"
+        "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Authorization, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, X-Api-Key"
       }
     }
   ]

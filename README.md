@@ -37,17 +37,17 @@ Rutas de usuarios
 | --- | --- | --- |
 | `/users` | GET | Recupera una lista de usuarios. |
 | `/users/check-user/:userId` | GET | Verifica si un usuario existe. |
-| `/users/:userId/:username/my-books` | GET | Recupera una lista de libros de un usuario. |
+| `/users/:userId/:username/books` | GET | Recupera una lista de libros de un usuario. |
 | `/users/:userId` | DELETE | Elimina la cuenta del usuario. |
-| `/users/:userId/my-favorites` | GET | Recupera una lista de libros favoritos de un usuario. |
+| `/users/:userId/favorites` | GET | Recupera una lista de libros favoritos de un usuario. |
 | `/users/favorites` | PATCH | Agrega o elimina un libro en favoritos. |
 | `/users/:userId/favorites` | DELETE | Elimina todos los favoritos. |
-| `/users/:userId/my-collections` | GET | Recupera una lista de colecciones de un usuario. |
-| `/users/:userId/my-collections/summary/:bookId` | GET | Recupera una lista de libros de una colección de un usuario. |
-| `/users/:userId/my-collections` | POST | Crea una nueva colección de un usuario. |
-| `/users/:userId/my-collections/:collectionId` | DELETE | Elimina una colección de un usuario. |
+| `/users/:userId/collections` | GET | Recupera una lista de colecciones de un usuario. |
+| `/users/:userId/collections/summary/:bookId` | GET | Recupera una lista de libros de una colección de un usuario. |
+| `/users/:userId/collections` | POST | Crea una nueva colección de un usuario. |
+| `/users/:userId/collections/:collectionId` | DELETE | Elimina una colección de un usuario. |
 | `/users/:userId/collecctions` | DELETE | Elimina todas las colecciones de un usuario. |
-| `/users/my-collections/collection/:collectionId` | GET | Recupera una colección de un usuario. |
-| `/users/my-collections/books/toggle` | PATCH | Agrega o elimina un libro de una colección. |
-| `/users/my-collections/:collectionId` | PATCH | Actualiza el nombre de una colección. |
-| `/users/my-collections/collection/remove-book` | PATCH | Elimina un libro de una colección. |
+| `/users/collections/collection/:collectionId` | GET | Recupera una colección de un usuario. |
+| `/users/collections/books/toggle` | PATCH | Agrega o elimina un libro de una colección. |
+| `/users/collections/:collectionId` | PATCH | Actualiza el nombre de una colección. |
+| `/users/collections/collection/remove-book` | PATCH | Elimina un libro de una colección. |
