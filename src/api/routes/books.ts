@@ -13,7 +13,6 @@ import {
   postBooks,
   putBooks,
   deleteBook,
-  patchToggleFavorite,
 } from '../controllers/bookController';
 import { query } from '../middlewares/query';
 import { pagination } from '../middlewares/pagination';
@@ -31,7 +30,6 @@ router.get('/books/related-books/:id', getRelatedBooks);
 router.get('/books/more-books-authors/:id', getMoreBooksAuthors);
 router.get('/books/most-viewed-books', getMostViewedBooks);
 router.get('/books/path/:pathUrl', getPathUrlBooks);
-router.patch('/books/favorite', patchToggleFavorite);
 router.get('/books/:id', getOneBooks);
 router.post('/books', postBooks);
 router.patch('/books/:id', putBooks);

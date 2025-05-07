@@ -4,6 +4,9 @@ import favoritesModel from '../models/favorites';
 import collectionsModel from '../models/collections';
 import {
   qyCheckUser,
+  qyAddFavorite,
+  qyFindAllBookFavorite,
+  qyRemoveFavorite,
   qyBooksByCollectionId,
   qyAddBookToCollection,
   qyRemoveBookFromCollection,
@@ -11,7 +14,6 @@ import {
   qyGetCollectionsForUser,
 } from '../db/userQueries';
 import { IRepositoryUser } from '../types/IRepository';
-import { qyFindAllBookFavorite } from '../db/bookQueries';
 // import { PipelineStage, Types } from 'mongoose';
 
 export const UserRepository: IRepositoryUser = {
@@ -81,6 +83,18 @@ export const UserRepository: IRepositoryUser = {
       totalBooks: result.totalBooks,
       results: result.results,
     };
+  },
+
+  async addFavorite(userId, id) {
+    const query = qyAddFavorite(userId, id);
+
+    return await favoritesModel.findOneAndUpdate(...query);
+  },
+
+  async removeFavorite(userId, id) {
+    const query = qyRemoveFavorite(userId, id);
+
+    return await favoritesModel.findOneAndUpdate(...query);
   },
 
   async findAllCollections(userId) {

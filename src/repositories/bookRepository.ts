@@ -1,5 +1,4 @@
 import booksModel from '../models/books';
-import favoritesModel from '../models/favorites';
 import { IRepositoryBook } from '../types/IRepository';
 import {
   qyGroupOptions,
@@ -12,10 +11,8 @@ import {
   qyRelatedBooks,
   qyMoreBooksAuthors,
   qyPutBook,
-  qyAddFavorite,
-  qyRemoveFavorite,
-  qyPathUrlBooksFavorite,
 } from '../db/bookQueries';
+import { qyPathUrlBooksFavorite } from '../db/userQueries';
 
 export const BookRepository: IRepositoryBook = {
   async findBooks(limit, offset) {
@@ -42,18 +39,6 @@ export const BookRepository: IRepositoryBook = {
     const query = qyOneBooks(id);
 
     return await booksModel.findByIdAndUpdate(...query).hint('_id_');
-  },
-
-  async addFavorite(userId, id) {
-    const query = qyAddFavorite(userId, id);
-
-    return await favoritesModel.findOneAndUpdate(...query);
-  },
-
-  async removeFavorite(userId, id) {
-    const query = qyRemoveFavorite(userId, id);
-
-    return await favoritesModel.findOneAndUpdate(...query);
   },
 
   async findBySlug(slug) {

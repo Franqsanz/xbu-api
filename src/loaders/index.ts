@@ -14,7 +14,7 @@ import * as Sentry from '@sentry/node';
 import swaggerUi from 'swagger-ui-express';
 
 import { ALLOWED_ORIGIN } from '../config/env';
-// import { apiKey } from '../api/middlewares/apiKey';
+import { apiKey } from '../api/middlewares/apiKey';
 import { errorHandler } from '../api/middlewares/errorHandler';
 import limiter from '../api/middlewares/rateLimit';
 import books from '../api/routes/books';
@@ -23,14 +23,28 @@ import users from '../api/routes/users';
 import swaggerDocument from '../docs/swagger.json';
 
 export function registerMW(app: Application) {
-  // app.use(apiKey);
+  const corsOptions = {
+    origin: ALLOWED_ORIGIN || '',
+    methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
+    allowedHeaders: [
+      'X-Requested-With',
+      'X-Api-Key',
+      'Authorization',
+      'Content-Type',
+      'Accept',
+      'Origin',
+    ],
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  };
+
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
+  app.use(apiKey);
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
-  app.use(
-    express.json({
-      limit: '50mb',
-    })
-  );
+  app.use(express.json({ limit: '50mb' }));
   app.use(
     express.urlencoded({
       limit: '50mb',
@@ -42,14 +56,6 @@ export function registerMW(app: Application) {
   app.use(cookieParser());
   app.use(limiter);
   app.use(logger('dev'));
-  app.use(
-    cors({
-      origin: ALLOWED_ORIGIN || '',
-      methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
-      allowedHeaders: ['X-Requested-With', 'Authorization', 'Content-Type', 'Accept', 'Origin'],
-      credentials: true,
-    })
-  );
   app.use(
     helmet({
       contentSecurityPolicy: true,
@@ -68,10 +74,10 @@ export function registerMW(app: Application) {
       xssFilter: true,
     })
   );
+
   app.use((req, res, next) => {
     res.header({
       'Set-Cookie': 'SameSite=None; Secure',
-      // 'Cache-Control': 'public, max-age=100'
     });
 
     next();

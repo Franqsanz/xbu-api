@@ -37,6 +37,22 @@ export const UserService = {
     }
   },
 
+  async addFavorite(userId: string, id: string) {
+    try {
+      return await UserRepository.addFavorite(userId, id);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async removeFavorite(userId: string, id: string) {
+    try {
+      return await UserRepository.removeFavorite(userId, id);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   async addBookToCollection(
     userId: string,
     collectionId: string[],

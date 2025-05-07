@@ -213,31 +213,6 @@ async function getPathUrlBooks(
   }
 }
 
-async function patchToggleFavorite(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<IBook | null>> {
-  const { userId, id, isFavorite } = req.body;
-  let result;
-
-  try {
-    if (isFavorite) {
-      result = await BookService.addFavorite(userId, id);
-    } else {
-      result = await BookService.removeFavorite(userId, id);
-    }
-
-    if (!result) {
-      throw NotFound('Libro no encontrado');
-    }
-
-    return res.status(200).json(result);
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
 async function getMostViewedBooks(
   req: Request,
   res: Response,
@@ -341,7 +316,6 @@ export {
   getOneBooks,
   getPathUrlBooks,
   getMostViewedBooks,
-  patchToggleFavorite,
   postBooks,
   putBooks,
   deleteBook,

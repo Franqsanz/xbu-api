@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
-import { IUser, IUserAndBooks } from '../../types/types';
+import { IBook, IUser, IUserAndBooks } from '../../types/types';
 import { NotFound, BadRequest } from '../../utils/errors';
 
 async function getUsers(
@@ -136,6 +136,31 @@ async function getFindAllBookFavoriteByUser(
     };
 
     return res.status(200).json(response);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function patchToggleFavorite(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook | null>> {
+  const { userId, id, isFavorite } = req.body;
+  let result;
+
+  try {
+    if (isFavorite) {
+      result = await UserService.addFavorite(userId, id);
+    } else {
+      result = await UserService.removeFavorite(userId, id);
+    }
+
+    if (!result) {
+      throw NotFound('Libro no encontrado');
+    }
+
+    return res.status(200).json(result);
   } catch (err) {
     return next(err) as any;
   }
@@ -404,6 +429,7 @@ export {
   getCheckUser,
   getUserAndBooks,
   getFindAllBookFavoriteByUser,
+  patchToggleFavorite,
   getAllCollections,
   postCreateCollections,
   deleteCollections,

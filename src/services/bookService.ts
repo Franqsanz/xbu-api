@@ -48,22 +48,6 @@ export const BookService: IRepositoryBook = {
     }
   },
 
-  async addFavorite(userId, id) {
-    try {
-      return await BookRepository.addFavorite(userId, id);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async removeFavorite(userId, id) {
-    try {
-      return await BookRepository.removeFavorite(userId, id);
-    } catch (err) {
-      throw err;
-    }
-  },
-
   async findSearch(q) {
     try {
       return await BookRepository.findSearch(q);

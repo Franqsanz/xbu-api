@@ -30,8 +30,6 @@ interface IReadBook {
     limit?: number,
     offset?: number
   ): Promise<IFindBooks>;
-  addFavorite(userId: string, id: string): Promise<IBook | null>;
-  removeFavorite(userId: string, id: string): Promise<IBook | null>;
 }
 
 interface IWriteBook {
@@ -47,6 +45,8 @@ interface IReadUser {
   findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks>;
   findBooksByUserId(userId: string): Promise<IBook[]>;
   findAllBookFavoriteByUser(userId: string, limit: number, offset: number): Promise<IFindBooks>;
+  addFavorite(userId: string, id: string): Promise<IBook | null>;
+  removeFavorite(userId: string, id: string): Promise<IBook | null>;
   findAllCollections(userId: string): Promise<any>;
   findOneCollection(collectionId: string): Promise<any>;
   findCollectionsForUser(userId: string, bookId: string): Promise<any>;

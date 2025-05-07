@@ -5,6 +5,7 @@ import {
   getCheckUser,
   getUserAndBooks,
   getFindAllBookFavoriteByUser,
+  patchToggleFavorite,
   getAllCollections,
   postCreateCollections,
   deleteCollections,
@@ -25,24 +26,25 @@ const router: Router = express.Router();
 // Usuarios
 router.get('/', getUsers);
 router.get('/check-user/:userId', getCheckUser);
-router.get('/:userId/:username/my-books', verifyToken, pagination, getUserAndBooks);
+router.get('/:userId/:username/books', verifyToken, pagination, getUserAndBooks);
 router.delete('/:userId', deleteAccount);
 
 // Favoritos
-router.get('/:userId/my-favorites', pagination, getFindAllBookFavoriteByUser);
+router.get('/:userId/favorites', pagination, getFindAllBookFavoriteByUser);
+router.patch('/favorites', patchToggleFavorite);
 router.delete('/:userId/favorites', deleteUserFavorites);
 
 // Colecciones
-router.get('/:userId/my-collections', getAllCollections);
-router.get('/:userId/my-collections/summary/:bookId', getCollectionsForUser);
-router.post('/:userId/my-collections', postCreateCollections);
-router.delete('/:userId/my-collections/:collectionId', deleteCollections);
+router.get('/:userId/collections', getAllCollections);
+router.get('/:userId/collections/summary/:bookId', getCollectionsForUser);
+router.post('/:userId/collections', postCreateCollections);
+router.delete('/:userId/collections/:collectionId', deleteCollections);
 router.delete('/:userId/collecctions', deleteUserCollections);
 
 // Colección
-router.get('/my-collections/collection/:collectionId', getOneCollection);
-router.patch('/my-collections/books/toggle', patchToggleBookInCollection);
-router.patch('/my-collections/:collectionId', patchCollectionName);
-router.patch('/my-collections/collection/remove-book', patchRemoveBookFromCollection);
+router.get('/collections/collection/:collectionId', getOneCollection);
+router.patch('/collections/books/toggle', patchToggleBookInCollection);
+router.patch('/collections/:collectionId', patchCollectionName);
+router.patch('/collections/collection/remove-book', patchRemoveBookFromCollection);
 
 export default router;
