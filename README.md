@@ -2,6 +2,80 @@
 
 Esta interfaz permite a los usuarios gestionar una colección de libros mediante una serie de rutas (endpoints). Los usuarios pueden realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar) sobre los recursos de libros, así como buscar libros por varios criterios. Está diseñada para ser utilizada por aplicaciones front-end, aplicaciones móviles o cualquier otro cliente que necesite acceder.
 
+## Diagrama de base de datos
+
+```mermaid
+erDiagram
+    USER ||--|| COLLECTIONS : tiene
+    USER ||--o{ BOOK : publica
+    USER ||--|| FAVORITES : tiene
+    USER {
+        string uid PK
+        string name
+        string username
+        string picture
+        string email
+        date createdAt
+    }
+
+    COLLECTIONS {
+        string userId PK
+        array collections
+        date createdAt
+        date updatedAt
+    }
+
+    COLLECTION {
+        string name "maxlength:25"
+        array books
+        date createdAt
+    }
+
+    BOOK_REFERENCE }|--|| BOOK : referencia
+    BOOK_REFERENCE {
+        ObjectId bookId
+        boolean checked
+    }
+
+    COLLECTIONS ||--o{ COLLECTION : contiene
+    COLLECTION ||--o{ BOOK_REFERENCE : contiene
+
+    FAVORITES {
+        string userId PK
+        array favoriteBooks
+        date createdAt
+        date updatedAt
+    }
+
+    FAVORITES }|--o{ BOOK : contiene
+
+    BOOK {
+        ObjectId _id PK
+        string title
+        array authors
+        string synopsis
+        array category
+        string sourceLink
+        string language
+        number year "min:1800, max:2050"
+        number numberPages "min:49"
+        string format
+        string pathUrl
+        object image
+        string userId FK
+        number views "default:0"
+        number rating "min:0, max:5, default:0"
+        date createdAt
+        date updatedAt
+    }
+
+    IMAGE ||--|| BOOK : pertenece_a
+    IMAGE {
+        string url
+        string public_id
+    }
+```
+
 ## Características
 
 * **Crear libros**: Permite añadir nuevos libros.
@@ -14,7 +88,7 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 
 ## Esquema de la API
 
-Rutas de libros
+### Rutas de libros
 
 | Ruta | Método | Descripción |
 | --- | --- | --- |
@@ -31,7 +105,7 @@ Rutas de libros
 | `/books/most-viewed-books` | GET | Recupera un lista de libros más vistos. |
 | `/books/path/:pathUrl` | GET | Recupera un libro por su URL de ruta (slug). |
 
-Rutas de usuarios
+### Rutas de usuarios
 
 | Ruta | Método | Descripción |
 | --- | --- | --- |
