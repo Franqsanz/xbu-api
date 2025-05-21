@@ -2,6 +2,20 @@
 
 Esta interfaz permite a los usuarios gestionar una colección de libros mediante una serie de rutas (endpoints). Los usuarios pueden realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar) sobre los recursos de libros, así como buscar libros por varios criterios. Está diseñada para ser utilizada por aplicaciones front-end, aplicaciones móviles o cualquier otro cliente que necesite acceder.
 
+## Características
+
+* **Crear libros**: Permite añadir nuevos libros.
+* **Obtener libros**: Recupera una lista de libros o un libro específico por su ID.
+* **Actualizar libros**: Permite modificar la información de un libro existente.
+* **Eliminar libros**: Eliminar un libro.
+* **Buscar libros**: Ofrece capacidades de búsqueda y filtrado por título, autor, categoria/género, año de publicación.
+* **Agregar libros a favoritos**: Permite marcar libros como favoritos para un acceso rápido.
+* **Crear colecciones de libros**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
+
+## Arquitectura de la API
+
+![Arquitectura de la API](./architecture.svg)
+
 ## Diagrama de base de datos
 
 ```mermaid
@@ -76,16 +90,6 @@ erDiagram
     }
 ```
 
-## Características
-
-* **Crear libros**: Permite añadir nuevos libros.
-* **Obtener libros**: Recupera una lista de libros o un libro específico por su ID.
-* **Actualizar libros**: Permite modificar la información de un libro existente.
-* **Eliminar libros**: Eliminar un libro.
-* **Buscar libros**: Ofrece capacidades de búsqueda y filtrado por título, autor, categoria/género, año de publicación.
-* **Agregar libros a favoritos**: Permite marcar libros como favoritos para un acceso rápido.
-* **Crear colecciones de libros**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
-
 ## Esquema de la API
 
 ### Rutas de libros
@@ -125,3 +129,5 @@ erDiagram
 | `/users/collections/books/toggle` | PATCH | Agrega o elimina un libro de una colección. |
 | `/users/collections/:collectionId` | PATCH | Actualiza el nombre de una colección. |
 | `/users/collections/collection/remove-book` | PATCH | Elimina un libro de una colección. |
+
+[© 2025](./LICENSE) Franco Andrés Sánchez
