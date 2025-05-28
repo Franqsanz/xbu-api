@@ -130,4 +130,4 @@ erDiagram
 | `/users/collections/:collectionId` | PATCH | Actualiza el nombre de una colección. |
 | `/users/collections/collection/remove-book` | PATCH | Elimina un libro de una colección. |
 
-[© 2025](./LICENSE) Franco Andrés Sánchez
+2025 Franco Andrés Sánchez

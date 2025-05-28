@@ -1,6 +1,8 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
 
 import { UserRepository } from './../repositories/userRepository';
+import { CollectionRepository } from './../repositories/collectionRepository';
+import { FavoriteRepository } from './../repositories/favoriteRepository';
 import { cloudinary } from '../config/cloudinary';
 // import { IRepositoryUser, IUserService } from '../types/IRepository';
 
@@ -29,51 +31,6 @@ export const UserService = {
     }
   },
 
-  async findAllBookFavoriteByUser(userId: string, limit: number, offset: number) {
-    try {
-      return await UserRepository.findAllBookFavoriteByUser(userId, limit, offset);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  async addFavorite(userId: string, id: string) {
-    try {
-      return await UserRepository.addFavorite(userId, id);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async removeFavorite(userId: string, id: string) {
-    try {
-      return await UserRepository.removeFavorite(userId, id);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async addBookToCollection(
-    userId: string,
-    collectionId: string[],
-    bookId: string,
-    checked: boolean
-  ) {
-    try {
-      return await UserRepository.addBookToCollection(userId, collectionId, bookId, checked);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async removeBookFromCollection(userId: string, collectionId: string[], bookId: string) {
-    try {
-      return await UserRepository.removeBookFromCollection(userId, collectionId, bookId);
-    } catch (err) {
-      throw err;
-    }
-  },
-
   async saveUser(decodedToken: DecodedIdToken, username: string) {
     const userToSave = {
       ...decodedToken,
@@ -89,70 +46,6 @@ export const UserService = {
         existingUser,
         saveUser,
       };
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async findAllCollections(userId: string) {
-    try {
-      return await UserRepository.findAllCollections(userId);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async saveCollections(userId: string, name: string) {
-    try {
-      return await UserRepository.createCollections(userId, name);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async findOneCollection(collectionId: string) {
-    try {
-      return await UserRepository.findOneCollection(collectionId);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async findCollectionsForUser(userId: string, bookId: string) {
-    try {
-      return await UserRepository.findCollectionsForUser(userId, bookId);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async updateCollectionName(userId: string, collectionId: string, name: string) {
-    try {
-      return await UserRepository.updateCollectionName(userId, collectionId, name);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async deleteCollections(userId: string, collectionId: string) {
-    try {
-      return await UserRepository.deleteCollections(userId, collectionId);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async deleteUserFavorites(userId: string) {
-    try {
-      return await UserRepository.deleteUserFavorites(userId);
-    } catch (err) {
-      throw err;
-    }
-  },
-
-  async deleteUserCollections(userId: string) {
-    try {
-      return await UserRepository.deleteUserCollections(userId);
     } catch (err) {
       throw err;
     }
@@ -174,8 +67,8 @@ export const UserService = {
         return await UserRepository.deleteUserBooks(book.userId);
       }
 
-      await UserRepository.deleteUserCollections(userId);
-      await UserRepository.deleteUserFavorites(userId);
+      await CollectionRepository.deleteUserCollections(userId);
+      await FavoriteRepository.deleteUserFavorites(userId);
 
       return await UserRepository.deleteUser(user?.uid);
     } catch (err) {

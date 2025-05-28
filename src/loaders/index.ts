@@ -20,7 +20,11 @@ import limiter from '../api/middlewares/rateLimit';
 import books from '../api/routes/books';
 import auth from '../api/routes/auth';
 import users from '../api/routes/users';
+import favorites from '../api/routes/favorites';
+import collections from '../api/routes/collections';
 import swaggerDocument from '../docs/swagger.json';
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 export function registerMW(app: Application) {
   const corsOptions = {
@@ -41,7 +45,11 @@ export function registerMW(app: Application) {
 
   app.use(cors(corsOptions));
   app.options('*', cors(corsOptions));
-  app.use(apiKey);
+
+  if (isProduction) {
+    app.use(apiKey);
+  }
+
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
   app.use(express.json({ limit: '50mb' }));
@@ -85,8 +93,6 @@ export function registerMW(app: Application) {
 }
 
 export function registerRoutes(app: Application) {
-  const isProduction = process.env.NODE_ENV === 'production';
-
   app.get('/', (req: Request, res: Response) => {
     res.status(200).send(`
       <section style="margin-top: 30px;">
@@ -120,6 +126,8 @@ export function registerRoutes(app: Application) {
   app.use('/api', books);
   app.use('/api/auth', auth);
   app.use('/api/users', users);
+  app.use('/api/users/favorites', favorites);
+  app.use('/api/users/collections', collections);
 
   if (isProduction) {
     app.use('/api-docs', (req, res) => {

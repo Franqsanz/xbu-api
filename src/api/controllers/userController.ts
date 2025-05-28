@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
-import { IBook, IUser, IUserAndBooks } from '../../types/types';
-import { NotFound, BadRequest } from '../../utils/errors';
+import { IUser, IUserAndBooks } from '../../types/types';
+import { NotFound } from '../../utils/errors';
 
 async function getUsers(
   req: Request,
@@ -12,7 +12,6 @@ async function getUsers(
 ): Promise<Response<IUser[]>> {
   try {
     const users = await UserService.findUsers();
-
     return res.status(200).json(users);
   } catch (err) {
     return next(err) as any;
@@ -33,22 +32,18 @@ async function getCheckUser(
   });
 
   try {
-    // Intentar obtener el usuario del caché
     const cachedUser = await memoryCache.get<string>(key);
 
     if (cachedUser) {
-      // Devolver el usuario almacenado
       return res.status(200).json(JSON.parse(cachedUser));
     }
 
-    // Obtener el usuario de la base de datos
     const user = await UserService.findById(userId);
 
     if (!user) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    // Almacenar el usuario en caché como JSON
     await memoryCache.set(key, JSON.stringify(user));
 
     return res.status(200).json(user);
@@ -62,7 +57,6 @@ async function getUserAndBooks(
   res: Response,
   next: NextFunction
 ): Promise<Response<IUserAndBooks>> {
-  // const token = (req.headers['authorization'] || '').split(' ')[1];
   const { username } = req.params;
   const { limit, offset } = req.pagination!;
 
@@ -85,305 +79,7 @@ async function getUserAndBooks(
       results,
     };
 
-    return (
-      res
-        .status(200)
-        // .cookie('acc_tk', token, {
-        //   httpOnly: true,
-        //   secure: process.env.NODE_ENV === 'production',
-        //   sameSite: 'lax',
-        // })
-        .json(response)
-    );
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function getFindAllBookFavoriteByUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<IUserAndBooks>> {
-  const { userId } = req.params;
-  const { limit, offset, page } = req.pagination! || {};
-
-  try {
-    // if (!limit || !page) {
-    //   const { results, totalBooks } = await UserService.findAllBookFavoriteByUser(userId);
-
-    //   return res.status(200).json({
-    //     totalBooks,
-    //     results,
-    //   });
-    // }
-
-    if (!limit || !page) {
-      throw BadRequest('Faltan los parametros "page" y "limit"');
-    }
-
-    const { results, totalBooks } = await UserService.findAllBookFavoriteByUser(
-      userId,
-      limit,
-      offset
-    );
-
-    req.calculatePagination!(totalBooks);
-
-    const response = {
-      info: req.paginationInfo,
-      results,
-    };
-
     return res.status(200).json(response);
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function patchToggleFavorite(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<IBook | null>> {
-  const { userId, id, isFavorite } = req.body;
-  let result;
-
-  try {
-    if (isFavorite) {
-      result = await UserService.addFavorite(userId, id);
-    } else {
-      result = await UserService.removeFavorite(userId, id);
-    }
-
-    if (!result) {
-      throw NotFound('Libro no encontrado');
-    }
-
-    return res.status(200).json(result);
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function getAllCollections(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { userId } = req.params;
-
-  try {
-    const findAllCollections = await UserService.findAllCollections(userId);
-
-    return res.status(200).json(findAllCollections);
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function postCreateCollections(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { userId } = req.params;
-  const { name } = req.body;
-
-  try {
-    await UserService.saveCollections(userId, name);
-
-    return res.status(201).json({
-      success: {
-        status: 201,
-        message: 'Colección creada',
-      },
-    });
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function deleteCollections(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { userId, collectionId } = req.params;
-
-  try {
-    await UserService.deleteCollections(userId, collectionId);
-
-    return res.status(200).json({
-      success: {
-        status: 200,
-        message: 'Colección eliminada',
-      },
-    });
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function getOneCollection(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { collectionId } = req.params;
-
-  try {
-    const findOneCollection = await UserService.findOneCollection(collectionId);
-
-    if (!findOneCollection) {
-      throw NotFound('Esta colección no existe');
-    }
-
-    return res.status(200).json(findOneCollection[0]);
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function getCollectionsForUser(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { userId, bookId } = req.params;
-
-  try {
-    const findCollections = await UserService.findCollectionsForUser(userId, bookId);
-
-    return res.status(200).json(findCollections);
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function patchCollectionName(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { collectionId } = req.params;
-  const { userId, name } = req.body;
-
-  try {
-    await UserService.updateCollectionName(userId, collectionId, name);
-
-    return res.status(200).json({
-      success: {
-        status: 200,
-        message: 'Nombre actualizado',
-      },
-    });
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function patchToggleBookInCollection(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<any>> {
-  const { userId, collections, bookId, checked } = req.body;
-
-  try {
-    const actions = collections.map(async (collection: any) => {
-      const { collectionId, collectionName, isInCollection } = collection;
-
-      if (isInCollection) {
-        await UserService.addBookToCollection(userId, [collectionId], bookId, checked);
-
-        return `Libro agregado a la colección ${collectionName}`;
-      } else {
-        await UserService.removeBookFromCollection(userId, [collectionId], bookId);
-
-        return `Libro eliminado de la colección ${collectionName}`;
-      }
-    });
-
-    // Ejecuta todas las operaciones en paralelo
-    const messages = await Promise.all(actions);
-
-    return res.status(200).json({
-      success: {
-        status: 200,
-        message: messages,
-      },
-    });
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function patchRemoveBookFromCollection(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<any>> {
-  const { userId, collectionId, bookId } = req.body;
-
-  try {
-    // Convertir el collectionId en un Array.
-    const collectionIds = collectionId
-      ? Array.isArray(collectionId)
-        ? collectionId
-        : [collectionId]
-      : [];
-
-    await UserService.removeBookFromCollection(userId, collectionIds, bookId);
-
-    return res.status(200).json({
-      success: {
-        status: 200,
-        message: 'Libro eliminado de la colección exitosamente',
-      },
-    });
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function deleteUserFavorites(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { userId } = req.params;
-
-  try {
-    await UserService.deleteUserFavorites(userId);
-
-    return res.status(200).json({
-      success: {
-        status: 200,
-        message: 'Favoritos eliminados',
-      },
-    });
-  } catch (err) {
-    return next(err) as any;
-  }
-}
-
-async function deleteUserCollections(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<void>> {
-  const { userId } = req.params;
-
-  try {
-    await UserService.deleteUserCollections(userId);
-
-    return res.status(200).json({
-      success: {
-        status: 200,
-        message: 'Colecciones eliminadas',
-      },
-    });
   } catch (err) {
     return next(err) as any;
   }
@@ -397,22 +93,7 @@ async function deleteAccount(
   const { userId } = req.params;
 
   try {
-    // const user = await usersModel.findOne({ uid: userId });
-    // const books = await booksModel.find({ userId: userId });
-
-    // if (!user) {
-    //   return res.status(404).json({ info: { message: 'Usuario no encontrado' } });
-    // }
-
-    // for (let book of books) {
-    //   const public_id = book.image.public_id;
-    //   await cloudinary.uploader.destroy(public_id);
-    //   await book.deleteOne();
-    // }
-
-    // await user?.deleteOne();
     await UserService.deleteAccount(userId);
-
     return res.status(200).json({
       success: {
         status: 200,
@@ -424,21 +105,4 @@ async function deleteAccount(
   }
 }
 
-export {
-  getUsers,
-  getCheckUser,
-  getUserAndBooks,
-  getFindAllBookFavoriteByUser,
-  patchToggleFavorite,
-  getAllCollections,
-  postCreateCollections,
-  deleteCollections,
-  getOneCollection,
-  getCollectionsForUser,
-  patchCollectionName,
-  patchToggleBookInCollection,
-  patchRemoveBookFromCollection,
-  deleteUserCollections,
-  deleteUserFavorites,
-  deleteAccount,
-};
+export { getUsers, getCheckUser, getUserAndBooks, deleteAccount };
