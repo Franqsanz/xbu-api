@@ -1,7 +1,8 @@
 import { CollectionRepository } from '../repositories/collectionRepository';
+import { ICollectionOperations } from '../types/IRepository';
 
-export const CollectionService = {
-  async findAllCollections(userId: string) {
+export const CollectionService: ICollectionOperations = {
+  async findAllCollections(userId) {
     try {
       return await CollectionRepository.findAllCollections(userId);
     } catch (err) {
@@ -9,15 +10,15 @@ export const CollectionService = {
     }
   },
 
-  async saveCollections(userId: string, name: string) {
+  async saveCollections(userId, name) {
     try {
-      return await CollectionRepository.createCollections(userId, name);
+      return await CollectionRepository.createCollections!(userId, name);
     } catch (err) {
       throw err;
     }
   },
 
-  async findOneCollection(collectionId: string) {
+  async findOneCollection(collectionId) {
     try {
       return await CollectionRepository.findOneCollection(collectionId);
     } catch (err) {
@@ -25,7 +26,7 @@ export const CollectionService = {
     }
   },
 
-  async findCollectionsForUser(userId: string, bookId: string) {
+  async findCollectionsForUser(userId, bookId) {
     try {
       return await CollectionRepository.findCollectionsForUser(userId, bookId);
     } catch (err) {
@@ -33,7 +34,7 @@ export const CollectionService = {
     }
   },
 
-  async updateCollectionName(userId: string, collectionId: string, name: string) {
+  async updateCollectionName(userId, collectionId, name) {
     try {
       return await CollectionRepository.updateCollectionName(userId, collectionId, name);
     } catch (err) {
@@ -41,7 +42,7 @@ export const CollectionService = {
     }
   },
 
-  async deleteCollections(userId: string, collectionId: string) {
+  async deleteCollections(userId, collectionId) {
     try {
       return await CollectionRepository.deleteCollections(userId, collectionId);
     } catch (err) {
@@ -49,7 +50,7 @@ export const CollectionService = {
     }
   },
 
-  async deleteUserCollections(userId: string) {
+  async deleteUserCollections(userId) {
     try {
       return await CollectionRepository.deleteUserCollections(userId);
     } catch (err) {
@@ -57,12 +58,7 @@ export const CollectionService = {
     }
   },
 
-  async addBookToCollection(
-    userId: string,
-    collectionId: string[],
-    bookId: string,
-    checked: boolean
-  ) {
+  async addBookToCollection(userId, collectionId, bookId, checked) {
     try {
       return await CollectionRepository.addBookToCollection(userId, collectionId, bookId, checked);
     } catch (err) {
@@ -70,7 +66,7 @@ export const CollectionService = {
     }
   },
 
-  async removeBookFromCollection(userId: string, collectionId: string[], bookId: string) {
+  async removeBookFromCollection(userId, collectionId, bookId) {
     try {
       return await CollectionRepository.removeBookFromCollection(userId, collectionId, bookId);
     } catch (err) {

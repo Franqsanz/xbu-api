@@ -1,17 +1,10 @@
-import express from 'express';
+import express, { Router } from 'express';
 
-import { createUser } from '../controllers/auth/registerController';
+import { createUser, logoutUser } from '../controllers/auth/authController';
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.post('/register', createUser);
-
-// router.post('/logout', (req, res, next) => {
-//   req.logout(function (err) {
-//     if (err) return next(err);
-
-//     res.redirect(CLIENT_URL);
-//   });
-// });
+router.post('/logout', logoutUser);
 
 export default router;

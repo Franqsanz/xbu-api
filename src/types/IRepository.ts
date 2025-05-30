@@ -41,9 +41,9 @@ interface IWriteBook {
 interface IReadUser {
   findUsers(): Promise<IUser[]>;
   findById(userId: string): Promise<IUser | null>;
-  findByUid(uid: string): Promise<IUser | null>;
+  findByUid?(uid: string): Promise<IUser | null>;
   findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks>;
-  findBooksByUserId(userId: string): Promise<IBook[]>;
+  findBooksByUserId?(userId: string): Promise<IBook[]>;
 }
 
 interface IWriteUser {
@@ -55,6 +55,14 @@ interface IWriteUser {
   deleteUserBooks(id: any): Promise<any>;
   deleteUser(userId: any): Promise<any>;
   deleteAccount?(userId: string): Promise<void>;
+}
+
+interface IFirebaseUserOperations {
+  saveUser(
+    decodedToken: DecodedIdToken,
+    username: string
+  ): Promise<{ existingUser: IUser | null; saveUser: IUser }>;
+  deleteAccount(userId: string): Promise<void>;
 }
 
 interface IFavoriteOperations {
@@ -69,7 +77,8 @@ interface ICollectionOperations {
   findAllCollections(userId: string): Promise<any>;
   findOneCollection(collectionId: string): Promise<any>;
   findCollectionsForUser(userId: string, bookId: string): Promise<any>;
-  createCollections(userId: string, name: string): Promise<ICollections>;
+  saveCollections?(userId: string, name: string): Promise<ICollections>;
+  createCollections?(userId: string, name: string): Promise<ICollections>;
   updateCollectionName(userId: string, collectionId: string, name: string): Promise<any>;
   addBookToCollection(
     userId: string,
@@ -92,5 +101,12 @@ interface IUserService extends IWriteUser, IFavoriteOperations {
 
 export type IRepositoryBook = IReadBook & IWriteBook;
 export type IRepositoryUser = IReadUser & IWriteUser;
+export type IFullRepositoryUser = IReadUser & IFirebaseUserOperations;
 
-export { IUserService, IReadUser, IFavoriteOperations, ICollectionOperations };
+export {
+  IUserService,
+  IReadUser,
+  IFirebaseUserOperations,
+  IFavoriteOperations,
+  ICollectionOperations,
+};

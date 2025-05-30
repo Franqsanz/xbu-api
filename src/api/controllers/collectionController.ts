@@ -28,7 +28,7 @@ async function postCreateCollections(
   const { name } = req.body;
 
   try {
-    await CollectionService.saveCollections(userId, name);
+    await CollectionService.saveCollections!(userId, name);
 
     return res.status(201).json({
       success: {

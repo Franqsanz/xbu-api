@@ -117,17 +117,17 @@ erDiagram
 | `/users/check-user/:userId` | GET | Verifica si un usuario existe. |
 | `/users/:userId/:username/books` | GET | Recupera una lista de libros de un usuario. |
 | `/users/:userId` | DELETE | Elimina la cuenta del usuario. |
-| `/users/:userId/favorites` | GET | Recupera una lista de libros favoritos de un usuario. |
+| `/users/favorites/:userId` | GET | Recupera una lista de libros favoritos de un usuario. |
 | `/users/favorites` | PATCH | Agrega o elimina un libro en favoritos. |
-| `/users/:userId/favorites` | DELETE | Elimina todos los favoritos. |
-| `/users/:userId/collections` | GET | Recupera una lista de colecciones de un usuario. |
+| `/users/favorites/:userId` | DELETE | Elimina todos los favoritos. |
+| `/users/collections/:userId` | GET | Recupera una lista de colecciones de un usuario. |
 | `/users/:userId/collections/summary/:bookId` | GET | Recupera una lista de libros de una colección de un usuario. |
-| `/users/:userId/collections` | POST | Crea una nueva colección de un usuario. |
-| `/users/:userId/collections/:collectionId` | DELETE | Elimina una colección de un usuario. |
-| `/users/:userId/collecctions` | DELETE | Elimina todas las colecciones de un usuario. |
+| `/users/collections/:userId` | POST | Crea una nueva colección de un usuario. |
+| `/users/collections/:userId/collection/:collectionId` | DELETE | Elimina una colección de un usuario. |
+| `/users/collections/:userId` | DELETE | Elimina todas las colecciones de un usuario. |
 | `/users/collections/collection/:collectionId` | GET | Recupera una colección de un usuario. |
 | `/users/collections/books/toggle` | PATCH | Agrega o elimina un libro de una colección. |
 | `/users/collections/:collectionId` | PATCH | Actualiza el nombre de una colección. |
-| `/users/collections/collection/remove-book` | PATCH | Elimina un libro de una colección. |
+| `/users/collections/remove` | PATCH | Elimina un libro de una colección. |
 
 2025 Franco Andrés Sánchez

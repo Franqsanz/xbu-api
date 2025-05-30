@@ -4,9 +4,9 @@ import { UserRepository } from './../repositories/userRepository';
 import { CollectionRepository } from './../repositories/collectionRepository';
 import { FavoriteRepository } from './../repositories/favoriteRepository';
 import { cloudinary } from '../config/cloudinary';
-// import { IRepositoryUser, IUserService } from '../types/IRepository';
+import { IFullRepositoryUser } from '../types/IRepository';
 
-export const UserService = {
+export const UserService: IFullRepositoryUser = {
   async findUsers() {
     try {
       return await UserRepository.findUsers();
@@ -15,7 +15,7 @@ export const UserService = {
     }
   },
 
-  async findById(userId: string) {
+  async findById(userId) {
     try {
       return await UserRepository.findById(userId);
     } catch (err) {
@@ -23,7 +23,7 @@ export const UserService = {
     }
   },
 
-  async findUserAndBooks(username: string, limit: number, offset: number) {
+  async findUserAndBooks(username, limit, offset) {
     try {
       return await UserRepository.findUserAndBooks(username, limit, offset);
     } catch (err) {
@@ -31,7 +31,7 @@ export const UserService = {
     }
   },
 
-  async saveUser(decodedToken: DecodedIdToken, username: string) {
+  async saveUser(decodedToken, username) {
     const userToSave = {
       ...decodedToken,
       username: username,
@@ -39,7 +39,7 @@ export const UserService = {
     };
 
     try {
-      const existingUser = await UserRepository.findByUid(decodedToken.uid);
+      const existingUser = await UserRepository.findByUid!(decodedToken.uid);
       const saveUser = await UserRepository.createUser(userToSave);
 
       return {
@@ -51,10 +51,10 @@ export const UserService = {
     }
   },
 
-  async deleteAccount(userId: string) {
+  async deleteAccount(userId) {
     try {
       const user = await UserRepository.findById(userId);
-      const books = await UserRepository.findBooksByUserId(userId);
+      const books = await UserRepository.findBooksByUserId!(userId);
 
       if (!user) {
         throw new Error('Usuario no encontrado');

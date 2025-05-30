@@ -300,7 +300,12 @@ async function deleteBook(
       throw NotFound('Libro no encontrado');
     }
 
-    return res.status(200).json({ success: { message: 'Libro eliminado' } });
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Libro eliminado',
+      },
+    });
   } catch (err) {
     return next(err) as any;
   }

@@ -45,4 +45,28 @@ async function createUser(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-export { createUser };
+async function logoutUser(req: Request, res: Response, next: NextFunction) {
+  const token = (req.headers['authorization'] || '').split(' ')[1];
+
+  try {
+    const decodedToken = await auth.verifyIdToken(token);
+    const uid = decodedToken.uid;
+
+    if (!token) {
+      throw UnauthorizedAccess('Token no proporcionado');
+    }
+
+    await auth.revokeRefreshTokens(uid);
+
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Token revocado exitosamente',
+      },
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+export { createUser, logoutUser };
