@@ -177,7 +177,7 @@ async function getPathUrlBooks(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<IBook[] | null>> {
+): Promise<Response<IBook | null>> {
   const token = (req.headers['authorization'] || '').split(' ')[1];
   const { pathUrl } = req.params;
   let decodedToken;
@@ -207,7 +207,10 @@ async function getPathUrlBooks(
       throw NotFound('No se encuentra o no existe');
     }
 
-    return res.status(200).json(result);
+    // Retornamos un objeto no un array
+    const bookObject = Array.isArray(result) ? result[0] : result;
+
+    return res.status(200).json(bookObject);
   } catch (err) {
     return next(err) as any;
   }
