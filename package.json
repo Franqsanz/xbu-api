@@ -8,7 +8,9 @@
   },
   "scripts": {
     "dev": "ts-node-dev -r dotenv/config src/server.ts",
+    "dev:staging": "cross-env NODE_ENV=staging ts-node-dev -r dotenv/config src/server.ts",
     "start": "cross-env NODE_ENV=production node -r dotenv/config dist/server.js",
+    "start:staging": "cross-env NODE_ENV=staging node -r dotenv/config dist/server.js",
     "ts-lint": "tsc --noEmit",
     "format": "prettier --write .",
     "build": "tsc -p .",

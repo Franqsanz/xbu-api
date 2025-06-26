@@ -5,7 +5,12 @@ import { BookRepository } from '../repositories/bookRepository';
 import { bookSchema } from '../utils/validation';
 import { IRepositoryBook } from '../types/IRepository';
 
-const folderUploads = process.env.NODE_ENV === 'production' ? 'xbu' : 'xbu_dev';
+const folderUploads =
+  process.env.NODE_ENV === 'production'
+    ? 'xbu'
+    : process.env.NODE_ENV === 'staging'
+      ? 'xbu_dev' // Staging usa xbu_dev
+      : 'xbu_dev'; // Local también usa xbu_dev
 
 export const BookService: IRepositoryBook = {
   async findBooks(limit, offset) {
