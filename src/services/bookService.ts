@@ -5,18 +5,6 @@ import { BookRepository } from '../repositories/bookRepository';
 import { bookSchema } from '../utils/validation';
 import { IRepositoryBook } from '../types/IRepository';
 
-const folderUploads =
-  process.env.NODE_ENV === 'production'
-    ? 'xbu'
-    : process.env.VERCEL_ENV === 'preview'
-      ? 'xbu_dev' // Staging usa xbu_dev
-      : 'xbu_dev'; // Local también usa xbu_dev
-
-console.log('=== DEBUG VARIABLES ===');
-console.log('VERCEL_ENV:', process.env.VERCEL_ENV);
-console.log('folderUploads result:', folderUploads);
-console.log('======================');
-
 export const BookService: IRepositoryBook = {
   async findBooks(limit, offset) {
     try {
@@ -135,7 +123,7 @@ export const BookService: IRepositoryBook = {
           .upload_stream(
             {
               upload_preset: 'xbu-uploads',
-              folder: folderUploads,
+              folder: process.env.CLOUDINARY_FOLDER,
               format: 'webp',
               transformation: {
                 quality: 60,
@@ -184,7 +172,7 @@ export const BookService: IRepositoryBook = {
             .upload_stream(
               {
                 upload_preset: 'xbu-uploads',
-                folder: folderUploads,
+                folder: process.env.CLOUDINARY_FOLDER,
                 format: 'webp',
                 transformation: {
                   quality: 60,
