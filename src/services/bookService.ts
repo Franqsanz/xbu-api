@@ -8,12 +8,12 @@ import { IRepositoryBook } from '../types/IRepository';
 const folderUploads =
   process.env.NODE_ENV === 'production'
     ? 'xbu'
-    : process.env.NODE_ENV === 'preview'
+    : process.env.VERCEL_ENV === 'preview'
       ? 'xbu_dev' // Staging usa xbu_dev
       : 'xbu_dev'; // Local también usa xbu_dev
 
 console.log('=== DEBUG VARIABLES ===');
-console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('VERCEL_ENV:', process.env.VERCEL_ENV);
 console.log('folderUploads result:', folderUploads);
 console.log('======================');
 
