@@ -161,6 +161,8 @@ export const BookService: IRepositoryBook = {
         };
       } else {
         if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
+        // Limpiamos el public_id para evitar duplicar la carpeta
+        const cleanPublicId = public_id?.split('/').pop();
 
         const uint8Array = new Uint8Array(url);
         const decompressedImage = pako.inflate(uint8Array);
@@ -177,7 +179,7 @@ export const BookService: IRepositoryBook = {
                 transformation: {
                   quality: 60,
                 },
-                public_id: public_id,
+                public_id: cleanPublicId,
               },
               (err, result) => {
                 if (err) {
