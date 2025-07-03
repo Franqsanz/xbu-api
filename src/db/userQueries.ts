@@ -21,16 +21,17 @@ function qyPathUrlBooksFavorite(pathUrl: string, userId: string | undefined): Pi
     {
       $lookup: {
         from: 'favorites',
-        localField: '_id', // ID del libro
-        foreignField: 'favoriteBooks', // Campo en favoritos que contiene los IDs de los libros
-        as: 'favoriteInfo',
+        let: { bookId: '$_id' }, // Usar let para pasar el bookId
         pipeline: [
           {
             $match: {
-              userId: userId, // Coincide solo con los favoritos del usuario actual
+              $expr: {
+                $and: [{ $in: ['$$bookId', '$favoriteBooks'] }, { $eq: ['$userId', userId] }],
+              },
             },
           },
         ],
+        as: 'favoriteInfo',
       },
     },
     {

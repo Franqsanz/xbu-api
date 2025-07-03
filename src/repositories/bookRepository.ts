@@ -50,15 +50,61 @@ export const BookRepository: IRepositoryBook = {
     const query = qyPathUrlBooksUpdateView(slug);
     const queryAggregate = qyPathUrlBooksFavorite(slug, userId);
 
-    await booksModel.findOneAndUpdate(...query).exec();
+    const updateResult = await booksModel.findOneAndUpdate(...query).exec();
 
-    return booksModel.aggregate(queryAggregate).exec();
+    if (!updateResult) {
+      console.log(`Book with pathUrl ${slug} not found for update`);
+      return [];
+    }
+
+    const result = await booksModel.aggregate(queryAggregate).exec();
+
+    // Fallback si el aggregate falla
+    if (!result || result.length === 0) {
+      console.log('Aggregate returned empty in findBySlugUpdateViewFavorite, using fallback');
+
+      const book = await booksModel.findOne({ pathUrl: slug }).lean().exec();
+
+      if (book) {
+        return [
+          {
+            ...book,
+            id: book._id,
+            isFavorite: false,
+            _id: undefined,
+          },
+        ];
+      }
+    }
+
+    return result;
   },
 
   async findBySlugFavorite(slug, userId) {
     const queryAggregate = qyPathUrlBooksFavorite(slug, userId);
+    const result = await booksModel.aggregate(queryAggregate).exec();
 
-    return booksModel.aggregate(queryAggregate).exec();
+    // Fallback si el aggregate falla
+    if (!result || result.length === 0) {
+      console.log('Aggregate returned empty in findBySlugFavorite, using fallback');
+
+      const book = await booksModel.findOne({ pathUrl: slug }).lean().exec();
+
+      if (book) {
+        return [
+          {
+            ...book,
+            id: book._id,
+            isFavorite: false,
+            _id: undefined,
+          },
+        ];
+      }
+
+      return [];
+    }
+
+    return result;
   },
 
   async findSearch(q) {

@@ -180,34 +180,31 @@ async function getPathUrlBooks(
 ): Promise<Response<IBook | null>> {
   const token = (req.headers['authorization'] || '').split(' ')[1];
   const { pathUrl } = req.params;
-  let decodedToken;
-  let result;
 
   try {
+    let userId = null;
+
     if (token) {
-      decodedToken = await auth.verifyIdToken(token);
+      const decodedToken = await auth.verifyIdToken(token);
+      userId = decodedToken?.uid;
     }
 
-    const userId = decodedToken?.uid;
+    let result;
 
-    // Terrible espagueti pero asi fue la unica forma que funcione :(
     if (!userId) {
       result = await BookService.findBySlug(pathUrl);
     } else {
       result = await BookService.findBySlugFavorite(pathUrl, userId);
 
-      if (result) {
-        if (userId && result[0]?.userId !== userId) {
-          result = await BookService.findBySlugUpdateViewFavorite(pathUrl, userId);
-        }
+      if (result && result.length > 0 && result[0]?.userId !== userId) {
+        result = await BookService.findBySlugUpdateViewFavorite(pathUrl, userId);
       }
     }
 
-    if (!result) {
+    if (!result || (Array.isArray(result) && result.length === 0)) {
       throw NotFound('No se encuentra o no existe');
     }
 
-    // Retornamos un objeto no un array
     const bookObject = Array.isArray(result) ? result[0] : result;
 
     return res.status(200).json(bookObject);
