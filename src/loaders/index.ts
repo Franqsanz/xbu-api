@@ -22,6 +22,7 @@ import auth from '../api/routes/auth';
 import users from '../api/routes/users';
 import favorites from '../api/routes/favorites';
 import collections from '../api/routes/collections';
+import comments from '../api/routes/comments';
 import swaggerDocument from '../docs/swagger.json';
 
 const isProduction = process.env.NODE_ENV === 'production';
@@ -128,6 +129,7 @@ export function registerRoutes(app: Application) {
   app.use('/api/users', users);
   app.use('/api/users/favorites', favorites);
   app.use('/api/users/collections', collections);
+  app.use('/api/users/comments', comments);
 
   if (isProduction) {
     app.use('/api-docs', (req, res) => {

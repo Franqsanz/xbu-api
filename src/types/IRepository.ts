@@ -8,6 +8,8 @@ import {
   IUserAndBooks,
   IUserToSave,
   ICollections,
+  IComment,
+  ICommentStats,
 } from './types';
 
 interface IReadBook {
@@ -99,9 +101,41 @@ interface IUserService extends IWriteUser, IFavoriteOperations {
   deleteAccount(userId: string): Promise<void>;
 }
 
+interface IReadComment {
+  findAll(
+    bookId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ results: IComment[]; totalComments: number }>;
+  findById(commentId: string): Promise<IComment | null>;
+  findByUserId(userId: string, limit: number, offset: number): Promise<IComment[]>;
+}
+
+interface IWriteComment {
+  create(commentData: Partial<IComment>): Promise<IComment>;
+  update(commentId: string, userId: string, text: string): Promise<IComment | null>;
+  delete(commentId: string, userId: string): Promise<IComment | null>;
+}
+
+interface ICommentReactions {
+  addReaction(
+    commentId: string,
+    userId: string,
+    type: 'like' | 'dislike'
+  ): Promise<IComment | null>;
+  removeReaction(commentId: string, userId: string): Promise<IComment | null>;
+  getStats(bookId: string): Promise<ICommentStats>;
+}
+
+interface ICommentService extends IReadComment, IWriteComment, ICommentReactions {
+  getUserReaction(commentId: string, userId: string): Promise<'like' | 'dislike' | null>;
+  validateCommentOwnership(commentId: string, userId: string): Promise<IComment>;
+}
+
 export type IRepositoryBook = IReadBook & IWriteBook;
 export type IRepositoryUser = IReadUser & IWriteUser;
 export type IFullRepositoryUser = IReadUser & IFirebaseUserOperations;
+export type IRepositoryComment = IReadComment & IWriteComment & ICommentReactions;
 
 export {
   IUserService,
@@ -109,4 +143,5 @@ export {
   IFirebaseUserOperations,
   IFavoriteOperations,
   ICollectionOperations,
+  ICommentService,
 };

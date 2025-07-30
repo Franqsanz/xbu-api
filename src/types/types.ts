@@ -72,6 +72,34 @@ interface ICollections {
   }[];
 }
 
+interface IReaction {
+  userId: string;
+  type: 'like' | 'dislike';
+}
+
+interface IAuthor {
+  userId: string;
+  username: string;
+}
+
+interface IComment extends pkg.Document {
+  text: string;
+  author: IAuthor;
+  bookId: string;
+  reactions: IReaction[];
+  likesCount: number;
+  dislikesCount: number;
+  isEdited: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface ICommentStats {
+  totalComments: number;
+  totalLikes: number;
+  totalDislikes: number;
+}
+
 interface IHttpError extends Error {
   statusCode: number;
 }
@@ -105,6 +133,8 @@ export {
   IUserToSave,
   IFavorite,
   ICollections,
+  IComment,
+  ICommentStats,
   IHttpError,
   Pagination,
   PaginationInfo,
