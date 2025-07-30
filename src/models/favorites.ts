@@ -23,9 +23,11 @@ const favoriteSchema = new Schema(
 
 favoriteSchema.set('toJSON', {
   transform: (_, returnedObject) => {
-    returnedObject.id = returnedObject._id;
-    delete returnedObject._v;
-    delete returnedObject._id;
+    const { _id, __v, ...rest } = returnedObject;
+    return {
+      id: _id,
+      ...rest,
+    };
   },
 });
 

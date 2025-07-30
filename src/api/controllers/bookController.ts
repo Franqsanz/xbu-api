@@ -249,10 +249,9 @@ async function postBooks(
 
     redis.expire(`books_${req.body}`, 0);
     return res.status(201).json(resultBook);
-  } catch (err) {
+  } catch (err: unknown) {
     if (err instanceof ZodError) {
-      const errorMessages = err.errors.map((error) => error.message);
-
+      const errorMessages = err.issues.map((error) => error.message);
       return res.status(400).json({
         error: {
           status: 400,

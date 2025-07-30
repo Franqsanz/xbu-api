@@ -44,25 +44,27 @@ const collectionsSchema = new Schema(
 
 collectionsSchema.set('toJSON', {
   transform: (_, returnedObject) => {
-    returnedObject.id = returnedObject._id;
-    delete returnedObject._v;
-    delete returnedObject._id;
+    const { _id, __v, collections, ...rest } = returnedObject;
 
-    // Transformación de las colecciones
-    if (returnedObject.collections) {
-      returnedObject.collections = returnedObject.collections.map((collection: any) => {
-        // Cambiar el nombre del _id a id en cada colección
-        return {
-          id: collection._id,
-          name: collection.name,
-          books: collection.books.map((book: any) => ({
-            bookId: book.bookId,
-            checked: book.checked,
-          })),
-          createdAt: collection.createdAt,
-        };
-      });
-    }
+    return {
+      id: _id,
+      ...rest,
+      // Transformación de las colecciones
+      collections: collections
+        ? collections.map((collection: any) => {
+            const { _id: collectionId, name, books, createdAt } = collection;
+            return {
+              id: collectionId,
+              name,
+              books: books.map((book: any) => ({
+                bookId: book.bookId,
+                checked: book.checked,
+              })),
+              createdAt,
+            };
+          })
+        : undefined,
+    };
   },
 });
 
