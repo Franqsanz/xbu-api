@@ -124,12 +124,12 @@ interface ICommentReactions {
     type: 'like' | 'dislike'
   ): Promise<IComment | null>;
   removeReaction(commentId: string, userId: string): Promise<IComment | null>;
-  getStats(bookId: string): Promise<ICommentStats>;
+  findStats(bookId: string): Promise<ICommentStats>;
 }
 
 interface ICommentService extends IReadComment, IWriteComment, ICommentReactions {
   getUserReaction(commentId: string, userId: string): Promise<'like' | 'dislike' | null>;
-  validateCommentOwnership(commentId: string, userId: string): Promise<IComment>;
+  validateCommentOwnership?(commentId: string, userId: string): Promise<IComment>;
 }
 
 export type IRepositoryBook = IReadBook & IWriteBook;

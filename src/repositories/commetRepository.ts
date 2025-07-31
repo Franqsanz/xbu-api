@@ -76,10 +76,6 @@ export const commentRepository: IRepositoryComment = {
     return deletedComment;
   },
 
-  // =============================================
-  // REACTION OPERATIONS
-  // =============================================
-
   async addReaction(commentId, userId, type) {
     // Remover reacción previa del usuario
     await commentsModel.updateOne(
@@ -147,7 +143,7 @@ export const commentRepository: IRepositoryComment = {
     return null;
   },
 
-  async getStats(bookId) {
+  async findStats(bookId) {
     const stats = await commentsModel
       .aggregate([
         {

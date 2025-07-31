@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { commentService } from '../../services/commentService';
-import { IComment } from '../../types/types';
+import { IComment, ICommentStats } from '../../types/types';
 
 async function findAll(
   req: Request,
@@ -143,7 +143,6 @@ async function update(
   const { text } = req.body;
 
   try {
-    // Validaciones básicas
     // if (!text || text.trim().length === 0) {
     //   return res.status(400).json({
     //     success: false,
@@ -203,46 +202,36 @@ async function deleteComment(
   }
 }
 
-// // =============================================
-// // REACTIONS
-// // =============================================
+async function addReaction(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IComment>> {
+  const { commentId, userId } = req.params;
+  const { type } = req.body;
 
-// export const addReaction = async (req: Request, res: Response) => {
-//   try {
-//     const { commentId } = req.params;
-//     const { type } = req.body; // 'like' o 'dislike'
-//     const { userId } = req.user;
+  try {
+    if (!['like', 'dislike'].includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tipo de reacción inválido. Debe ser "like" o "dislike"',
+      });
+    }
 
-//     // Validar tipo de reacción
-//     if (!['like', 'dislike'].includes(type)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Tipo de reacción inválido. Debe ser "like" o "dislike"'
-//       });
-//     }
+    const updatedComment = await commentService.addReaction(commentId, userId, type);
 
-//     const updatedComment = await commentService.addReaction(commentId, userId, type);
+    if (!updatedComment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Comentario no encontrado',
+      });
+    }
 
-//     if (!updatedComment) {
-//       return res.status(404).json({
-//         success: false,
-//         message: 'Comentario no encontrado'
-//       });
-//     }
-
-//     res.status(200).json({
-//       success: true,
-//       message: 'Reacción agregada exitosamente',
-//       data: updatedComment
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       success: false,
-//       message: 'Error al agregar reacción',
-//       error: error.message
-//     });
-//   }
-// };
+    return res.status(200).json(updatedComment);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
 
 // export const removeReaction = async (req: Request, res: Response) => {
 //   try {
@@ -272,6 +261,32 @@ async function deleteComment(
 //   }
 // };
 
+async function findStats(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<ICommentStats>> {
+  const { bookId } = req.params;
+
+  try {
+    if (!bookId) {
+      return res.status(400).json({
+        success: false,
+        message: 'El ID del contenido es requerido',
+      });
+    }
+
+    const stats = await commentService.findStats(bookId);
+
+    return res.status(200).json({
+      success: true,
+      data: stats,
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 // export const getUserReaction = async (req: Request, res: Response) => {
 //   try {
 //     const { commentId } = req.params;
@@ -294,4 +309,4 @@ async function deleteComment(
 //   }
 // };
 
-export { findAll, findByUserId, create, update, deleteComment };
+export { findAll, findByUserId, create, update, deleteComment, addReaction, findStats };

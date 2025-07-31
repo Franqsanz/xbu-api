@@ -26,14 +26,6 @@ export const commentService: ICommentService = {
     }
   },
 
-  async getStats(bookId) {
-    try {
-      return await commentRepository.getStats(bookId);
-    } catch (err) {
-      throw err;
-    }
-  },
-
   async create(commentData) {
     try {
       // const commentData = {
@@ -93,20 +85,14 @@ export const commentService: ICommentService = {
     }
   },
 
-  // =============================================
-  // REACTIONS
-  // =============================================
-
   async addReaction(commentId, userId, reactionType) {
     try {
-      // Validar que el comentario existe
       const existingComment = await commentRepository.findById(commentId);
 
       if (!existingComment) {
         throw new Error('Comentario no encontrado');
       }
 
-      // Validar tipo de reacción
       if (!['like', 'dislike'].includes(reactionType)) {
         throw new Error('Tipo de reacción inválida');
       }
@@ -140,6 +126,14 @@ export const commentService: ICommentService = {
     }
   },
 
+  async findStats(bookId) {
+    try {
+      return await commentRepository.findStats(bookId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   // =============================================
   // HELPER METHODS
   // =============================================
@@ -160,21 +154,21 @@ export const commentService: ICommentService = {
     }
   },
 
-  async validateCommentOwnership(commentId, userId) {
-    try {
-      const comment = await commentRepository.findById(commentId);
+  // async validateCommentOwnership(commentId, userId) {
+  //   try {
+  //     const comment = await commentRepository.findById(commentId);
 
-      if (!comment) {
-        throw new Error('Comentario no encontrado');
-      }
+  //     if (!comment) {
+  //       throw new Error('Comentario no encontrado');
+  //     }
 
-      if (comment.author.userId.toString() !== userId) {
-        throw new Error('No tienes permisos para esta acción');
-      }
+  //     if (comment.author.userId.toString() !== userId) {
+  //       throw new Error('No tienes permisos para esta acción');
+  //     }
 
-      return comment;
-    } catch (err) {
-      throw err;
-    }
-  },
+  //     return comment;
+  //   } catch (err) {
+  //     throw err;
+  //   }
+  // },
 };
