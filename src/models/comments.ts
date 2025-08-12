@@ -8,7 +8,7 @@ const commentsSchema = new Schema(
     text: {
       type: String,
       required: true,
-      maxlength: 500,
+      maxlength: 1500,
     },
     author: {
       userId: {

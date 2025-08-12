@@ -5,6 +5,7 @@ export const commentRepository: IRepositoryComment = {
   async findAll(bookId, limit, offset) {
     const results = await commentsModel
       .find({ bookId })
+      .select('-reactions')
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(offset)
@@ -107,6 +108,7 @@ export const commentRepository: IRepositoryComment = {
 
       const finalComment = await commentsModel
         .findByIdAndUpdate(commentId, { likesCount, dislikesCount }, { new: true, lean: true })
+        .select('-reactions')
         .exec();
 
       return finalComment;
@@ -135,6 +137,7 @@ export const commentRepository: IRepositoryComment = {
 
       const finalComment = await commentsModel
         .findByIdAndUpdate(commentId, { likesCount, dislikesCount }, { new: true, lean: true })
+        .select('-reactions')
         .exec();
 
       return finalComment;
