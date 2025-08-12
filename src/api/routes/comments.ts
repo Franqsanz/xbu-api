@@ -8,10 +8,12 @@ import {
   addReaction,
   findStats,
 } from '../controllers/commentController';
+import { query } from '../middlewares/query';
+import { pagination } from '../middlewares/pagination';
 
 const router: Router = express.Router();
 
-router.get('/book-comments/:bookId', findAll);
+router.get('/book-comments/:bookId', pagination, query, findAll);
 router.get('/user-comments/:userId', findByUserId);
 router.post('/comment', create);
 router.patch('/comment/:commentId/:userId', update);

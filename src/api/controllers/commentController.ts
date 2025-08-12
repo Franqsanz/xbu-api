@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 import { commentService } from '../../services/commentService';
 import { IComment, ICommentStats } from '../../types/types';
+import { BadRequest } from '../../utils/errors';
 
 async function findAll(
   req: Request,
@@ -9,12 +10,23 @@ async function findAll(
   next: NextFunction
 ): Promise<Response<IComment[]>> {
   const { bookId } = req.params;
-  const { limit = 10, offset = 0 } = req.query;
+  const { limit, offset, page } = req.pagination! || {};
 
   try {
-    const result = await commentService.findAll(bookId, Number(limit), Number(offset));
+    if (!limit || !page) {
+      throw BadRequest('Faltan los parametros "page" y "limit"');
+    }
 
-    return res.status(200).json(result);
+    const { results, totalComments } = await commentService.findAll(bookId, limit, offset);
+
+    req.calculatePagination!(totalComments);
+
+    const response = {
+      info: req.paginationInfo,
+      results,
+    };
+
+    return res.status(200).json(response);
   } catch (err) {
     return next(err) as any;
   }
