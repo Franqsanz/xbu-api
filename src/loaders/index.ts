@@ -141,7 +141,10 @@ export function registerRoutes(app: Application) {
 
   app.all('*', (req, res: Response) =>
     res.status(404).json({
-      error: 'Not found',
+      error: {
+        status: 404,
+        message: 'La ruta solicitada no existe',
+      },
     })
   );
 
