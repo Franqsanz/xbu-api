@@ -99,48 +99,17 @@ async function create(
   res: Response,
   next: NextFunction
 ): Promise<Response<IComment>> {
-  // const { userId, username } = req.params;
   const { body } = req;
 
   try {
-    // const commentData = {
-    //   text,
-    //   author: {
-    //     userId,
-    //     username
-    //   },
-    //   contentId,
-    //   reactions: [],
-    //   likesCount: 0,
-    //   dislikesCount: 0,
-    //   isEdited: false
-    // };
+    await commentService.create(body);
 
-    // Validaciones básicas
-    // if (!text || text.trim().length === 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'El texto del comentario es requerido'
-    //   });
-    // }
-
-    // if (text.length > 500) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'El comentario no puede exceder 500 caracteres'
-    //   });
-    // }
-
-    // if (!contentId) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'El ID del contenido es requerido'
-    //   });
-    // }
-
-    const newComment = await commentService.create(body);
-
-    return res.status(201).json(newComment);
+    return res.status(201).json({
+      success: {
+        status: 201,
+        message: 'Comentario creado',
+      },
+    });
   } catch (err) {
     return next(err) as any;
   }
@@ -155,33 +124,22 @@ async function update(
   const { text } = req.body;
 
   try {
-    // if (!text || text.trim().length === 0) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'El texto del comentario es requerido'
-    //   });
-    // }
-
-    // if (text.length > 500) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: 'El comentario no puede exceder 500 caracteres'
-    //   });
-    // }
-
     const updatedComment = await commentService.update(commentId, userId, text.trim());
 
     if (!updatedComment) {
       return res.status(404).json({
-        success: false,
-        message: 'Comentario no encontrado',
+        error: {
+          status: 404,
+          message: 'Comentario no encontrado',
+        },
       });
     }
 
     return res.status(200).json({
-      success: true,
-      message: 'Comentario actualizado exitosamente',
-      data: updatedComment,
+      success: {
+        status: 200,
+        message: 'Comentario actualizado',
+      },
     });
   } catch (err) {
     return next(err) as any;
@@ -200,14 +158,18 @@ async function deleteComment(
 
     if (!deletedComment) {
       return res.status(404).json({
-        success: false,
-        message: 'Comentario no encontrado',
+        error: {
+          status: 404,
+          message: 'Comentario no encontrado',
+        },
       });
     }
 
     return res.status(200).json({
-      success: true,
-      message: 'Comentario eliminado',
+      success: {
+        status: 200,
+        message: 'Comentario eliminado',
+      },
     });
   } catch (err) {
     return next(err) as any;
@@ -225,8 +187,10 @@ async function addReaction(
   try {
     if (!['like', 'dislike'].includes(type)) {
       return res.status(400).json({
-        success: false,
-        message: 'Tipo de reacción inválido. Debe ser "like" o "dislike"',
+        error: {
+          status: 400,
+          message: 'Tipo de reacción inválido. Debe ser "like" o "dislike"',
+        },
       });
     }
 
@@ -234,12 +198,19 @@ async function addReaction(
 
     if (!updatedComment) {
       return res.status(404).json({
-        success: false,
-        message: 'Comentario no encontrado',
+        info: {
+          status: 404,
+          message: 'Comentario no encontrado',
+        },
       });
     }
 
-    return res.status(200).json(updatedComment);
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Reacción agregada',
+      },
+    });
   } catch (err) {
     return next(err) as any;
   }
@@ -283,17 +254,16 @@ async function findStats(
   try {
     if (!bookId) {
       return res.status(400).json({
-        success: false,
-        message: 'El ID del contenido es requerido',
+        error: {
+          status: 400,
+          message: 'El ID del contenido es requerido',
+        },
       });
     }
 
     const stats = await commentService.findStats(bookId);
 
-    return res.status(200).json({
-      success: true,
-      data: stats,
-    });
+    return res.status(200).json(stats);
   } catch (err) {
     return next(err) as any;
   }

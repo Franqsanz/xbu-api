@@ -35,10 +35,6 @@ export const commentService: ICommentService = {
       //     username
       //   },
       //   bookId,
-      //   reactions: [],
-      //   likesCount: 0,
-      //   dislikesCount: 0,
-      //   isEdited: false
       // };
 
       return await commentRepository.create(commentData);
@@ -138,21 +134,21 @@ export const commentService: ICommentService = {
   // HELPER METHODS
   // =============================================
 
-  async getUserReaction(commentId, userId) {
-    try {
-      const comment = await commentRepository.findById(commentId);
+  // async getUserReaction(commentId, userId) {
+  //   try {
+  //     const comment = await commentRepository.findById(commentId);
 
-      if (!comment) {
-        return null;
-      }
+  //     if (!comment) {
+  //       return null;
+  //     }
 
-      const userReaction = comment.reactions.find((r) => r.userId.toString() === userId);
+  //     const userReaction = comment.reactions.find((r) => r.userId.toString() === userId);
 
-      return userReaction ? userReaction.type : null;
-    } catch (err) {
-      throw err;
-    }
-  },
+  //     return userReaction ? userReaction.type : null;
+  //   } catch (err) {
+  //     throw err;
+  //   }
+  // },
 
   // async validateCommentOwnership(commentId, userId) {
   //   try {

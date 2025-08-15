@@ -128,7 +128,7 @@ interface ICommentReactions {
 }
 
 interface ICommentService extends IReadComment, IWriteComment, ICommentReactions {
-  getUserReaction(commentId: string, userId: string): Promise<'like' | 'dislike' | null>;
+  getUserReaction?(commentId: string, userId: string): Promise<'like' | 'dislike' | null>;
   validateCommentOwnership?(commentId: string, userId: string): Promise<IComment>;
 }
 
