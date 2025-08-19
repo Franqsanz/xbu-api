@@ -11,6 +11,7 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 * **Buscar libros**: Ofrece capacidades de búsqueda y filtrado por título, autor, categoria/género, año de publicación.
 * **Agregar libros a favoritos**: Permite marcar libros como favoritos para un acceso rápido.
 * **Crear colecciones de libros**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
+* **Sistema de comentarios:** Permite a los usuarios dejar comentarios en cada libro, con la posibilidad de editarlos, eliminarlos y gestionar reacciones (likes/dislikes) tanto en comentarios propios como de otros usuarios.
 
 ## Arquitectura de la API
 
@@ -23,6 +24,8 @@ erDiagram
     USER ||--|| COLLECTIONS : tiene
     USER ||--o{ BOOK : publica
     USER ||--|| FAVORITES : tiene
+    USER ||--o{ COMMENTS : escribe
+    USER ||--o{ REACTIONS : da
     USER {
         string uid PK
         string name
@@ -31,38 +34,32 @@ erDiagram
         string email
         date createdAt
     }
-
     COLLECTIONS {
         string userId PK
         array collections
         date createdAt
         date updatedAt
     }
-
     COLLECTION {
         string name "maxlength:25"
         array books
         date createdAt
     }
-
     BOOK_REFERENCE }|--|| BOOK : referencia
     BOOK_REFERENCE {
         ObjectId bookId
         boolean checked
     }
-
     COLLECTIONS ||--o{ COLLECTION : contiene
     COLLECTION ||--o{ BOOK_REFERENCE : contiene
-
     FAVORITES {
         string userId PK
         array favoriteBooks
         date createdAt
         date updatedAt
     }
-
     FAVORITES }|--o{ BOOK : contiene
-
+    BOOK ||--o{ COMMENTS : recibe
     BOOK {
         ObjectId _id PK
         string title
@@ -82,12 +79,34 @@ erDiagram
         date createdAt
         date updatedAt
     }
-
     IMAGE ||--|| BOOK : pertenece_a
     IMAGE {
         string url
         string public_id
     }
+    COMMENTS {
+        ObjectId _id PK
+        string text "maxlength:1500"
+        object author
+        string bookId FK
+        array reactions
+        number likesCount "default:0"
+        number dislikesCount "default:0"
+        boolean isEdited "default:false"
+        date createdAt
+        date updatedAt
+    }
+    AUTHOR_INFO {
+        string userId FK
+        string username
+        string avatar
+    }
+    REACTION {
+        string userId FK
+        string type "enum:like,dislike"
+    }
+    COMMENTS ||--|| AUTHOR_INFO : tiene_autor
+    COMMENTS ||--o{ REACTION : tiene_reacciones
 ```
 
 ## Esquema de la API

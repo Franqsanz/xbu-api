@@ -80,6 +80,7 @@ interface IReaction {
 interface IAuthor {
   userId: string;
   username: string;
+  avatar: string;
 }
 
 interface IComment extends pkg.Document {

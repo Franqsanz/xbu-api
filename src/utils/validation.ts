@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const bookSchema = z.object({
+const bookSchema = z.object({
   title: z.string().min(1, 'title es requerido.'),
   authors: z.array(z.string().refine((item) => item.trim() !== '')).nonempty({
     message: 'El array authors es requerido.',
@@ -40,4 +40,16 @@ export const bookSchema = z.object({
   rating: z.number().optional(),
 });
 
-// export type Book = z.infer<typeof bookSchema>;
+const commentSchema = z.object({
+  text: z
+    .string()
+    .min(1, 'El comentario es obligatorio')
+    .max(1500, 'El comentario no puede exceder los 1500 caracteres')
+    .trim(),
+  author: z.object({
+    userId: z.string().min(1, 'El ID del usuario no puede estar vacío'),
+  }),
+  bookId: z.string().min(1, 'El ID del libro no puede estar vacío'),
+});
+
+export { bookSchema, commentSchema };

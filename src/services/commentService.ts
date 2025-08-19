@@ -1,5 +1,7 @@
 import { commentRepository } from '../repositories/commetRepository';
+import { UserRepository } from '../repositories/userRepository';
 import { ICommentService } from '../types/IRepository';
+import { commentSchema } from '../utils/validation';
 
 export const commentService: ICommentService = {
   async findAll(bookId, limit = 10, offset = 0) {
@@ -27,17 +29,26 @@ export const commentService: ICommentService = {
   },
 
   async create(commentData) {
-    try {
-      // const commentData = {
-      //   text,
-      //   author: {
-      //     userId,
-      //     username
-      //   },
-      //   bookId,
-      // };
+    const validatedData = commentSchema.parse(commentData);
 
-      return await commentRepository.create(commentData);
+    try {
+      const user = await UserRepository.findById(validatedData.author.userId);
+
+      if (!user) {
+        throw new Error('Usuario no encontrado');
+      }
+
+      const commentToCreate = {
+        text: validatedData.text,
+        bookId: validatedData.bookId,
+        author: {
+          userId: user.uid,
+          username: user.name,
+          avatar: user.picture,
+        },
+      };
+
+      return await commentRepository.create(commentToCreate);
     } catch (err) {
       throw err;
     }

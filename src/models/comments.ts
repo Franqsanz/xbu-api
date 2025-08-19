@@ -20,6 +20,9 @@ const commentsSchema = new Schema(
         type: String,
         required: true,
       },
+      avatar: {
+        type: String,
+      },
     },
     bookId: {
       type: String,
