@@ -5,7 +5,6 @@ export const commentRepository: IRepositoryComment = {
   async findAll(bookId, limit, offset) {
     const results = await commentsModel
       .find({ bookId })
-      .select('-reactions')
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(offset)
