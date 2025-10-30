@@ -134,6 +134,88 @@
             "type": "string"
           }
         }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "ID único del comentario",
+            "example": "comment123"
+          },
+          "text": {
+            "type": "string",
+            "description": "Texto del comentario",
+            "example": "Excelente libro, muy recomendado!"
+          },
+          "author": {
+            "type": "object",
+            "properties": {
+              "userId": {
+                "type": "string",
+                "description": "ID del autor",
+                "example": "user123"
+              },
+              "username": {
+                "type": "string",
+                "description": "Nombre de usuario del autor",
+                "example": "maria_gonzalez"
+              }
+            }
+          },
+          "contentId": {
+            "type": "string",
+            "description": "ID del libro comentado",
+            "example": "libro123"
+          },
+          "likesCount": {
+            "type": "integer",
+            "description": "Número total de likes",
+            "example": 15
+          },
+          "dislikesCount": {
+            "type": "integer",
+            "description": "Número total de dislikes",
+            "example": 2
+          },
+          "isEdited": {
+            "type": "boolean",
+            "description": "Indica si el comentario fue editado",
+            "example": false
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de creación",
+            "example": "2024-03-20T10:30:00Z"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Fecha de última actualización",
+            "example": "2024-03-20T10:30:00Z"
+          }
+        }
+      },
+      "CommentStats": {
+        "type": "object",
+        "properties": {
+          "totalComments": {
+            "type": "integer",
+            "description": "Total de comentarios en el libro",
+            "example": 45
+          },
+          "totalLikes": {
+            "type": "integer",
+            "description": "Total de likes en todos los comentarios",
+            "example": 128
+          },
+          "totalDislikes": {
+            "type": "integer",
+            "description": "Total de dislikes en todos los comentarios",
+            "example": 12
+          }
+        }
       }
     }
   },
@@ -749,60 +831,88 @@
         "tags": ["Books"],
         "requestBody": {
           "required": true,
-          "description": "Todos los campos son de tipo `string`, excepto el campo `url`, que es un binario (`ArrayBuffer`). Todos los campos son obligatorios, excepto `sourceLink`.",
+          "description": "La imagen se envía como binario separado. El campo `bookData` contiene un JSON con todos los datos del libro. Todos los campos son obligatorios excepto `sourceLink`.",
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
+                "required": ["image", "bookData"],
                 "properties": {
                   "image": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Archivo de imagen en formato binario"
+                  },
+                  "bookData": {
                     "type": "object",
+                    "description": "Datos del libro en formato JSON",
                     "properties": {
-                      "url": {
-                        "example": [255, 216, 255, 225, 14, 6]
+                      "image": {
+                        "type": "object",
+                        "properties": {
+                          "public_id": {
+                            "type": "string",
+                            "example": "books/abc123"
+                          }
+                        }
                       },
-                      "public_id": {
-                        "type": "string"
+                      "title": {
+                        "type": "string",
+                        "example": "El Quijote"
+                      },
+                      "synopsis": {
+                        "type": "string",
+                        "example": "Las aventuras de Don Quijote de la Mancha"
+                      },
+                      "category": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "example": ["Ficción", "Clásicos"]
+                      },
+                      "sourceLink": {
+                        "type": "string",
+                        "example": "https://example.com/source"
+                      },
+                      "language": {
+                        "type": "string",
+                        "example": "Español"
+                      },
+                      "year": {
+                        "type": "string",
+                        "example": "1605"
+                      },
+                      "numberPages": {
+                        "type": "string",
+                        "example": "863"
+                      },
+                      "format": {
+                        "type": "string",
+                        "example": "PDF"
+                      },
+                      "pathUrl": {
+                        "type": "string",
+                        "example": "/books/quijote.pdf"
+                      },
+                      "authors": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "example": ["Miguel de Cervantes"]
+                      },
+                      "userId": {
+                        "type": "string",
+                        "example": "user123"
                       }
                     }
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "synopsis": {
-                    "type": "string"
-                  },
-                  "category": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "sourceLink": {
-                    "type": "string"
-                  },
-                  "language": {
-                    "type": "string"
-                  },
-                  "year": {
-                    "type": "string"
-                  },
-                  "numberPages": {
-                    "type": "string"
-                  },
-                  "format": {
-                    "type": "string"
-                  },
-                  "pathUrl": {
-                    "type": "string"
-                  },
-                  "authors": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "userId": "string"
+                  }
+                }
+              },
+              "encoding": {
+                "bookData": {
+                  "contentType": "application/json"
                 }
               }
             }
@@ -810,7 +920,7 @@
         },
         "responses": {
           "201": {
-            "description": "Created",
+            "description": "Libro creado exitosamente",
             "content": {
               "application/json": {
                 "schema": {
@@ -820,10 +930,12 @@
                       "type": "object",
                       "properties": {
                         "url": {
-                          "type": "string"
+                          "type": "string",
+                          "example": "https://res.cloudinary.com/demo/image/upload/v1234567890/books/abc123.jpg"
                         },
                         "public_id": {
-                          "type": "string"
+                          "type": "string",
+                          "example": "books/abc123"
                         }
                       }
                     },
@@ -970,66 +1082,29 @@
         ],
         "requestBody": {
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
                   "image": {
-                    "type": "object",
-                    "properties": {
-                      "url": {
-                        "example": [255, 216, 255, 225, 14, 6]
-                      },
-                      "public_id": {
-                        "type": "string"
-                      }
-                    }
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Archivo de imagen (opcional, solo si se desea cambiar la imagen)"
                   },
-                  "title": {
-                    "type": "string"
-                  },
-                  "synopsis": {
-                    "type": "string"
-                  },
-                  "category": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "sourceLink": {
-                    "type": "string"
-                  },
-                  "language": {
-                    "type": "string"
-                  },
-                  "year": {
-                    "type": "number"
-                  },
-                  "numberPages": {
-                    "type": "number"
-                  },
-                  "format": {
-                    "type": "string"
-                  },
-                  "pathUrl": {
-                    "type": "string"
-                  },
-                  "authors": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "userId": "string"
-                }
+                  "bookData": {
+                    "type": "string",
+                    "description": "Datos del libro en formato JSON",
+                    "example": "{\"title\":\"Título actualizado\",\"authors\":[\"Autor 1\"],\"synopsis\":\"Nueva sinopsis\",\"year\":\"2024\",\"category\":[\"Ficción\"],\"numberPages\":\"300\",\"sourceLink\":\"https://example.com\",\"language\":\"Español\",\"format\":\"PDF\",\"pathUrl\":\"ruta/libro\",\"userId\":\"user123\",\"rating\":4,\"image\":{\"url\":\"https://cloudinary.com/image.webp\",\"public_id\":\"xbu/imagen123\"}}"
+                  }
+                },
+                "required": ["bookData"]
               }
             }
           }
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "200": {
+            "description": "Updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -1440,6 +1515,448 @@
         },
         "items": {
           "$ref": "#/components/schemas/Users"
+        }
+      }
+    },
+    "/api/users/comments/book-comments/{bookId}": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Obtener comentarios de un libro",
+        "description": "Obtiene todos los comentarios de un libro específico con paginación",
+        "parameters": [
+          {
+            "name": "bookId",
+            "in": "path",
+            "required": true,
+            "description": "ID del libro",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Número de comentarios por página",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Número de comentarios a omitir",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comentarios obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "totalComments": {
+                      "type": "integer",
+                      "example": 45
+                    },
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Comment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/comments/user-comments/{userId}": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Obtener comentarios de un usuario",
+        "description": "Obtiene todos los comentarios realizados por un usuario específico",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID del usuario",
+            "schema": {
+              "type": "string",
+              "example": "user123"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Número de comentarios por página",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Número de comentarios a omitir",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comentarios del usuario obtenidos exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Comment"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/comments/comment": {
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Crear un nuevo comentario",
+        "description": "Crea un nuevo comentario en un libro",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["contentId", "text"],
+                "properties": {
+                  "contentId": {
+                    "type": "string",
+                    "description": "ID del libro",
+                    "example": "libro123"
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "Texto del comentario",
+                    "minLength": 1,
+                    "maxLength": 1500,
+                    "example": "Excelente libro, muy recomendado!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comentario creado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Comentario creado exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/comments/comment/{commentId}/{userId}": {
+      "patch": {
+        "tags": ["Comments"],
+        "summary": "Actualizar un comentario",
+        "description": "Actualiza el texto de un comentario. Solo el autor puede editarlo.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "description": "ID del comentario",
+            "schema": {
+              "type": "string",
+              "example": "comment123"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID del usuario",
+            "schema": {
+              "type": "string",
+              "example": "user123"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["text"],
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "Nuevo texto del comentario",
+                    "minLength": 1,
+                    "maxLength": 1500,
+                    "example": "Texto editado del comentario"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Comentario actualizado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "number",
+                          "example": 200
+                        },
+                        "message": {
+                          "type": "string",
+                          "example": "Comentario actualizado"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Comments"],
+        "summary": "Eliminar un comentario",
+        "description": "Elimina un comentario. Solo el autor puede eliminarlo.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "description": "ID del comentario",
+            "schema": {
+              "type": "string",
+              "example": "comment123"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID del usuario",
+            "schema": {
+              "type": "string",
+              "example": "user123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Comentario eliminado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Comentario eliminado exitosamente"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/comments/comment/{commentId}/{userId}/reaction": {
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Agregar o cambiar reacción",
+        "description": "Agrega una reacción (like/dislike) a un comentario. Si ya existe, la cambia o la quita.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "description": "ID del comentario",
+            "schema": {
+              "type": "string",
+              "example": "comment123"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "description": "ID del usuario",
+            "schema": {
+              "type": "string",
+              "example": "user123"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["like", "dislike"],
+                    "description": "Tipo de reacción",
+                    "example": "like"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reacción agregada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Reacción agregada exitosamente"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Comment"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/comments/comment/stats/{bookId}": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Obtener estadísticas de comentarios",
+        "description": "Obtiene estadísticas totales de comentarios de un libro (total, likes, dislikes)",
+        "parameters": [
+          {
+            "name": "bookId",
+            "in": "path",
+            "required": true,
+            "description": "ID del libro",
+            "schema": {
+              "type": "string",
+              "example": "libro123"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estadísticas obtenidas exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/CommentStats"
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }

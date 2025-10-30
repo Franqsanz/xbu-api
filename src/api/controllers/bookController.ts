@@ -238,16 +238,18 @@ async function postBooks(
   res: Response,
   next: NextFunction
 ): Promise<Response<IBook>> {
-  const { body } = req;
+  const { body, file } = req;
 
   try {
-    const resultBook = await BookService.createBook(body);
+    const bookData = JSON.parse(body.bookData);
+
+    const resultBook = await BookService.createBook(bookData, file?.buffer);
 
     if (!resultBook) {
       throw BadRequest('Error al publicar, la solicitud está vacia');
     }
 
-    redis.expire(`books_${req.body}`, 0);
+    redis.expire(`books_${bookData}`, 0);
     return res.status(201).json(resultBook);
   } catch (err: unknown) {
     if (err instanceof ZodError) {
@@ -270,10 +272,12 @@ async function putBooks(
   next: NextFunction
 ): Promise<Response<IBook | null>> {
   const { id } = req.params;
-  const { body } = req;
+  const { body, file } = req;
 
   try {
-    const result = await BookService.updateBook(id, body);
+    const bookData = JSON.parse(body.bookData);
+
+    const result = await BookService.updateBook(id, bookData, file?.buffer);
 
     if (!result) {
       throw BadRequest('No se pudo actualizar');

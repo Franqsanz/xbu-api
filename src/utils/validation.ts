@@ -33,7 +33,7 @@ const bookSchema = z.object({
   format: z.string().min(1, 'format es requerido.'),
   pathUrl: z.string().min(1),
   image: z.object({
-    url: z.union([z.string(), z.array(z.number())]),
+    url: z.string().optional(),
     public_id: z.string(),
   }),
   userId: z.string(),

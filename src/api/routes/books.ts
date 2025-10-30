@@ -16,6 +16,7 @@ import {
 } from '../controllers/bookController';
 import { query } from '../middlewares/query';
 import { pagination } from '../middlewares/pagination';
+import { upload } from '../middlewares/multer';
 
 const router: Router = express.Router();
 
@@ -31,8 +32,8 @@ router.get('/books/more-books-authors/:id', getMoreBooksAuthors);
 router.get('/books/most-viewed-books', getMostViewedBooks);
 router.get('/books/path/:pathUrl', getPathUrlBooks);
 router.get('/books/:id', getOneBooks);
-router.post('/books', postBooks);
-router.patch('/books/:id', putBooks);
+router.post('/books', upload.single('image'), postBooks);
+router.patch('/books/:id', upload.single('image'), putBooks);
 router.delete('/books/:id', deleteBook);
 
 export default router;

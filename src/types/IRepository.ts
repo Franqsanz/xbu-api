@@ -35,8 +35,8 @@ interface IReadBook {
 }
 
 interface IWriteBook {
-  createBook(body: any): Promise<IBook>;
-  updateBook(id: string, body: any, image?: any): Promise<IBook | null>;
+  createBook(body: any, buffer?: any): Promise<IBook>;
+  updateBook(id: string, body: any, image?: any, buffer?: any): Promise<IBook | null>;
   removeBook(id: string): Promise<IDeleteBook>;
 }
 

@@ -109,13 +109,48 @@ export const BookService: IRepositoryBook = {
     }
   },
 
-  async createBook(body) {
-    const validateBook = bookSchema.parse(body);
+  // async createBook(body) {
+  //   const validateBook = bookSchema.parse(body);
 
-    let { url } = body.image;
-    const uint8Array = new Uint8Array(url);
-    const decompressedImage = pako.inflate(uint8Array);
-    const buffer = Buffer.from(decompressedImage);
+  //   let { url } = body.image;
+  //   const uint8Array = new Uint8Array(url);
+  //   const decompressedImage = pako.inflate(uint8Array);
+  //   const buffer = Buffer.from(decompressedImage);
+
+  //   try {
+  //     const cloudinaryResult = await new Promise<any>((resolve, reject) => {
+  //       cloudinary.uploader
+  //         .upload_stream(
+  //           {
+  //             upload_preset: 'xbu-uploads',
+  //             folder: process.env.CLOUDINARY_FOLDER,
+  //             format: 'webp',
+  //             transformation: {
+  //               quality: 60,
+  //             },
+  //           },
+  //           (err, result) => {
+  //             if (err) {
+  //               reject(err);
+  //             } else {
+  //               resolve(result);
+  //             }
+  //           }
+  //         )
+  //         .end(buffer);
+  //     });
+
+  //     validateBook.image.url = cloudinaryResult.secure_url;
+  //     validateBook.image.public_id = cloudinaryResult.public_id;
+
+  //     return await BookRepository.createBook(validateBook);
+  //   } catch (err) {
+  //     throw err;
+  //   }
+  // },
+
+  async createBook(body, buffer) {
+    const validateBook = bookSchema.parse(body);
 
     try {
       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
@@ -140,8 +175,10 @@ export const BookService: IRepositoryBook = {
           .end(buffer);
       });
 
-      validateBook.image.url = cloudinaryResult.secure_url;
-      validateBook.image.public_id = cloudinaryResult.public_id;
+      validateBook.image = {
+        url: cloudinaryResult.secure_url,
+        public_id: cloudinaryResult.public_id,
+      };
 
       return await BookRepository.createBook(validateBook);
     } catch (err) {
@@ -149,24 +186,72 @@ export const BookService: IRepositoryBook = {
     }
   },
 
-  async updateBook(id, body) {
+  // async updateBook(id, body) {
+  //   let { url, public_id } = body.image;
+  //   let image;
+
+  //   try {
+  //     if (typeof body.image.url === 'string') {
+  //       image = {
+  //         url: url,
+  //         public_id: public_id,
+  //       };
+  //     } else {
+  //       if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
+  //       // Limpiamos el public_id para evitar duplicar la carpeta
+  //       const cleanPublicId = public_id?.split('/').pop();
+
+  //       const uint8Array = new Uint8Array(url);
+  //       const decompressedImage = pako.inflate(uint8Array);
+  //       const buffer = Buffer.from(decompressedImage);
+
+  //       // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
+  //       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
+  //         cloudinary.uploader
+  //           .upload_stream(
+  //             {
+  //               upload_preset: 'xbu-uploads',
+  //               folder: process.env.CLOUDINARY_FOLDER,
+  //               format: 'webp',
+  //               transformation: {
+  //                 quality: 60,
+  //               },
+  //               public_id: cleanPublicId,
+  //             },
+  //             (err, result) => {
+  //               if (err) {
+  //                 reject(err);
+  //               } else {
+  //                 resolve(result);
+  //               }
+  //             }
+  //           )
+  //           .end(buffer);
+  //       });
+
+  //       image = {
+  //         url: cloudinaryResult.secure_url,
+  //         public_id: cloudinaryResult.public_id,
+  //       };
+  //     }
+
+  //     return await BookRepository.updateBook(id, body, image);
+  //   } catch (err) {
+  //     throw err;
+  //   }
+  // },
+  //
+  async updateBook(id, body, buffer?) {
     let { url, public_id } = body.image;
     let image;
 
     try {
-      if (typeof body.image.url === 'string') {
-        image = {
-          url: url,
-          public_id: public_id,
-        };
-      } else {
+      // Si buffer existe, significa que hay una nueva imagen
+      if (buffer) {
         if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
+
         // Limpiamos el public_id para evitar duplicar la carpeta
         const cleanPublicId = public_id?.split('/').pop();
-
-        const uint8Array = new Uint8Array(url);
-        const decompressedImage = pako.inflate(uint8Array);
-        const buffer = Buffer.from(decompressedImage);
 
         // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
         const cloudinaryResult = await new Promise<any>((resolve, reject) => {
@@ -195,6 +280,12 @@ export const BookService: IRepositoryBook = {
         image = {
           url: cloudinaryResult.secure_url,
           public_id: cloudinaryResult.public_id,
+        };
+      } else {
+        // Si no hay buffer, mantenemos la imagen actual
+        image = {
+          url: url,
+          public_id: public_id,
         };
       }
 
