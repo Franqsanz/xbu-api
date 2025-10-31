@@ -53,14 +53,28 @@ export function registerMW(app: Application) {
 
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
-  app.use(express.json({ limit: '50mb' }));
-  app.use(
-    express.urlencoded({
-      limit: '50mb',
-      extended: true,
-      parameterLimit: 50000,
-    })
-  );
+  // app.use(express.json({ limit: '50mb' }));
+  // app.use(
+  //   express.urlencoded({
+  //     limit: '50mb',
+  //     extended: true,
+  //     parameterLimit: 50000,
+  //   })
+  // );
+  app.use((req, res, next) => {
+    const contentType = req.headers['content-type'] || '';
+
+    // Detecta correctamente incluso con boundary
+    if (contentType.startsWith('multipart/form-data')) {
+      return next();
+    }
+
+    express.json()(req, res, (err) => {
+      if (err) return res.status(400).json({ error: 'Invalid JSON' });
+      express.urlencoded({ extended: true })(req, res, next);
+    });
+  });
+
   app.use(compression());
   app.use(cookieParser());
   app.use(limiter);
