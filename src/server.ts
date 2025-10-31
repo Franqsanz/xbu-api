@@ -10,8 +10,8 @@ connectDB(); // Ejecutar conexión a la base de datos.
 const app: Express = express();
 
 initSentry(app);
-registerMW(app); // Registrar middlewares
 registerRoutes(app);
+registerMW(app); // Registrar middlewares
 
 app.listen(PORT, () => console.log('Server Ready'));
 
