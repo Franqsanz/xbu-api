@@ -239,6 +239,11 @@ async function postBooks(
   next: NextFunction
 ): Promise<Response<IBook>> {
   const { body, file } = req;
+  console.log('=== DEBUG ===');
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
+  console.log('=============');
 
   try {
     const bookData = JSON.parse(body.bookData);
@@ -273,6 +278,11 @@ async function putBooks(
 ): Promise<Response<IBook | null>> {
   const { id } = req.params;
   const { body, file } = req;
+  console.log('=== DEBUG ===');
+  console.log('Content-Type:', req.headers['content-type']);
+  console.log('req.body:', req.body);
+  console.log('req.file:', req.file);
+  console.log('=============');
 
   try {
     const bookData = JSON.parse(body.bookData);

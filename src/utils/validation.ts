@@ -28,15 +28,15 @@ const bookSchema = z.object({
         '"numberPages" debe tener un minimo o igual a 49, es el número minimo de paginas para un libro.',
     }
   ),
-  sourceLink: z.string().optional(),
+  sourceLink: z.string().optional().or(z.literal('')),
   language: z.string().min(1, 'language es requerido.'),
   format: z.string().min(1, 'format es requerido.'),
-  pathUrl: z.string().min(1),
+  pathUrl: z.string().optional(),
   image: z.object({
     url: z.string().optional(),
-    public_id: z.string(),
+    public_id: z.string().default(''),
   }),
-  userId: z.string(),
+  userId: z.string().optional(),
   rating: z.number().optional(),
 });
 

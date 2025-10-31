@@ -1,5 +1,3 @@
-import pako from 'pako';
-
 import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
 import { bookSchema } from '../utils/validation';
