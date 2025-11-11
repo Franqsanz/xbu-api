@@ -64,14 +64,15 @@ export function registerMW(app: Application) {
   app.use((req, res, next) => {
     const contentType = req.headers['content-type'] || '';
 
-    // Detecta correctamente incluso con boundary
-    if (contentType.startsWith('multipart/form-data')) {
+    // Si es multipart, NO parsear (Multer lo hace)
+    if (contentType.includes('multipart/form-data')) {
       return next();
     }
 
-    express.json()(req, res, (err) => {
+    // Para todo lo demás (JSON), sí parsear
+    express.json({ limit: '10mb' })(req, res, (err) => {
       if (err) return res.status(400).json({ error: 'Invalid JSON' });
-      express.urlencoded({ extended: true })(req, res, next);
+      express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
     });
   });
 

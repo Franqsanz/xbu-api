@@ -16,5 +16,11 @@
         "Access-Control-Allow-Headers": "X-CSRF-Token, X-Requested-With, Accept, Authorization, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Origin, X-Api-Key"
       }
     }
-  ]
+  ],
+  "functions": {
+    "src/server.ts": {
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  }
 }
