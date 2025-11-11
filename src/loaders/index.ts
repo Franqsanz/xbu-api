@@ -61,35 +61,6 @@ export function registerMW(app: Application) {
   //     parameterLimit: 50000,
   //   })
   // );
-  app.use((req, res, next) => {
-    const path = req.path;
-    const method = req.method;
-
-    // Lista de rutas que NO deben usar express.json() porque usan Multer
-    const multerRoutes = [
-      { method: 'POST', path: '/api/books' },
-      { method: 'PATCH', path: /^\/api\/books\/[^/]+$/ }, // /api/books/:id
-    ];
-
-    // Verificar si la ruta actual usa Multer
-    const isMulterRoute = multerRoutes.some((route) => {
-      const methodMatch = route.method === method;
-      const pathMatch = route.path instanceof RegExp ? route.path.test(path) : route.path === path;
-      return methodMatch && pathMatch;
-    });
-
-    // Si es ruta con Multer, saltar el parser
-    if (isMulterRoute) {
-      return next();
-    }
-
-    // Para el resto, usar express.json()
-    express.json({ limit: '10mb' })(req, res, (err) => {
-      if (err) return res.status(400).json({ error: 'Invalid JSON' });
-      express.urlencoded({ extended: true, limit: '10mb' })(req, res, next);
-    });
-  });
-
   app.use(compression());
   app.use(cookieParser());
   app.use(limiter);
