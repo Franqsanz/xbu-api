@@ -253,7 +253,6 @@ async function postBooks(
 
     return res.status(201).json(resultBook);
   } catch (err: unknown) {
-    console.log(err);
     if (err instanceof ZodError) {
       const errorMessages = err.issues.map((error) => error.message);
       return res.status(400).json({
