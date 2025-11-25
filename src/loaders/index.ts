@@ -29,7 +29,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export function registerMW(app: Application) {
   const corsOptions = {
-    origin: ALLOWED_ORIGIN || '',
+    origin: ALLOWED_ORIGIN,
     methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: [
       'X-Requested-With',
@@ -53,14 +53,14 @@ export function registerMW(app: Application) {
 
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
-  // app.use(express.json({ limit: '50mb' }));
-  // app.use(
-  //   express.urlencoded({
-  //     limit: '50mb',
-  //     extended: true,
-  //     parameterLimit: 50000,
-  //   })
-  // );
+  app.use(express.json({ limit: '50mb' }));
+  app.use(
+    express.urlencoded({
+      limit: '50mb',
+      extended: true,
+      parameterLimit: 50000,
+    })
+  );
   app.use(compression());
   app.use(cookieParser());
   app.use(limiter);

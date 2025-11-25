@@ -148,7 +148,7 @@ export const BookService: IRepositoryBook = {
   // },
 
   async createBook(body, buffer) {
-    const validateBook = bookSchema.parse(body);
+    // const validateBook = bookSchema.parse(body);
 
     try {
       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
@@ -173,12 +173,12 @@ export const BookService: IRepositoryBook = {
           .end(buffer);
       });
 
-      validateBook.image = {
+      body.image = {
         url: cloudinaryResult.secure_url,
         public_id: cloudinaryResult.public_id,
       };
 
-      return await BookRepository.createBook(validateBook);
+      return await BookRepository.createBook(body);
     } catch (err) {
       throw err;
     }

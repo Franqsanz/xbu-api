@@ -250,6 +250,7 @@ async function postBooks(
     }
 
     redis.expire(`books_${bookData}`, 0);
+
     return res.status(201).json(resultBook);
   } catch (err: unknown) {
     if (err instanceof ZodError) {
