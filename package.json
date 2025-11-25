@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "engines": {
-    "node": "24.x"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "ts-node-dev -r dotenv/config src/server.ts",
