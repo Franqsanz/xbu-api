@@ -149,6 +149,7 @@ export const BookService: IRepositoryBook = {
 
   async createBook(body, buffer) {
     // const validateBook = bookSchema.parse(body);
+    console.log(body, buffer);
 
     try {
       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
