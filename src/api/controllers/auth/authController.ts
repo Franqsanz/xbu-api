@@ -63,16 +63,16 @@ async function login(req: Request, res: Response, next: NextFunction) {
     // Cookie de sesión (corta duración)
     res.cookie('_secure_tk', sessionCookie, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: expiresIn,
     });
 
     // Cookie de refresh token (larga duración) - almacena el idToken para renovar
     res.cookie('_refresh_tk', idToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: refreshExpiresIn,
     });
 
@@ -111,14 +111,14 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
     // Limpiar cookies
     res.clearCookie('_secure_tk', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     res.clearCookie('_refresh_tk', {
       httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     });
 
     return res.status(200).json({
@@ -146,15 +146,24 @@ async function refreshSession(req: Request, res: Response, next: NextFunction) {
 
       res.cookie('_secure_tk', sessionCookie, {
         httpOnly: true,
-        secure: true,
-        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
         maxAge: expiresIn,
       });
 
       return res.status(200).json({ auth: true });
     } catch (error) {
-      res.clearCookie('_secure_tk');
-      res.clearCookie('_refresh_tk');
+      res.clearCookie('_secure_tk', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      });
+      res.clearCookie('_refresh_tk', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      });
+
       return res.status(401).json({ message: 'Refresh token inválido o expirado' });
     }
   } catch (err) {

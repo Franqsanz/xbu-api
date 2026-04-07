@@ -35,8 +35,8 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
           res.cookie('_secure_tk', newSessionCookie, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'lax',
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
             maxAge: expiresIn,
           });
 
