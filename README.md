@@ -25,128 +25,152 @@ erDiagram
     USER ||--o{ BOOK : publica
     USER ||--|| FAVORITES : tiene
     USER ||--o{ COMMENTS : escribe
-    USER ||--o{ REACTIONS : da
     USER {
-        string uid PK
-        string name
-        string username
+        string uid PK "required, unique"
+        string name "required"
+        string username UK "required, unique, lowercase"
         string picture
-        string email
-        date createdAt
+        string email UK "required, unique, lowercase"
+        date createdAt "required"
     }
-    COLLECTIONS {
-        string userId PK
-        array collections
-        date createdAt
-        date updatedAt
-    }
-    COLLECTION {
-        string name "maxlength:25"
-        array books
-        date createdAt
-    }
-    BOOK_REFERENCE }|--|| BOOK : referencia
-    BOOK_REFERENCE {
-        ObjectId bookId
-        boolean checked
-    }
-    COLLECTIONS ||--o{ COLLECTION : contiene
-    COLLECTION ||--o{ BOOK_REFERENCE : contiene
-    FAVORITES {
-        string userId PK
-        array favoriteBooks
-        date createdAt
-        date updatedAt
-    }
-    FAVORITES }|--o{ BOOK : contiene
     BOOK ||--o{ COMMENTS : recibe
     BOOK {
         ObjectId _id PK
         string title
-        array authors
+        string[] authors
         string synopsis
-        array category
+        string[] category
         string sourceLink
         string language
-        number year "min:1800, max:2050"
-        number numberPages "min:49"
+        number year "default: null"
+        number numberPages "min: 49"
         string format
         string pathUrl
-        object image
+        string url "cloudinary"
+        string public_id "cloudinary"
         string userId FK
-        number views "default:0"
-        number rating "min:0, max:5, default:0"
+        number views "default: 0"
+        number rating "min: 0, max: 5, default: 0"
         date createdAt
         date updatedAt
     }
-    IMAGE ||--|| BOOK : pertenece_a
-    IMAGE {
-        string url
-        string public_id
+    COLLECTIONS {
+        string userId PK
+        string[] collections
+        date createdAt
+        date updatedAt
+    }
+    COLLECTION {
+        string name "maxlength: 25"
+        ObjectId[] bookIds
+        date createdAt
+    }
+    COLLECTIONS ||--o{ COLLECTION : contiene
+    FAVORITES {
+        string userId PK
+        ObjectId[] bookIds
+        date createdAt
+        date updatedAt
     }
     COMMENTS {
         ObjectId _id PK
-        string text "maxlength:1500"
-        object author
-        string bookId FK
-        array reactions
-        number likesCount "default:0"
-        number dislikesCount "default:0"
-        boolean isEdited "default:false"
-        date createdAt
-        date updatedAt
-    }
-    AUTHOR_INFO {
+        string text "maxlength: 1500"
         string userId FK
         string username
         string avatar
+        ObjectId bookId FK
+        number likesCount "default: 0"
+        number dislikesCount "default: 0"
+        string[] likedBy "array de userId"
+        string[] dislikedBy "array de userId"
+        boolean isEdited "default: false"
+        date createdAt
+        date updatedAt
     }
-    REACTION {
-        string userId FK
-        string type "enum:like,dislike"
-    }
-    COMMENTS ||--|| AUTHOR_INFO : tiene_autor
-    COMMENTS ||--o{ REACTION : tiene_reacciones
 ```
 
 ## Esquema de la API
 
+### Autenticación
+
+El sistema usa **Firebase Authentication con Google** y **cookies de sesión seguras**.
+
+**Flujo:**
+
+1. Cliente se autentica con Google (obtiene `idToken`)
+2. Envía `idToken` a `/api/auth/login`
+3. Backend genera `sessionCookie` (5 días) + `refreshToken` (30 días)
+4. Las cookies se envían automáticamente en cada request
+5. Si la sesión expira, se renueva automáticamente con el refresh token
+
+**Cookies:**
+* `_secure_tk`: SessionCookie (5 días) - autenticación
+* `_refresh_tk`: RefreshToken (30 días) - renovación de sesión
+
+### Rutas de autenticación
+
+| Ruta | Método | Protegido | Descripción |
+| --- | --- | --- | --- |
+| `/auth/login` | POST | No | Inicia sesión con idToken de Firebase. |
+| `/auth/register` | POST | Sí | Registra un usuario (crea username). |
+| `/auth/logout` | POST | Sí | Cierra sesión e invalida tokens. |
+| `/auth/refresh` | POST | No | Renueva la sessionCookie. |
+
 ### Rutas de libros
 
-| Ruta | Método | Descripción |
-| --- | --- | --- |
-| `/books` | GET | Recupera una lista de libros. |
-| `/books/:id` | GET | Recupera un libro específico por su ID. |
-| `/books` | POST | Crea un nuevo libro. |
-| `/books/:id` | PATCH | Actualiza la información de un libro existente. |
-| `/books/:id` | DELETE | Elimina un libro. |
-| `/books/search` | GET | Busca libros por título y autor. |
-| `/books/options` | GET | Recupera una lista de opciones de filtrado para la búsqueda de libros. |
-| `/books/more-books/:id` | GET | Recupera un libro aleatorio de una colección de libros. |
-| `/books/related-books/:id` | GET | Recupera un libro relacionado con otro libro. |
-| `/books/more-books-authors/:id` | GET | Recupera un libro aleatorio de un autor específico. |
-| `/books/most-viewed-books` | GET | Recupera un lista de libros más vistos. |
-| `/books/path/:pathUrl` | GET | Recupera un libro por su URL de ruta (slug). |
+| Ruta | Método | Protegido | Descripción |
+| --- | --- | --- | --- |
+| `/books` | GET | No | Recupera una lista de libros. |
+| `/books/:id` | GET | No | Recupera un libro específico por su ID. |
+| `/books` | POST | Sí | Crea un nuevo libro. |
+| `/books/:id` | PATCH | Sí | Actualiza la información de un libro existente. |
+| `/books/:id` | DELETE | Sí | Elimina un libro. |
+| `/books/search` | GET | No | Busca libros por título y autor. |
+| `/books/options` | GET | No | Recupera una lista de opciones de filtrado. |
+| `/books/more-books/:id` | GET | No | Recupera un libro aleatorio de una colección. |
+| `/books/related-books/:id` | GET | No | Recupera un libro relacionado con otro. |
+| `/books/more-books-authors/:id` | GET | No | Recupera un libro aleatorio de un autor. |
+| `/books/most-viewed-books` | GET | No | Recupera libros más vistos. |
+| `/books/path/:pathUrl` | GET | No | Recupera un libro por su slug. |
 
 ### Rutas de usuarios
 
-| Ruta | Método | Descripción |
-| --- | --- | --- |
-| `/users` | GET | Recupera una lista de usuarios. |
-| `/users/check-user/:userId` | GET | Verifica si un usuario existe. |
-| `/users/:userId/:username/books` | GET | Recupera una lista de libros de un usuario. |
-| `/users/:userId` | DELETE | Elimina la cuenta del usuario. |
-| `/users/favorites/:userId` | GET | Recupera una lista de libros favoritos de un usuario. |
-| `/users/favorites` | PATCH | Agrega o elimina un libro en favoritos. |
-| `/users/favorites/:userId` | DELETE | Elimina todos los favoritos. |
-| `/users/collections/:userId` | GET | Recupera una lista de colecciones de un usuario. |
-| `/users/:userId/collections/summary/:bookId` | GET | Recupera una lista de libros de una colección de un usuario. |
-| `/users/collections/:userId` | POST | Crea una nueva colección de un usuario. |
-| `/users/collections/:userId/collection/:collectionId` | DELETE | Elimina una colección de un usuario. |
-| `/users/collections/:userId` | DELETE | Elimina todas las colecciones de un usuario. |
-| `/users/collections/collection/:collectionId` | GET | Recupera una colección de un usuario. |
-| `/users/collections/books/toggle` | PATCH | Agrega o elimina un libro de una colección. |
-| `/users/collections/:collectionId` | PATCH | Actualiza el nombre de una colección. |
-| `/users/collections/remove` | PATCH | Elimina un libro de una colección. |
+| Ruta | Método | Protegido | Descripción |
+| --- | --- | --- | --- |
+| `/users` | GET | No | Recupera una lista de usuarios. |
+| `/users/check-user` | GET | Sí | Verifica datos del usuario autenticado. |
+| `/users/:userId/:username/books` | GET | Sí | Recupera libros de un usuario. |
+| `/users/:userId` | DELETE | Sí | Elimina la cuenta del usuario. |
+
+### Rutas de favoritos
+
+| Ruta | Método | Protegido | Descripción |
+| --- | --- | --- | --- |
+| `/users/favorites/:userId` | GET | Sí | Recupera libros favoritos. |
+| `/users/favorites` | PATCH | Sí | Agrega o elimina un libro en favoritos. |
+| `/users/favorites/:userId` | DELETE | Sí | Elimina todos los favoritos. |
+
+### Rutas de colecciones
+
+| Ruta | Método | Protegido | Descripción |
+| --- | --- | --- | --- |
+| `/users/collections/:userId` | GET | Sí | Recupera colecciones de un usuario. |
+| `/users/:userId/collections/summary/:bookId` | GET | Sí | Recupera libros de una colección. |
+| `/users/collections/:userId` | POST | Sí | Crea una nueva colección. |
+| `/users/collections/:userId/collection/:collectionId` | DELETE | Sí | Elimina una colección. |
+| `/users/collections/:userId` | DELETE | Sí | Elimina todas las colecciones. |
+| `/users/collections/collection/:collectionId` | GET | Sí | Recupera una colección. |
+| `/users/collections/books/toggle` | PATCH | Sí | Agrega o elimina libro de colección. |
+| `/users/collections/:collectionId` | PATCH | Sí | Actualiza el nombre de una colección. |
+| `/users/collections/remove` | PATCH | Sí | Elimina un libro de una colección. |
+
+### Rutas de comentarios
+
+| Ruta | Método | Protegido | Descripción |
+| --- | --- | --- | --- |
+| `/users/comments/:bookId` | GET | No | Recupera comentarios de un libro. |
+| `/users/comments` | POST | Sí | Crea un comentario en un libro. |
+| `/users/comments/:commentId` | PATCH | Sí | Edita un comentario. |
+| `/users/comments/:commentId` | DELETE | Sí | Elimina un comentario. |
 
 2025 Franco Andrés Sánchez

@@ -7,19 +7,21 @@ const auth = authFirebase;
 
 export async function verifyToken(req: Request, res: Response, next: NextFunction) {
   try {
-    const token = (req.headers['authorization'] || '').split(' ')[1];
+    // Buscar token en cookie (sistema actual)
+    const session = req.cookies?._secure_tk;
     const { userId } = req.params;
 
-    // Verificar si el token está presente
-    if (!token) {
+    // Verificar si la sesión está presente
+    if (!session) {
       throw UnauthorizedAccess('Token no proporcionado');
     }
 
-    // Verificar el token utilizando la API de autenticación de Firebase
-    const decodedToken = await auth.verifyIdToken(token);
+    // Verificar la sesión mediante Firebase
+    const decoded = await auth.verifySessionCookie(session, true);
 
-    // Verificar si el usuario en la solicitud es el mismo que el del token
-    if (decodedToken && userId === decodedToken.uid) {
+    // Verificar si el usuario en la solicitud es el mismo que el de la sesión
+    if (decoded && userId === decoded.uid) {
+      req.user = decoded;
       return next();
     } else {
       throw Forbidden('Acceso denegado');

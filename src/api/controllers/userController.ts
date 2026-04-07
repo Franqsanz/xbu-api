@@ -23,7 +23,7 @@ async function getCheckUser(
   res: Response,
   next: NextFunction
 ): Promise<Response<IUser | null>> {
-  const { userId } = req.params;
+  const userId = req.user.uid;
   const key = `user:${userId}`;
 
   const memoryCache = await caching('memory', {
@@ -57,15 +57,11 @@ async function getUserAndBooks(
   res: Response,
   next: NextFunction
 ): Promise<Response<IUserAndBooks>> {
-  const { username } = req.params;
+  const { userId } = req.params;
   const { limit, offset } = req.pagination!;
 
   try {
-    const { user, results, totalBooks } = await UserService.findUserAndBooks(
-      username,
-      limit,
-      offset
-    );
+    const { user, results, totalBooks } = await UserService.findUserAndBooks(userId, limit, offset);
 
     if (!user) {
       throw NotFound('Usuario no encontrado');

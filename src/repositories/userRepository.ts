@@ -19,11 +19,11 @@ export const UserRepository: IRepositoryUser = {
     });
   },
 
-  async findUserAndBooks(username, limit, offset) {
-    const user = await usersModel.findOne({ username: username }, 'uid name picture createdAt');
+  async findUserAndBooks(userId, limit, offset) {
+    const user = await usersModel.findOne({ uid: userId }, 'uid name picture createdAt');
 
     const totalBooks = await booksModel.countDocuments({
-      userId: user?.uid,
+      userId: userId,
     });
 
     const results = await booksModel

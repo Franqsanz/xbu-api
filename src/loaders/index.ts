@@ -16,6 +16,7 @@ import swaggerUi from 'swagger-ui-express';
 import { ALLOWED_ORIGIN } from '../config/env';
 import { apiKey } from '../api/middlewares/apiKey';
 import { errorHandler } from '../api/middlewares/errorHandler';
+import { authMiddleware } from '../api/middlewares/authMiddleware';
 import limiter from '../api/middlewares/rateLimit';
 import books from '../api/routes/books';
 import auth from '../api/routes/auth';
@@ -84,13 +85,13 @@ export function registerMW(app: Application) {
     })
   );
 
-  app.use((req, res, next) => {
-    res.header({
-      'Set-Cookie': 'SameSite=None; Secure',
-    });
+  // app.use((req, res, next) => {
+  //   res.header({
+  //     'Set-Cookie': 'SameSite=None; Secure',
+  //   });
 
-    next();
-  });
+  //   next();
+  // });
 }
 
 export function registerRoutes(app: Application) {
@@ -126,10 +127,10 @@ export function registerRoutes(app: Application) {
   });
   app.use('/api', books);
   app.use('/api/auth', auth);
-  app.use('/api/users', users);
-  app.use('/api/users/favorites', favorites);
-  app.use('/api/users/collections', collections);
-  app.use('/api/users/comments', comments);
+  app.use('/api/users', authMiddleware, users);
+  app.use('/api/users/favorites', authMiddleware, favorites);
+  app.use('/api/users/collections', authMiddleware, collections);
+  app.use('/api/users/comments', authMiddleware, comments);
 
   if (isProduction) {
     app.use('/api-docs', (req, res) => {
