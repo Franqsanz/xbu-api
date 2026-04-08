@@ -176,4 +176,12 @@ export const commentRepository: IRepositoryComment = {
       totalDislikes: 0,
     };
   },
+
+  async deleteAllByUserId(userId) {
+    const result = await commentsModel.deleteMany({
+      'author.userId': userId,
+    });
+
+    return result.deletedCount > 0;
+  },
 };

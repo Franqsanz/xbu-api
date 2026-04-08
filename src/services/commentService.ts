@@ -141,6 +141,14 @@ export const commentService: ICommentService = {
     }
   },
 
+  async deleteAllByUserId(userId) {
+    try {
+      return await commentRepository.deleteAllByUserId(userId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
   // =============================================
   // HELPER METHODS
   // =============================================

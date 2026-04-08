@@ -52,11 +52,11 @@ export const UserRepository: IRepositoryUser = {
     return await newUser.save();
   },
 
-  async deleteUserBooks(id) {
-    return await booksModel.deleteOne(id);
+  async deleteUserBooks(userId) {
+    return await booksModel.deleteMany({ userId });
   },
 
   async deleteUser(userId) {
-    return await usersModel.deleteOne(userId);
+    return await usersModel.deleteOne({ uid: userId });
   },
 };

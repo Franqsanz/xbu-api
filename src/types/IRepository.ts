@@ -115,6 +115,7 @@ interface IWriteComment {
   create(commentData: Partial<IComment>): Promise<IComment>;
   update(commentId: string, userId: string, text: string): Promise<IComment | null>;
   delete(commentId: string, userId: string): Promise<IComment | null>;
+  deleteAllByUserId(userId: string): Promise<boolean>;
 }
 
 interface ICommentReactions {

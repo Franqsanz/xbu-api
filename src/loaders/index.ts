@@ -127,10 +127,10 @@ export function registerRoutes(app: Application) {
   });
   app.use('/api', books);
   app.use('/api/auth', auth);
+  app.use('/api/users/comments', comments);
   app.use('/api/users', authMiddleware, users);
   app.use('/api/users/favorites', authMiddleware, favorites);
   app.use('/api/users/collections', authMiddleware, collections);
-  app.use('/api/users/comments', authMiddleware, comments);
 
   if (isProduction) {
     app.use('/api-docs', (req, res) => {

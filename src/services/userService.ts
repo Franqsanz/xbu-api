@@ -1,9 +1,9 @@
-import { DecodedIdToken } from 'firebase-admin/auth';
-
 import { UserRepository } from './../repositories/userRepository';
 import { CollectionRepository } from './../repositories/collectionRepository';
 import { FavoriteRepository } from './../repositories/favoriteRepository';
+import { commentRepository } from './../repositories/commetRepository';
 import { cloudinary } from '../config/cloudinary';
+import { authFirebase } from '../config/firebase';
 import { IFullRepositoryUser } from '../types/IRepository';
 
 export const UserService: IFullRepositoryUser = {
@@ -60,15 +60,17 @@ export const UserService: IFullRepositoryUser = {
         throw new Error('Usuario no encontrado');
       }
 
+      // Eliminar todas las imágenes de libros de Cloudinary
       for (let book of books) {
         const public_id = book.image.public_id;
         await cloudinary.uploader.destroy(public_id);
-
-        return await UserRepository.deleteUserBooks(book.userId);
       }
 
+      await UserRepository.deleteUserBooks(userId);
+      await commentRepository.deleteAllByUserId(userId);
       await CollectionRepository.deleteUserCollections(userId);
       await FavoriteRepository.deleteUserFavorites(userId);
+      await authFirebase.deleteUser(user?.uid);
 
       return await UserRepository.deleteUser(user?.uid);
     } catch (err) {
