@@ -90,6 +90,18 @@ async function deleteAccount(
 
   try {
     await UserService.deleteAccount(userId);
+
+    res.clearCookie('_secure_tk', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : ('lax' as const),
+    });
+    res.clearCookie('_refresh_tk', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : ('lax' as const),
+    });
+
     return res.status(200).json({
       success: {
         status: 200,

@@ -22,9 +22,9 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     try {
       const decoded = await authFirebase.verifySessionCookie(session, true);
       req.user = decoded;
+
       return next();
     } catch (error: any) {
-      // Si la sesión expiró pero hay refresh token, intentar renovar
       if (refreshToken && error.code === 'auth/argument-error') {
         try {
           // El refreshToken es el idToken guardado, usarlo para crear una nueva sesión
@@ -42,16 +42,35 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
           const decoded = await authFirebase.verifySessionCookie(newSessionCookie, true);
           req.user = decoded;
+
           return next();
         } catch {
-          res.clearCookie('_secure_tk');
-          res.clearCookie('_refresh_tk');
+          res.clearCookie('_secure_tk', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+          });
+          res.clearCookie('_refresh_tk', {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+          });
+
           return res.status(401).json({ message: 'Sesión expirada, reautentícate' });
         }
       }
 
-      res.clearCookie('_secure_tk');
-      res.clearCookie('_refresh_tk');
+      res.clearCookie('_secure_tk', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      });
+      res.clearCookie('_refresh_tk', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      });
+
       return res.status(401).json({ message: 'Sesión inválida' });
     }
   } catch (error) {

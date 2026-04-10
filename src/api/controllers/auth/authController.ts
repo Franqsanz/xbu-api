@@ -1,20 +1,13 @@
 import { Request, Response, NextFunction } from 'express';
 
-// import usersModel from '../../../models/users';
 import { authFirebase } from '../../../config/firebase';
 import { UserService } from '../../../services/userService';
-import { UnauthorizedAccess } from '../../../utils/errors';
-
-const auth = authFirebase;
 
 async function createUser(req: Request, res: Response, next: NextFunction) {
-  // const token = (req.headers['authorization'] || '').split(' ')[1];
-  const userId = req.user.uid;
   const { username } = req.body;
 
   try {
-    // const decodedToken = await auth.verifyIdToken(token);
-    const { existingUser, saveUser } = await UserService.saveUser(username, userId);
+    const { existingUser, saveUser } = await UserService.saveUser(req.user, username);
 
     if (existingUser) {
       return res.status(200).json({
@@ -24,15 +17,6 @@ async function createUser(req: Request, res: Response, next: NextFunction) {
         },
       });
     }
-
-    // const userToSave = {
-    //   ...decodedToken,
-    //   username: username,
-    //   createdAt: new Date(),
-    // };
-
-    // const newUser = new usersModel(userToSave);
-    // const resultUser = await newUser.save();
 
     return res.status(200).json(saveUser);
   } catch (err) {
@@ -84,7 +68,6 @@ async function login(req: Request, res: Response, next: NextFunction) {
 
 async function logoutUser(req: Request, res: Response, next: NextFunction) {
   try {
-    // Validar que el usuario esté autenticado
     const session = req.cookies?._secure_tk;
 
     if (!session) {
@@ -103,12 +86,10 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
       try {
         await authFirebase.revokeRefreshTokens(req.user.uid);
       } catch (error) {
-        // Continuar incluso si la revocación falla
         console.error('Error revocando tokens en Firebase:', error);
       }
     }
 
-    // Limpiar cookies
     res.clearCookie('_secure_tk', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
