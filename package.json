@@ -14,7 +14,7 @@
     "ts-lint": "tsc --noEmit",
     "format": "prettier --write .",
     "build": "tsc -p .",
-    "prepare": "node -e \"if (!process.env.CI) require('child_process').execSync('husky install', {stdio: 'inherit'})\"
+    "prepare": "husky install || true"
   },
   "lint-staged": {
     "*.{ts,json}": [
