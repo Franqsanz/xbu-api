@@ -1,7 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
-
 import { authFirebase } from '../../../config/firebase';
 import { UserService } from '../../../services/userService';
+
+const isProduction = process.env.NODE_ENV === 'production';
+const DOMAIN = process.env.COOKIE_DOMAIN;
+
+const cookieConfig = {
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: 'lax' as const,
+  domain: isProduction ? DOMAIN : undefined,
+};
 
 async function createUser(req: Request, res: Response, next: NextFunction) {
   const { username } = req.body;
@@ -20,12 +29,6 @@ async function createUser(req: Request, res: Response, next: NextFunction) {
 
     return res.status(200).json(saveUser);
   } catch (err) {
-    // res.status(401).json({
-    //   error: {
-    //     message: 'Token inválido',
-    //   },
-    // });
-    // throw UnauthorizedAccess('Token inválido');
     return next(err);
   }
 }
@@ -41,22 +44,16 @@ async function login(req: Request, res: Response, next: NextFunction) {
     }
 
     const sessionCookie = await authFirebase.createSessionCookie(idToken, {
-      expiresIn: expiresIn,
+      expiresIn,
     });
 
-    // Cookie de sesión (corta duración)
     res.cookie('_secure_tk', sessionCookie, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      ...cookieConfig,
       maxAge: expiresIn,
     });
 
-    // Cookie de refresh token (larga duración) - almacena el idToken para renovar
     res.cookie('_refresh_tk', idToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      ...cookieConfig,
       maxAge: refreshExpiresIn,
     });
 
@@ -74,14 +71,12 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
       return res.status(401).json({ message: 'No hay sesión activa' });
     }
 
-    // Verificar que la sesión sea válida
     try {
       await authFirebase.verifySessionCookie(session, true);
     } catch {
       return res.status(401).json({ message: 'Sesión inválida' });
     }
 
-    // Revocar tokens en Firebase (uid está en req.user si pasó por authMiddleware)
     if (req.user?.uid) {
       try {
         await authFirebase.revokeRefreshTokens(req.user.uid);
@@ -90,21 +85,10 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
       }
     }
 
-    res.clearCookie('_secure_tk', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    });
+    res.clearCookie('_secure_tk', cookieConfig);
+    res.clearCookie('_refresh_tk', cookieConfig);
 
-    res.clearCookie('_refresh_tk', {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-    });
-
-    return res.status(200).json({
-      message: 'Logout exitoso',
-    });
+    return res.status(200).json({ message: 'Logout exitoso' });
   } catch (err) {
     return next(err);
   }
@@ -122,28 +106,18 @@ async function refreshSession(req: Request, res: Response, next: NextFunction) {
       const expiresIn = 5 * 24 * 60 * 60 * 1000; // 5 días
 
       const sessionCookie = await authFirebase.createSessionCookie(refreshToken, {
-        expiresIn: expiresIn,
+        expiresIn,
       });
 
       res.cookie('_secure_tk', sessionCookie, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        ...cookieConfig,
         maxAge: expiresIn,
       });
 
       return res.status(200).json({ auth: true });
     } catch (error) {
-      res.clearCookie('_secure_tk', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      });
-      res.clearCookie('_refresh_tk', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      });
+      res.clearCookie('_secure_tk', cookieConfig);
+      res.clearCookie('_refresh_tk', cookieConfig);
 
       return res.status(401).json({ message: 'Refresh token inválido o expirado' });
     }
