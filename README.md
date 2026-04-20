@@ -104,6 +104,7 @@ El sistema usa **Firebase Authentication con Google** y **cookies de sesión seg
 5. Si la sesión expira, se renueva automáticamente con el refresh token
 
 **Cookies:**
+
 * `_secure_tk`: SessionCookie (5 días) - autenticación
 * `_refresh_tk`: RefreshToken (30 días) - renovación de sesión
 
@@ -138,7 +139,7 @@ El sistema usa **Firebase Authentication con Google** y **cookies de sesión seg
 | Ruta | Método | Protegido | Descripción |
 | --- | --- | --- | --- |
 | `/users` | GET | No | Recupera una lista de usuarios. |
-| `/users/check-user` | GET | Sí | Verifica datos del usuario autenticado. |
+| `/users/me` | GET | Sí | Obtiene los datos del usuario autenticado. |
 | `/users/:userId/:username/books` | GET | Sí | Recupera libros de un usuario. |
 | `/users/:userId` | DELETE | Sí | Elimina la cuenta del usuario. |
 

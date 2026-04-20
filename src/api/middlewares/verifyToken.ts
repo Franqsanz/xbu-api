@@ -7,7 +7,7 @@ const auth = authFirebase;
 
 export async function verifyToken(req: Request, res: Response, next: NextFunction) {
   try {
-    // Buscar token en cookie (sistema actual)
+    // Buscar token en cookie
     const session = req.cookies?._secure_tk;
     const { userId } = req.params;
 
@@ -19,21 +19,19 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
     // Verificar la sesión mediante Firebase
     const decoded = await auth.verifySessionCookie(session, true);
 
-    // Verificar si el usuario en la solicitud es el mismo que el de la sesión
-    if (decoded && userId === decoded.uid) {
-      req.user = decoded;
-      return next();
-    } else {
+    if (!decoded) {
+      throw UnauthorizedAccess('Token inválido');
+    }
+
+    // Si hay userId en parámetros, verificar que coincida con el token
+    // Si no hay userId (ej: /me), solo verificamos que el token sea válido
+    if (userId && userId !== decoded.uid) {
       throw Forbidden('Acceso denegado');
     }
+
+    req.user = decoded;
+    return next();
   } catch (err) {
-    // Si hay un error al verificar el token, responde con un código de error
-    // res.status(401).json({
-    //   error: {
-    //     message: 'Token inválido',
-    //   },
-    // });
-    // throw UnauthorizedAccess('Token inválido');
     return next(err);
   }
 }

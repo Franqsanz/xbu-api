@@ -12,6 +12,7 @@ async function getUsers(
 ): Promise<Response<IUser[]>> {
   try {
     const users = await UserService.findUsers();
+
     return res.status(200).json(users);
   } catch (err) {
     return next(err) as any;
@@ -22,29 +23,15 @@ async function getCheckUser(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<IUser | null>> {
+): Promise<Response<IUser>> {
   const userId = req.user.uid;
-  const key = `user:${userId}`;
-
-  const memoryCache = await caching('memory', {
-    max: 100,
-    ttl: 24 * 3600 * 1000,
-  });
 
   try {
-    const cachedUser = await memoryCache.get<string>(key);
-
-    if (cachedUser) {
-      return res.status(200).json(JSON.parse(cachedUser));
-    }
-
     const user = await UserService.findById(userId);
 
     if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
+      throw NotFound('Usuario no encontrado');
     }
-
-    await memoryCache.set(key, JSON.stringify(user));
 
     return res.status(200).json(user);
   } catch (err) {

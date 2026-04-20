@@ -32,6 +32,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     try {
       const decoded = await authFirebase.verifySessionCookie(session, true);
       req.user = decoded;
+
       return next();
     } catch (error: any) {
       if (refreshToken && error.code === 'auth/argument-error') {
@@ -48,16 +49,19 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
           const decoded = await authFirebase.verifySessionCookie(newSessionCookie, true);
           req.user = decoded;
+
           return next();
         } catch {
           res.clearCookie('_secure_tk', cookieConfig);
           res.clearCookie('_refresh_tk', cookieConfig);
+
           return res.status(401).json({ message: 'Sesión expirada, reautentícate' });
         }
       }
 
       res.clearCookie('_secure_tk', cookieConfig);
       res.clearCookie('_refresh_tk', cookieConfig);
+
       return res.status(401).json({ message: 'Sesión inválida' });
     }
   } catch (error) {
