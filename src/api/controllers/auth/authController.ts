@@ -37,7 +37,6 @@ async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const { idToken } = req.body;
     const expiresIn = 5 * 24 * 60 * 60 * 1000; // 5 días
-    const refreshExpiresIn = 30 * 24 * 60 * 60 * 1000; // 30 días
 
     if (!idToken) {
       return res.status(400).json({ message: 'Token requerido' });
@@ -50,11 +49,6 @@ async function login(req: Request, res: Response, next: NextFunction) {
     res.cookie('_secure_tk', sessionCookie, {
       ...cookieConfig,
       maxAge: expiresIn,
-    });
-
-    res.cookie('_refresh_tk', idToken, {
-      ...cookieConfig,
-      maxAge: refreshExpiresIn,
     });
 
     return res.status(200).json({ auth: true });
@@ -86,7 +80,6 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
     }
 
     res.clearCookie('_secure_tk', cookieConfig);
-    res.clearCookie('_refresh_tk', cookieConfig);
 
     return res.status(200).json({ message: 'Logout exitoso' });
   } catch (err) {
@@ -96,16 +89,16 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
 
 async function refreshSession(req: Request, res: Response, next: NextFunction) {
   try {
-    const refreshToken = req.cookies?._refresh_tk;
+    const { idToken } = req.body;
 
-    if (!refreshToken) {
-      return res.status(401).json({ message: 'No hay refresh token' });
+    if (!idToken) {
+      return res.status(400).json({ message: 'Token requerido' });
     }
 
     try {
       const expiresIn = 5 * 24 * 60 * 60 * 1000; // 5 días
 
-      const sessionCookie = await authFirebase.createSessionCookie(refreshToken, {
+      const sessionCookie = await authFirebase.createSessionCookie(idToken, {
         expiresIn,
       });
 
@@ -117,9 +110,8 @@ async function refreshSession(req: Request, res: Response, next: NextFunction) {
       return res.status(200).json({ auth: true });
     } catch (error) {
       res.clearCookie('_secure_tk', cookieConfig);
-      res.clearCookie('_refresh_tk', cookieConfig);
 
-      return res.status(401).json({ message: 'Refresh token inválido o expirado' });
+      return res.status(401).json({ message: 'Token inválido o expirado' });
     }
   } catch (err) {
     return next(err);
