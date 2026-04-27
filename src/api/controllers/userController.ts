@@ -3,7 +3,7 @@ import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
 import { IUser, IUserAndBooks } from '../../types/types';
-import { NotFound } from '../../utils/errors';
+import { NotFound, BadRequest } from '../../utils/errors';
 
 async function getUsers(
   req: Request,
@@ -100,4 +100,179 @@ async function deleteAccount(
   }
 }
 
-export { getUsers, getCheckUser, getUserAndBooks, deleteAccount };
+async function followUser(req: Request, res: Response, next: NextFunction): Promise<Response<any>> {
+  const currentUserId = req.user.uid;
+  const { targetUserId: followingId } = req.params;
+
+  try {
+    if (currentUserId === followingId) {
+      throw BadRequest('No puedes seguirte a ti mismo');
+    }
+
+    // Verificar si el usuario a seguir existe
+    const userToFollow = await UserService.findById(followingId);
+
+    if (!userToFollow) {
+      throw NotFound('Usuario a seguir no encontrado');
+    }
+
+    // Verificar si ya está siguiendo
+    const alreadyFollowing = await UserService.isFollowing(currentUserId, followingId);
+
+    if (alreadyFollowing) {
+      throw BadRequest('Ya estás siguiendo a este usuario');
+    }
+
+    await UserService.followUser(currentUserId, followingId);
+
+    return res.status(201).json({
+      success: {
+        status: 201,
+        message: 'Siguiendo usuario',
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function unfollowUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<any>> {
+  const currentUserId = req.user.uid;
+  const { targetUserId: followingId } = req.params;
+
+  try {
+    // Verificar si estaba siguiendo
+    const isFollowing = await UserService.isFollowing(currentUserId, followingId);
+
+    if (!isFollowing) {
+      throw BadRequest('No estás siguiendo a este usuario');
+    }
+
+    await UserService.unfollowUser(currentUserId, followingId);
+
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: 'Dejó de seguir usuario',
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function getFollowers(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<any>> {
+  const { userId } = req.params;
+  const { limit = 10, offset = 0 } = req.query;
+
+  try {
+    const user = await UserService.findById(userId);
+
+    if (!user) {
+      throw NotFound('Usuario no encontrado');
+    }
+
+    const { followers, totalFollowers } = await UserService.getFollowers(
+      userId,
+      parseInt(limit as string),
+      parseInt(offset as string)
+    );
+
+    return res.status(200).json({
+      user: {
+        id: user._id,
+        username: user.username,
+      },
+      followers,
+      totalFollowers,
+      limit: parseInt(limit as string),
+      offset: parseInt(offset as string),
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function getFollowing(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<any>> {
+  const { userId } = req.params;
+  const { limit = 10, offset = 0 } = req.query;
+
+  try {
+    const user = await UserService.findById(userId);
+    if (!user) {
+      throw NotFound('Usuario no encontrado');
+    }
+
+    const { following, totalFollowing } = await UserService.getFollowing(
+      userId,
+      parseInt(limit as string),
+      parseInt(offset as string)
+    );
+
+    return res.status(200).json({
+      user: {
+        id: user._id,
+        username: user.username,
+      },
+      following,
+      totalFollowing,
+      limit: parseInt(limit as string),
+      offset: parseInt(offset as string),
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function getFollowStats(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<any>> {
+  const { userId } = req.params;
+
+  try {
+    const user = await UserService.findById(userId);
+
+    if (!user) {
+      throw NotFound('Usuario no encontrado');
+    }
+
+    const { followersCount, followingCount } = await UserService.getFollowStats(userId);
+
+    return res.status(200).json({
+      user: {
+        id: user._id,
+        username: user.username,
+      },
+      followersCount,
+      followingCount,
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+export {
+  getUsers,
+  getCheckUser,
+  getUserAndBooks,
+  deleteAccount,
+  followUser,
+  unfollowUser,
+  getFollowers,
+  getFollowing,
+  getFollowStats,
+};

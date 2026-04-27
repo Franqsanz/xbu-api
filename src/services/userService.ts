@@ -1,10 +1,12 @@
 import { UserRepository } from './../repositories/userRepository';
+import { FollowRepository } from './../repositories/followRepository';
 import { CollectionRepository } from './../repositories/collectionRepository';
 import { FavoriteRepository } from './../repositories/favoriteRepository';
 import { commentRepository } from './../repositories/commetRepository';
 import { cloudinary } from '../config/cloudinary';
 import { authFirebase } from '../config/firebase';
 import { IFullRepositoryUser } from '../types/IRepository';
+import { IFollowData, IFollowingData, IFollowStats } from '../types/types';
 
 export const UserService: IFullRepositoryUser = {
   async findUsers() {
@@ -70,9 +72,62 @@ export const UserService: IFullRepositoryUser = {
       await commentRepository.deleteAllByUserId(userId);
       await CollectionRepository.deleteUserCollections(userId);
       await FavoriteRepository.deleteUserFavorites(userId);
-      await authFirebase.deleteUser(user?.uid);
+      await FollowRepository.deleteUserFollows(userId);
+      await authFirebase.deleteUser(user.uid);
 
       return await UserRepository.deleteUser(user?.uid);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async followUser(followerId: string, followingId: string): Promise<any> {
+    try {
+      return await FollowRepository.followUser(followerId, followingId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async unfollowUser(followerId: string, followingId: string): Promise<any> {
+    try {
+      return await FollowRepository.unfollowUser(followerId, followingId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async isFollowing(followerId: string, followingId: string): Promise<any> {
+    try {
+      return await FollowRepository.isFollowing(followerId, followingId);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async getFollowers(userId: string, limit: number = 10, offset: number = 0): Promise<IFollowData> {
+    try {
+      return await FollowRepository.getFollowers(userId, limit, offset);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async getFollowing(
+    userId: string,
+    limit: number = 10,
+    offset: number = 0
+  ): Promise<IFollowingData> {
+    try {
+      return await FollowRepository.getFollowing(userId, limit, offset);
+    } catch (err) {
+      throw err;
+    }
+  },
+
+  async getFollowStats(userId: string): Promise<IFollowStats> {
+    try {
+      return await FollowRepository.getFollowStats(userId);
     } catch (err) {
       throw err;
     }

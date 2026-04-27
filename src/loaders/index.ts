@@ -98,7 +98,7 @@ export function registerRoutes(app: Application) {
   app.get('/', (req: Request, res: Response) => {
     res.status(200).send(`
       <section style="margin-top: 30px;">
-        <h1 style="font-size: 32px; padding-left: 22px;">API REST de XBuniverse</h1>
+        <h1 style="font-size: 32px; padding-left: 22px;">API REST de XBuReads</h1>
         <ul>
           <li>
             <h2 style="font-weight: 500;">

@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "API RESTful de XBUniverse",
+    "title": "API RESTful de XBuReads",
     "version": "1.0.0",
-    "description": "Documentación de la API de XBUniverse"
+    "description": "Documentación de la API de XBuReads"
   },
   "servers": [
     {

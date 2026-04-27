@@ -10,6 +10,9 @@ import {
   ICollections,
   IComment,
   ICommentStats,
+  IFollowStats,
+  IFollowData,
+  IFollowingData,
 } from './types';
 
 interface IReadBook {
@@ -93,7 +96,16 @@ interface ICollectionOperations {
   deleteUserCollections(userId: string): Promise<any>;
 }
 
-interface IUserService extends IWriteUser, IFavoriteOperations {
+interface IFollowOperations {
+  followUser(followerId: string, followingId: string): Promise<any>;
+  unfollowUser(followerId: string, followingId: string): Promise<any>;
+  isFollowing(followerId: string, followingId: string): Promise<any>;
+  getFollowers(userId: string, limit?: number, offset?: number): Promise<IFollowData>;
+  getFollowing(userId: string, limit?: number, offset?: number): Promise<IFollowingData>;
+  getFollowStats(userId: string): Promise<IFollowStats>;
+}
+
+interface IUserService extends IWriteUser, IFavoriteOperations, IFollowOperations {
   saveUser(
     decodedToken: DecodedIdToken,
     username: string
@@ -135,7 +147,7 @@ interface ICommentService extends IReadComment, IWriteComment, ICommentReactions
 
 export type IRepositoryBook = IReadBook & IWriteBook;
 export type IRepositoryUser = IReadUser & IWriteUser;
-export type IFullRepositoryUser = IReadUser & IFirebaseUserOperations;
+export type IFullRepositoryUser = IReadUser & IFirebaseUserOperations & IFollowOperations;
 export type IRepositoryComment = IReadComment & IWriteComment & ICommentReactions;
 
 export {
@@ -144,5 +156,6 @@ export {
   IFirebaseUserOperations,
   IFavoriteOperations,
   ICollectionOperations,
+  IFollowOperations,
   ICommentService,
 };

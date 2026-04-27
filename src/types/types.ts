@@ -125,6 +125,21 @@ interface PaginationInfo {
   prevPageLink: string | null;
 }
 
+interface IFollowStats {
+  followersCount: number;
+  followingCount: number;
+}
+
+interface IFollowData {
+  followers: IUser[];
+  totalFollowers: number;
+}
+
+interface IFollowingData {
+  following: IUser[];
+  totalFollowing: number;
+}
+
 export {
   IBook,
   IFindBooks,
@@ -139,4 +154,7 @@ export {
   IHttpError,
   Pagination,
   PaginationInfo,
+  IFollowStats,
+  IFollowData,
+  IFollowingData,
 };

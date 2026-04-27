@@ -1,4 +1,4 @@
-# XBuniverse API RESTful
+# XBuReads API RESTful
 
 Esta interfaz permite a los usuarios gestionar una colección de libros mediante una serie de rutas (endpoints). Los usuarios pueden realizar operaciones CRUD (Crear, Leer, Actualizar, Eliminar) sobre los recursos de libros, así como buscar libros por varios criterios. Está diseñada para ser utilizada por aplicaciones front-end, aplicaciones móviles o cualquier otro cliente que necesite acceder.
 
@@ -12,6 +12,7 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 * **Agregar libros a favoritos**: Permite marcar libros como favoritos para un acceso rápido.
 * **Crear colecciones de libros**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
 * **Sistema de comentarios:** Permite a los usuarios dejar comentarios en cada libro, con la posibilidad de editarlos, eliminarlos y gestionar reacciones (likes/dislikes) tanto en comentarios propios como de otros usuarios.
+* **Sistema de seguimiento**: Permite a los usuarios seguir y dejar de seguir a otros usuarios, con acceso a la lista de seguidores, seguidos y estadísticas de ambos conteos.
 
 ## Arquitectura de la API
 
@@ -25,13 +26,21 @@ erDiagram
     USER ||--o{ BOOK : publica
     USER ||--|| FAVORITES : tiene
     USER ||--o{ COMMENTS : escribe
+    USER ||--o{ FOLLOWS : "sigue (follower)"
+    USER ||--o{ FOLLOWS : "es seguido (following)"
     USER {
-        string uid PK "required, unique"
-        string name "required"
-        string username UK "required, unique, lowercase"
+        string uid PK
+        string name
+        string username UK
         string picture
-        string email UK "required, unique, lowercase"
-        date createdAt "required"
+        string email UK
+        date createdAt
+    }
+    FOLLOWS {
+        ObjectId _id PK
+        string follower FK
+        string following FK
+        date createdAt
     }
     BOOK ||--o{ COMMENTS : recibe
     BOOK {
@@ -40,17 +49,15 @@ erDiagram
         string[] authors
         string synopsis
         string[] category
-        string sourceLink
         string language
-        number year "default: null"
-        number numberPages "min: 49"
+        number year
+        number numberPages
         string format
         string pathUrl
-        string url "cloudinary"
-        string public_id "cloudinary"
+        string url
         string userId FK
-        number views "default: 0"
-        number rating "min: 0, max: 5, default: 0"
+        number views
+        number rating
         date createdAt
         date updatedAt
     }
@@ -61,7 +68,7 @@ erDiagram
         date updatedAt
     }
     COLLECTION {
-        string name "maxlength: 25"
+        string name
         ObjectId[] bookIds
         date createdAt
     }
@@ -74,39 +81,22 @@ erDiagram
     }
     COMMENTS {
         ObjectId _id PK
-        string text "maxlength: 1500"
+        string text
         string userId FK
         string username
         string avatar
         ObjectId bookId FK
-        number likesCount "default: 0"
-        number dislikesCount "default: 0"
-        string[] likedBy "array de userId"
-        string[] dislikedBy "array de userId"
-        boolean isEdited "default: false"
+        number likesCount
+        number dislikesCount
+        string[] likedBy
+        string[] dislikedBy
+        boolean isEdited
         date createdAt
         date updatedAt
     }
 ```
 
 ## Esquema de la API
-
-### Autenticación
-
-El sistema usa **Firebase Authentication con Google** y **cookies de sesión seguras**.
-
-**Flujo:**
-
-1. Cliente se autentica con Google (obtiene `idToken`)
-2. Envía `idToken` a `/api/auth/login`
-3. Backend genera `sessionCookie` (5 días) + `refreshToken` (30 días)
-4. Las cookies se envían automáticamente en cada request
-5. Si la sesión expira, se renueva automáticamente con el refresh token
-
-**Cookies:**
-
-* `_secure_tk`: SessionCookie (5 días) - autenticación
-* `_refresh_tk`: RefreshToken (30 días) - renovación de sesión
 
 ### Rutas de autenticación
 
@@ -142,6 +132,16 @@ El sistema usa **Firebase Authentication con Google** y **cookies de sesión seg
 | `/users/me` | GET | Sí | Obtiene los datos del usuario autenticado. |
 | `/users/:userId/:username/books` | GET | Sí | Recupera libros de un usuario. |
 | `/users/:userId` | DELETE | Sí | Elimina la cuenta del usuario. |
+
+### Rutas de seguimiento
+
+| Ruta | Método | Protegido | Descripción |
+| --- | --- | --- | --- |
+| `/users/follow/:targetUserId` | POST | Sí | Sigue a un usuario. |
+| `/users/follow/:targetUserId` | DELETE | Sí | Deja de seguir a un usuario. |
+| `/users/:userId/followers` | GET | No | Recupera la lista de seguidores de un usuario. |
+| `/users/:userId/following` | GET | No | Recupera la lista de usuarios seguidos. |
+| `/users/:userId/follow-stats` | GET | No | Recupera estadísticas de seguimiento (followers y following count). |
 
 ### Rutas de favoritos
 
