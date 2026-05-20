@@ -132,4 +132,12 @@ export const UserService: IFullRepositoryUser = {
       throw err;
     }
   },
+
+  async findUserByUsernameAndBooks(username, limit, offset) {
+    try {
+      return await UserRepository.findUserByUsernameAndBooks(username, limit, offset);
+    } catch (err) {
+      throw err;
+    }
+  },
 };

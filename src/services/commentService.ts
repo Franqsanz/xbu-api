@@ -43,7 +43,8 @@ export const commentService: ICommentService = {
         bookId: validatedData.bookId,
         author: {
           userId: user.uid,
-          username: user.name,
+          name: user.name,
+          username: user.username,
           avatar: user.picture,
         },
       };

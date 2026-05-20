@@ -59,4 +59,36 @@ export const UserRepository: IRepositoryUser = {
   async deleteUser(userId) {
     return await usersModel.deleteOne({ uid: userId });
   },
+
+  async findUserByUsernameAndBooks(username, limit, offset) {
+    const user = await usersModel.findOne(
+      { username: { $regex: `^${username.trim()}$`, $options: 'i' } },
+      'uid name picture username createdAt'
+    );
+
+    if (!user) {
+      return {
+        user: null,
+        results: [],
+        totalBooks: 0,
+      };
+    }
+
+    const totalBooks = await booksModel.countDocuments({
+      userId: user.uid,
+    });
+
+    const results = await booksModel
+      .find({ userId: user.uid }, 'title category language authors pathUrl image')
+      .skip(offset)
+      .limit(limit)
+      .sort({ _id: -1 })
+      .exec();
+
+    return {
+      user,
+      results,
+      totalBooks,
+    };
+  },
 };

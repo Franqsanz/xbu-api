@@ -45,6 +45,7 @@ async function getUserAndBooks(
   next: NextFunction
 ): Promise<Response<IUserAndBooks>> {
   const { userId } = req.params;
+  const currentUserId = req.user?.uid;
   const { limit, offset } = req.pagination!;
 
   try {
@@ -56,10 +57,17 @@ async function getUserAndBooks(
 
     req.calculatePagination!(totalBooks);
 
+    let isFollowing = false;
+
+    if (currentUserId && currentUserId !== userId) {
+      isFollowing = !!(await UserService.isFollowing(currentUserId, userId));
+    }
+
     const response = {
       info: req.paginationInfo,
       user,
       results,
+      isFollowing,
     };
 
     return res.status(200).json(response);
@@ -265,10 +273,52 @@ async function getFollowStats(
   }
 }
 
+async function getUserAndBooksByUsername(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IUserAndBooks>> {
+  const { username } = req.params;
+  const currentUserId = req.user?.uid;
+  const { limit, offset } = req.pagination!;
+
+  try {
+    const { user, results, totalBooks } = await UserService.findUserByUsernameAndBooks(
+      username,
+      limit,
+      offset
+    );
+
+    if (!user) {
+      throw NotFound('Usuario no encontrado');
+    }
+
+    req.calculatePagination!(totalBooks);
+
+    let isFollowing = false;
+
+    if (currentUserId && currentUserId !== user.uid) {
+      isFollowing = !!(await UserService.isFollowing(currentUserId, user.uid));
+    }
+
+    const response = {
+      info: req.paginationInfo,
+      user,
+      results,
+      isFollowing,
+    };
+
+    return res.status(200).json(response);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 export {
   getUsers,
   getCheckUser,
   getUserAndBooks,
+  getUserAndBooksByUsername,
   deleteAccount,
   followUser,
   unfollowUser,

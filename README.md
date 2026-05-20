@@ -130,6 +130,7 @@ erDiagram
 | --- | --- | --- | --- |
 | `/users` | GET | No | Recupera una lista de usuarios. |
 | `/users/me` | GET | Sí | Obtiene los datos del usuario autenticado. |
+| `/users/profile/:username/books` | GET | No | Recupera libros y perfil de un usuario por su username. |
 | `/users/:userId/:username/books` | GET | Sí | Recupera libros de un usuario. |
 | `/users/:userId` | DELETE | Sí | Elimina la cuenta del usuario. |
 

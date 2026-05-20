@@ -48,6 +48,11 @@ interface IReadUser {
   findById(userId: string): Promise<IUser | null>;
   findByUid?(uid: string): Promise<IUser | null>;
   findUserAndBooks(username: string, limit: number, offset: number): Promise<IUserAndBooks>;
+  findUserByUsernameAndBooks(
+    username: string,
+    limit: number,
+    offset: number
+  ): Promise<IUserAndBooks>;
   findBooksByUserId?(userId: string): Promise<IBook[]>;
 }
 

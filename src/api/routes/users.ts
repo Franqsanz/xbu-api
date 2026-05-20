@@ -4,6 +4,7 @@ import {
   getUsers,
   getCheckUser,
   getUserAndBooks,
+  getUserAndBooksByUsername,
   deleteAccount,
   followUser,
   unfollowUser,
@@ -18,6 +19,7 @@ const router: Router = express.Router();
 
 router.get('/', getUsers);
 router.get('/me', verifyToken, getCheckUser);
+router.get('/profile/:username/books', pagination, getUserAndBooksByUsername);
 router.get('/:userId/:username/books', verifyToken, pagination, getUserAndBooks);
 router.post('/follow/:targetUserId', verifyToken, followUser);
 router.delete('/follow/:targetUserId', verifyToken, unfollowUser);

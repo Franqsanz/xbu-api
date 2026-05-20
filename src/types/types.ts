@@ -79,6 +79,7 @@ interface IReaction {
 
 interface IAuthor {
   userId: string;
+  name: string;
   username: string;
   avatar: string;
 }
