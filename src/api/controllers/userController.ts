@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
+import { FeedRepository } from '../../repositories/feedRepository';
 import { IUser, IUserAndBooks } from '../../types/types';
 import { NotFound, BadRequest } from '../../utils/errors';
 
@@ -317,6 +318,41 @@ async function getUserAndBooksByUsername(
   }
 }
 
+async function getFeed(req: Request, res: Response, next: NextFunction): Promise<Response<any>> {
+  const currentUserId = req.user?.uid;
+  const { limit = 10, offset = 0 } = req.query;
+
+  if (!currentUserId) {
+    throw BadRequest('Usuario no autenticado');
+  }
+
+  const parsedLimit = parseInt(limit as string);
+  const parsedOffset = parseInt(offset as string);
+
+  try {
+    const { activities, total } = await FeedRepository.getFeed(
+      currentUserId,
+      parsedLimit,
+      parsedOffset
+    );
+
+    const nextPage =
+      parsedOffset + activities.length < total ? parsedOffset / parsedLimit + 1 : null;
+
+    return res.status(200).json({
+      activities,
+      info: {
+        total,
+        limit: parsedLimit,
+        offset: parsedOffset,
+        nextPage,
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 export {
   getUsers,
   getCheckUser,
@@ -328,4 +364,5 @@ export {
   getFollowers,
   getFollowing,
   getFollowStats,
+  getFeed,
 };
