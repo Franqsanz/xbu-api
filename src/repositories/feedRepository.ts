@@ -41,22 +41,19 @@ export const FeedRepository = {
       .exec();
 
     const followingUids = followingRecords.map((f: any) => f.following);
-
-    if (followingUids.length === 0) {
-      return { activities: [], total: 0 };
-    }
+    const targetUids = Array.from(new Set([...followingUids, userId]));
 
     const fetchUpTo = offset + limit;
 
     const [bookDocs, commentDocs] = await Promise.all([
       booksModel
-        .find({ userId: { $in: followingUids } })
+        .find({ userId: { $in: targetUids } })
         .sort({ createdAt: -1 })
         .limit(fetchUpTo)
         .lean()
         .exec(),
       commentsModel
-        .find({ 'author.userId': { $in: followingUids } })
+        .find({ 'author.userId': { $in: targetUids } })
         .sort({ createdAt: -1 })
         .limit(fetchUpTo)
         .lean()
