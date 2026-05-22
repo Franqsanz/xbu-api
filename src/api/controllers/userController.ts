@@ -295,17 +295,20 @@ async function getUserAndBooksByUsername(
 
     req.calculatePagination!(totalBooks);
 
-    let isFollowing = false;
-
-    if (currentUserId && currentUserId !== user.uid) {
-      isFollowing = !!(await UserService.isFollowing(currentUserId, user.uid));
-    }
+    const [isFollowing, followStats] = await Promise.all([
+      currentUserId && currentUserId !== user.uid
+        ? UserService.isFollowing(currentUserId, user.uid).then(Boolean)
+        : Promise.resolve(false),
+      UserService.getFollowStats(user.uid),
+    ]);
 
     const response = {
       info: req.paginationInfo,
       user,
       results,
       isFollowing,
+      followersCount: followStats.followersCount,
+      followingCount: followStats.followingCount,
     };
 
     return res.status(200).json(response);
