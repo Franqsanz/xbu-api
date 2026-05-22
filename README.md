@@ -13,6 +13,7 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 * **Crear colecciones de libros**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
 * **Sistema de comentarios:** Permite a los usuarios dejar comentarios en cada libro, con la posibilidad de editarlos, eliminarlos y gestionar reacciones (likes/dislikes) tanto en comentarios propios como de otros usuarios.
 * **Sistema de seguimiento**: Permite a los usuarios seguir y dejar de seguir a otros usuarios, con acceso a la lista de seguidores, seguidos y estadísticas de ambos conteos.
+* **Feed de actividad social**: Genera un feed paginado y cronológico para el usuario autenticado, combinando libros publicados y comentarios de los usuarios que sigue.
 
 ## Arquitectura de la API
 
@@ -130,7 +131,8 @@ erDiagram
 | --- | --- | --- | --- |
 | `/users` | GET | No | Recupera una lista de usuarios. |
 | `/users/me` | GET | Sí | Obtiene los datos del usuario autenticado. |
-| `/users/profile/:username/books` | GET | No | Recupera libros y perfil de un usuario por su username. |
+| `/users/me/feed` | GET | Sí | Recupera el feed de actividad (libros y comentarios de usuarios seguidos), paginado y ordenado cronológicamente. |
+| `/users/profile/:username/books` | GET | No | Recupera libros y perfil de un usuario por su username, incluyendo `followersCount`, `followingCount` e `isFollowing`. |
 | `/users/:userId/:username/books` | GET | Sí | Recupera libros de un usuario. |
 | `/users/:userId` | DELETE | Sí | Elimina la cuenta del usuario. |
 
