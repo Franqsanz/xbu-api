@@ -8,7 +8,7 @@ const DOMAIN = process.env.COOKIE_DOMAIN;
 const cookieConfig = {
   httpOnly: true,
   secure: isProduction,
-  sameSite: 'lax' as const,
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
   domain: isProduction ? DOMAIN : undefined,
 };
 
