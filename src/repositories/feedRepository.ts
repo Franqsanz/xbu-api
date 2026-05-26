@@ -2,6 +2,7 @@ import followsModel from '../models/follows';
 import booksModel from '../models/books';
 import commentsModel from '../models/comments';
 import usersModel from '../models/users';
+import bookStatusesModel from '../models/bookStatuses';
 
 type FeedActor = {
   uid: string;
@@ -20,12 +21,15 @@ type FeedBook = {
   synopsis: string;
 };
 
+type StatusValue = 'read' | 'reading' | 'want_to_read';
+
 type FeedActivity = {
-  type: 'book' | 'comment';
+  type: 'book' | 'comment' | 'status';
   createdAt: Date;
   actor: FeedActor;
   book: FeedBook;
   comment?: { id: string; text: string };
+  status?: StatusValue;
 };
 
 export const FeedRepository = {
@@ -45,7 +49,7 @@ export const FeedRepository = {
 
     const fetchUpTo = offset + limit;
 
-    const [bookDocs, commentDocs] = await Promise.all([
+    const [bookDocs, commentDocs, statusDocs] = await Promise.all([
       booksModel
         .find({ userId: { $in: targetUids } })
         .sort({ createdAt: -1 })
@@ -58,20 +62,29 @@ export const FeedRepository = {
         .limit(fetchUpTo)
         .lean()
         .exec(),
+      bookStatusesModel
+        .find({ userId: { $in: targetUids } })
+        .sort({ updatedAt: -1 })
+        .limit(fetchUpTo)
+        .lean()
+        .exec(),
     ]);
 
-    const commentBookIds = Array.from(new Set(commentDocs.map((c: any) => c.bookId)));
+    const referencedBookIds = Array.from(
+      new Set([...commentDocs.map((c: any) => c.bookId), ...statusDocs.map((s: any) => s.bookId)])
+    );
     const actorUids = Array.from(
       new Set([
         ...bookDocs.map((b: any) => b.userId),
         ...commentDocs.map((c: any) => c.author.userId),
+        ...statusDocs.map((s: any) => s.userId),
       ])
     );
 
-    const [commentBooks, actors] = await Promise.all([
-      commentBookIds.length > 0
+    const [referencedBooks, actors] = await Promise.all([
+      referencedBookIds.length > 0
         ? booksModel
-            .find({ _id: { $in: commentBookIds } })
+            .find({ _id: { $in: referencedBookIds } })
             .select('title pathUrl image authors category synopsis')
             .lean()
             .exec()
@@ -93,7 +106,7 @@ export const FeedRepository = {
     );
 
     const bookById = new Map<string, FeedBook>(
-      commentBooks.map((b: any) => [
+      referencedBooks.map((b: any) => [
         b._id.toString(),
         {
           id: b._id.toString(),
@@ -143,7 +156,22 @@ export const FeedRepository = {
       })
       .filter((a): a is FeedActivity => a !== null);
 
-    const merged = [...bookActivities, ...commentActivities].sort(
+    const statusActivities: FeedActivity[] = statusDocs
+      .map((s: any): FeedActivity | null => {
+        const actor = actorByUid.get(s.userId);
+        const book = bookById.get(s.bookId);
+        if (!actor || !book) return null;
+        return {
+          type: 'status',
+          createdAt: s.updatedAt ?? s.createdAt,
+          actor,
+          book,
+          status: s.status,
+        };
+      })
+      .filter((a): a is FeedActivity => a !== null);
+
+    const merged = [...bookActivities, ...commentActivities, ...statusActivities].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
