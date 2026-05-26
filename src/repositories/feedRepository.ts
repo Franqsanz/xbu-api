@@ -3,6 +3,7 @@ import booksModel from '../models/books';
 import commentsModel from '../models/comments';
 import usersModel from '../models/users';
 import bookStatusesModel from '../models/bookStatuses';
+import activityLogModel from '../models/activityLog';
 
 type FeedActor = {
   uid: string;
@@ -24,10 +25,11 @@ type FeedBook = {
 type StatusValue = 'read' | 'reading' | 'want_to_read';
 
 type FeedActivity = {
-  type: 'book' | 'comment' | 'status';
+  type: 'book' | 'comment' | 'status' | 'follow' | 'favorite' | 'collection';
   createdAt: Date;
   actor: FeedActor;
-  book: FeedBook;
+  book?: FeedBook;
+  target?: FeedActor;
   comment?: { id: string; text: string };
   status?: StatusValue;
 };
@@ -49,7 +51,7 @@ export const FeedRepository = {
 
     const fetchUpTo = offset + limit;
 
-    const [bookDocs, commentDocs, statusDocs] = await Promise.all([
+    const [bookDocs, commentDocs, statusDocs, followDocs, activityDocs] = await Promise.all([
       booksModel
         .find({ userId: { $in: targetUids } })
         .sort({ createdAt: -1 })
@@ -68,16 +70,35 @@ export const FeedRepository = {
         .limit(fetchUpTo)
         .lean()
         .exec(),
+      followsModel
+        .find({ follower: { $in: targetUids } })
+        .sort({ createdAt: -1 })
+        .limit(fetchUpTo)
+        .lean()
+        .exec(),
+      activityLogModel
+        .find({ userId: { $in: targetUids } })
+        .sort({ createdAt: -1 })
+        .limit(fetchUpTo)
+        .lean()
+        .exec(),
     ]);
 
     const referencedBookIds = Array.from(
-      new Set([...commentDocs.map((c: any) => c.bookId), ...statusDocs.map((s: any) => s.bookId)])
+      new Set([
+        ...commentDocs.map((c: any) => c.bookId),
+        ...statusDocs.map((s: any) => s.bookId),
+        ...activityDocs.map((a: any) => a.bookId),
+      ])
     );
     const actorUids = Array.from(
       new Set([
         ...bookDocs.map((b: any) => b.userId),
         ...commentDocs.map((c: any) => c.author.userId),
         ...statusDocs.map((s: any) => s.userId),
+        ...followDocs.map((f: any) => f.follower),
+        ...followDocs.map((f: any) => f.following),
+        ...activityDocs.map((a: any) => a.userId),
       ])
     );
 
@@ -171,9 +192,41 @@ export const FeedRepository = {
       })
       .filter((a): a is FeedActivity => a !== null);
 
-    const merged = [...bookActivities, ...commentActivities, ...statusActivities].sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const followActivities: FeedActivity[] = followDocs
+      .map((f: any): FeedActivity | null => {
+        const actor = actorByUid.get(f.follower);
+        const target = actorByUid.get(f.following);
+        if (!actor || !target || actor.uid === target.uid) return null;
+        return {
+          type: 'follow',
+          createdAt: f.createdAt,
+          actor,
+          target,
+        };
+      })
+      .filter((a): a is FeedActivity => a !== null);
+
+    const logActivities: FeedActivity[] = activityDocs
+      .map((a: any): FeedActivity | null => {
+        const actor = actorByUid.get(a.userId);
+        const book = bookById.get(a.bookId);
+        if (!actor || !book) return null;
+        return {
+          type: a.type,
+          createdAt: a.createdAt,
+          actor,
+          book,
+        };
+      })
+      .filter((a): a is FeedActivity => a !== null);
+
+    const merged = [
+      ...bookActivities,
+      ...commentActivities,
+      ...statusActivities,
+      ...followActivities,
+      ...logActivities,
+    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const paginated = merged.slice(offset, offset + limit);
 
