@@ -13,6 +13,8 @@ import {
   IFollowStats,
   IFollowData,
   IFollowingData,
+  IBookStatus,
+  BookStatusValue,
 } from './types';
 
 interface IReadBook {
@@ -150,6 +152,18 @@ interface ICommentService extends IReadComment, IWriteComment, ICommentReactions
   validateCommentOwnership?(commentId: string, userId: string): Promise<IComment>;
 }
 
+interface IBookStatusOperations {
+  getStatus(userId: string, bookId: string): Promise<IBookStatus | null>;
+  setStatus(userId: string, bookId: string, status: BookStatusValue): Promise<IBookStatus | null>;
+  deleteStatus(userId: string, bookId: string): Promise<{ deletedCount?: number }>;
+  listByUserAndStatus(
+    userId: string,
+    status: BookStatusValue,
+    limit?: number,
+    offset?: number
+  ): Promise<{ items: IBookStatus[]; total: number }>;
+}
+
 export type IRepositoryBook = IReadBook & IWriteBook;
 export type IRepositoryUser = IReadUser & IWriteUser;
 export type IFullRepositoryUser = IReadUser & IFirebaseUserOperations & IFollowOperations;
@@ -163,4 +177,5 @@ export {
   ICollectionOperations,
   IFollowOperations,
   ICommentService,
+  IBookStatusOperations,
 };

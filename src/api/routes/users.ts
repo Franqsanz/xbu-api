@@ -13,6 +13,11 @@ import {
   getFollowStats,
   getFeed,
 } from '../controllers/userController';
+import {
+  getBookStatus,
+  setBookStatus,
+  deleteBookStatus,
+} from '../controllers/bookStatusController';
 import { verifyToken } from '../middlewares/verifyToken';
 import { pagination } from '../middlewares/pagination';
 
@@ -21,6 +26,9 @@ const router: Router = express.Router();
 router.get('/', getUsers);
 router.get('/me', verifyToken, getCheckUser);
 router.get('/me/feed', verifyToken, getFeed);
+router.get('/me/book-status/:bookId', verifyToken, getBookStatus);
+router.patch('/me/book-status/:bookId', verifyToken, setBookStatus);
+router.delete('/me/book-status/:bookId', verifyToken, deleteBookStatus);
 router.get('/profile/:username/books', pagination, getUserAndBooksByUsername);
 router.get('/:userId/:username/books', verifyToken, pagination, getUserAndBooks);
 router.post('/follow/:targetUserId', verifyToken, followUser);

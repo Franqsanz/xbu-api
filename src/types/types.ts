@@ -141,6 +141,16 @@ interface IFollowingData {
   totalFollowing: number;
 }
 
+type BookStatusValue = 'read' | 'reading' | 'want_to_read';
+
+interface IBookStatus {
+  userId: string;
+  bookId: string;
+  status: BookStatusValue;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
 export {
   IBook,
   IFindBooks,
@@ -158,4 +168,6 @@ export {
   IFollowStats,
   IFollowData,
   IFollowingData,
+  IBookStatus,
+  BookStatusValue,
 };
