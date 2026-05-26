@@ -1,7 +1,22 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { CollectionService } from '../../services/collectionService';
+import { ActivityLogService } from '../../services/activityLogService';
+import collectionsModel from '../../models/collections';
 import { NotFound } from '../../utils/errors';
+
+async function syncCollectionActivity(userId: string, bookId: string) {
+  const stillInAny = await collectionsModel
+    .findOne({ userId, 'collections.books.bookId': bookId })
+    .lean()
+    .exec();
+
+  if (stillInAny) {
+    await ActivityLogService.record(userId, 'collection', bookId);
+  } else {
+    await ActivityLogService.remove(userId, 'collection', bookId);
+  }
+}
 
 async function getAllCollections(
   req: Request,
@@ -141,6 +156,7 @@ async function patchToggleBookInCollection(
     });
 
     const messages = await Promise.all(actions);
+    await syncCollectionActivity(userId, bookId);
 
     return res.status(200).json({
       success: {
@@ -168,6 +184,7 @@ async function patchRemoveBookFromCollection(
       : [];
 
     await CollectionService.removeBookFromCollection(userId, collectionIds, bookId);
+    await syncCollectionActivity(userId, bookId);
 
     return res.status(200).json({
       success: {
