@@ -179,14 +179,22 @@ async function getPathUrlBooks(
   next: NextFunction
 ): Promise<Response<IBook | null>> {
   const token = (req.headers['authorization'] || '').split(' ')[1];
+  const session = req.cookies?._secure_tk;
   const { pathUrl } = req.params;
 
   try {
-    let userId = null;
+    let userId: string | null = null;
 
     if (token) {
       const decodedToken = await auth.verifyIdToken(token);
       userId = decodedToken?.uid;
+    } else if (session) {
+      try {
+        const decoded = await auth.verifySessionCookie(session, true);
+        userId = decoded?.uid;
+      } catch {
+        userId = null;
+      }
     }
 
     let result;
