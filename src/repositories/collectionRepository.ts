@@ -6,7 +6,7 @@ import {
   qyUpdateCollectionName,
   qyGetCollectionsForUser,
 } from '../db/userQueries';
-import { ICollectionOperations } from '../types/IRepository';
+import { ICollectionOperations } from '../types/repositories/ICollectionRepository';
 
 export const CollectionRepository: ICollectionOperations = {
   async findAllCollections(userId) {
@@ -106,5 +106,14 @@ export const CollectionRepository: ICollectionOperations = {
     const result = await collectionsModel.deleteOne({ userId: userId });
 
     return result.deletedCount > 0;
+  },
+
+  async isBookInAnyCollection(userId, bookId) {
+    const doc = await collectionsModel
+      .findOne({ userId, 'collections.books.bookId': bookId })
+      .lean()
+      .exec();
+
+    return !!doc;
   },
 };

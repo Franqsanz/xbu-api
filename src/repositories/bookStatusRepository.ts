@@ -1,6 +1,6 @@
 import bookStatusesModel from '../models/bookStatuses';
 import { IBookStatus, BookStatusValue } from '../types/types';
-import { IBookStatusOperations } from '../types/IRepository';
+import { IBookStatusOperations } from '../types/repositories/IBookStatusRepository';
 
 export const BookStatusRepository: IBookStatusOperations = {
   async getStatus(userId: string, bookId: string): Promise<IBookStatus | null> {

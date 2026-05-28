@@ -1,310 +1,123 @@
 import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
 import { bookSchema } from '../utils/validation';
-import { IRepositoryBook } from '../types/IRepository';
+import { IRepositoryBook } from '../types/repositories/IBookRepository';
+
+const CLOUDINARY_UPLOAD_OPTIONS = {
+  upload_preset: 'xbu-uploads',
+  folder: process.env.CLOUDINARY_FOLDER,
+  format: 'webp' as const,
+  transformation: { quality: 60 },
+};
+
+function uploadToCloudinary(buffer: Buffer, public_id?: string): Promise<any> {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        { ...CLOUDINARY_UPLOAD_OPTIONS, ...(public_id ? { public_id } : {}) },
+        (err, result) => (err ? reject(err) : resolve(result))
+      )
+      .end(buffer);
+  });
+}
 
 export const BookService: IRepositoryBook = {
   async findBooks(limit, offset) {
-    try {
-      return await BookRepository.findBooks(limit, offset);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findBooks(limit, offset);
   },
 
   async findById(id) {
-    try {
-      return await BookRepository.findById(id);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findById(id);
   },
 
   async findBySlug(pathUrl) {
-    try {
-      return await BookRepository.findBySlug(pathUrl);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findBySlug(pathUrl);
   },
 
   async findBySlugUpdateViewFavorite(pathUrl, userId) {
-    try {
-      return await BookRepository.findBySlugUpdateViewFavorite(pathUrl, userId);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findBySlugUpdateViewFavorite(pathUrl, userId);
   },
 
   async findBySlugFavorite(pathUrl, userId) {
-    try {
-      return await BookRepository.findBySlugFavorite(pathUrl, userId);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findBySlugFavorite(pathUrl, userId);
   },
 
   async findSearch(q) {
-    try {
-      return await BookRepository.findSearch(q);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findSearch(q);
   },
 
   async findByGroupFields() {
-    try {
-      return await BookRepository.findByGroupFields();
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findByGroupFields();
   },
 
   async findBooksRandom(id) {
-    try {
-      return await BookRepository.findBooksRandom(id);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findBooksRandom(id);
   },
 
   async findRelatedBooks(id) {
-    try {
-      return await BookRepository.findRelatedBooks(id);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findRelatedBooks(id);
   },
 
   async findMoreBooksAuthors(id) {
-    try {
-      return await BookRepository.findMoreBooksAuthors(id);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findMoreBooksAuthors(id);
   },
 
   async findMostViewedBooks(detail) {
-    try {
-      return await BookRepository.findMostViewedBooks(detail);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findMostViewedBooks(detail);
   },
 
   async findOptionsFiltering(authors, category, year, language, limit, offset) {
-    try {
-      return await BookRepository.findOptionsFiltering(
-        authors,
-        category,
-        year,
-        language,
-        limit,
-        offset
-      );
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.findOptionsFiltering(
+      authors,
+      category,
+      year,
+      language,
+      limit,
+      offset
+    );
   },
-
-  // async createBook(body) {
-  //   const validateBook = bookSchema.parse(body);
-
-  //   let { url } = body.image;
-  //   const uint8Array = new Uint8Array(url);
-  //   const decompressedImage = pako.inflate(uint8Array);
-  //   const buffer = Buffer.from(decompressedImage);
-
-  //   try {
-  //     const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-  //       cloudinary.uploader
-  //         .upload_stream(
-  //           {
-  //             upload_preset: 'xbu-uploads',
-  //             folder: process.env.CLOUDINARY_FOLDER,
-  //             format: 'webp',
-  //             transformation: {
-  //               quality: 60,
-  //             },
-  //           },
-  //           (err, result) => {
-  //             if (err) {
-  //               reject(err);
-  //             } else {
-  //               resolve(result);
-  //             }
-  //           }
-  //         )
-  //         .end(buffer);
-  //     });
-
-  //     validateBook.image.url = cloudinaryResult.secure_url;
-  //     validateBook.image.public_id = cloudinaryResult.public_id;
-
-  //     return await BookRepository.createBook(validateBook);
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // },
 
   async createBook(body, buffer) {
     const validateBook = bookSchema.parse(body);
+    const cloudinaryResult = await uploadToCloudinary(buffer);
 
-    try {
-      const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-        cloudinary.uploader
-          .upload_stream(
-            {
-              upload_preset: 'xbu-uploads',
-              folder: process.env.CLOUDINARY_FOLDER,
-              format: 'webp',
-              transformation: {
-                quality: 60,
-              },
-            },
-            (err, result) => {
-              if (err) {
-                reject(err);
-              } else {
-                resolve(result);
-              }
-            }
-          )
-          .end(buffer);
-      });
+    validateBook.image = {
+      url: cloudinaryResult.secure_url,
+      public_id: cloudinaryResult.public_id,
+    };
 
-      validateBook.image = {
+    return await BookRepository.createBook(validateBook);
+  },
+
+  async updateBook(id, body, buffer?) {
+    const { url, public_id } = body.image;
+    let image: { url: string; public_id?: string };
+
+    if (buffer) {
+      // Reemplazo de imagen: borrar la vieja y subir la nueva conservando public_id
+      if (public_id) await cloudinary.uploader.destroy(public_id);
+      const cleanPublicId = public_id?.split('/').pop();
+      const cloudinaryResult = await uploadToCloudinary(buffer, cleanPublicId);
+
+      image = {
         url: cloudinaryResult.secure_url,
         public_id: cloudinaryResult.public_id,
       };
-
-      return await BookRepository.createBook(validateBook);
-    } catch (err) {
-      throw err;
+    } else {
+      // Sin imagen nueva, mantener la actual
+      image = { url, public_id };
     }
-  },
 
-  // async updateBook(id, body) {
-  //   let { url, public_id } = body.image;
-  //   let image;
-
-  //   try {
-  //     if (typeof body.image.url === 'string') {
-  //       image = {
-  //         url: url,
-  //         public_id: public_id,
-  //       };
-  //     } else {
-  //       if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
-  //       // Limpiamos el public_id para evitar duplicar la carpeta
-  //       const cleanPublicId = public_id?.split('/').pop();
-
-  //       const uint8Array = new Uint8Array(url);
-  //       const decompressedImage = pako.inflate(uint8Array);
-  //       const buffer = Buffer.from(decompressedImage);
-
-  //       // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
-  //       const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-  //         cloudinary.uploader
-  //           .upload_stream(
-  //             {
-  //               upload_preset: 'xbu-uploads',
-  //               folder: process.env.CLOUDINARY_FOLDER,
-  //               format: 'webp',
-  //               transformation: {
-  //                 quality: 60,
-  //               },
-  //               public_id: cleanPublicId,
-  //             },
-  //             (err, result) => {
-  //               if (err) {
-  //                 reject(err);
-  //               } else {
-  //                 resolve(result);
-  //               }
-  //             }
-  //           )
-  //           .end(buffer);
-  //       });
-
-  //       image = {
-  //         url: cloudinaryResult.secure_url,
-  //         public_id: cloudinaryResult.public_id,
-  //       };
-  //     }
-
-  //     return await BookRepository.updateBook(id, body, image);
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // },
-  //
-  async updateBook(id, body, buffer?) {
-    let { url, public_id } = body.image;
-    let image;
-
-    try {
-      // Si buffer existe, significa que hay una nueva imagen
-      if (buffer) {
-        if (public_id) await cloudinary.uploader.destroy(public_id); // Eliminamos la imagen actual
-
-        // Limpiamos el public_id para evitar duplicar la carpeta
-        const cleanPublicId = public_id?.split('/').pop();
-
-        // Subimos la nueva imagen conservando el mismo public_id de la imagen que eliminamos
-        const cloudinaryResult = await new Promise<any>((resolve, reject) => {
-          cloudinary.uploader
-            .upload_stream(
-              {
-                upload_preset: 'xbu-uploads',
-                folder: process.env.CLOUDINARY_FOLDER,
-                format: 'webp',
-                transformation: {
-                  quality: 60,
-                },
-                public_id: cleanPublicId,
-              },
-              (err, result) => {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve(result);
-                }
-              }
-            )
-            .end(buffer);
-        });
-
-        image = {
-          url: cloudinaryResult.secure_url,
-          public_id: cloudinaryResult.public_id,
-        };
-      } else {
-        // Si no hay buffer, mantenemos la imagen actual
-        image = {
-          url: url,
-          public_id: public_id,
-        };
-      }
-
-      return await BookRepository.updateBook(id, body, image);
-    } catch (err) {
-      throw err;
-    }
+    return await BookRepository.updateBook(id, body, image);
   },
 
   async removeBook(id) {
-    try {
-      const { book, deleteOne } = await BookRepository.removeBook(id);
+    const { book, deleteOne } = await BookRepository.removeBook(id);
 
-      if (book) {
-        const public_id = book.image.public_id;
-        await cloudinary.uploader.destroy(public_id);
-      }
-
-      return deleteOne;
-    } catch (err) {
-      throw err;
+    if (book) {
+      await cloudinary.uploader.destroy(book.image.public_id);
     }
+
+    return deleteOne;
   },
 };

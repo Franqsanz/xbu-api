@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 import { BookStatusService } from '../../services/bookStatusService';
 import { BookStatusValue } from '../../types/types';
+import { BookStatusResponse } from '../../types/responses';
 import { BadRequest } from '../../utils/errors';
 
 const VALID_STATUSES: BookStatusValue[] = ['read', 'reading', 'want_to_read'];
@@ -10,7 +11,7 @@ async function getBookStatus(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<any>> {
+): Promise<Response<BookStatusResponse>> {
   const userId = req.user?.uid;
   const { bookId } = req.params;
 
@@ -30,7 +31,7 @@ async function setBookStatus(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<any>> {
+): Promise<Response<BookStatusResponse>> {
   const userId = req.user?.uid;
   const { bookId } = req.params;
   const { status } = req.body as { status?: string };
@@ -55,7 +56,7 @@ async function deleteBookStatus(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<any>> {
+): Promise<Response<BookStatusResponse>> {
   const userId = req.user?.uid;
   const { bookId } = req.params;
 

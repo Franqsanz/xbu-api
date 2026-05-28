@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { FavoriteService } from '../../services/favoriteService';
-import { ActivityLogService } from '../../services/activityLogService';
 import { IBook, IUserAndBooks } from '../../types/types';
 import { NotFound, BadRequest } from '../../utils/errors';
 
@@ -54,12 +53,6 @@ async function patchToggleFavorite(
 
     if (!result) {
       throw NotFound('Libro no encontrado');
-    }
-
-    if (isFavorite) {
-      await ActivityLogService.record(userId, 'favorite', id);
-    } else {
-      await ActivityLogService.remove(userId, 'favorite', id);
     }
 
     return res.status(200).json(result);

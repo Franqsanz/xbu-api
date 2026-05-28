@@ -2,8 +2,15 @@ import { Request, Response, NextFunction } from 'express';
 import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
-import { FeedRepository } from '../../repositories/feedRepository';
+import { FeedService } from '../../services/feedService';
 import { IUser, IUserAndBooks } from '../../types/types';
+import {
+  SuccessMessage,
+  FollowStatsResponse,
+  FollowersListResponse,
+  FollowingListResponse,
+  FeedResponse,
+} from '../../types/responses';
 import { NotFound, BadRequest } from '../../utils/errors';
 
 async function getUsers(
@@ -109,7 +116,11 @@ async function deleteAccount(
   }
 }
 
-async function followUser(req: Request, res: Response, next: NextFunction): Promise<Response<any>> {
+async function followUser(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<SuccessMessage>> {
   const currentUserId = req.user.uid;
   const { targetUserId: followingId } = req.params;
 
@@ -149,7 +160,7 @@ async function unfollowUser(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<any>> {
+): Promise<Response<SuccessMessage>> {
   const currentUserId = req.user.uid;
   const { targetUserId: followingId } = req.params;
 
@@ -178,7 +189,7 @@ async function getFollowers(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<any>> {
+): Promise<Response<FollowersListResponse>> {
   const { userId } = req.params;
   const { limit = 10, offset = 0 } = req.query;
 
@@ -214,7 +225,7 @@ async function getFollowing(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<any>> {
+): Promise<Response<FollowingListResponse>> {
   const { userId } = req.params;
   const { limit = 10, offset = 0 } = req.query;
 
@@ -249,7 +260,7 @@ async function getFollowStats(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<any>> {
+): Promise<Response<FollowStatsResponse>> {
   const { userId } = req.params;
 
   try {
@@ -318,7 +329,11 @@ async function getUserAndBooksByUsername(
   }
 }
 
-async function getFeed(req: Request, res: Response, next: NextFunction): Promise<Response<any>> {
+async function getFeed(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<FeedResponse>> {
   const currentUserId = req.user?.uid;
   const { limit = 10, offset = 0 } = req.query;
 
@@ -330,7 +345,7 @@ async function getFeed(req: Request, res: Response, next: NextFunction): Promise
   const parsedOffset = parseInt(offset as string);
 
   try {
-    const { activities, total } = await FeedRepository.getFeed(
+    const { activities, total } = await FeedService.getFeed(
       currentUserId,
       parsedLimit,
       parsedOffset

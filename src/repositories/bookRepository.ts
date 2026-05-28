@@ -1,5 +1,5 @@
 import booksModel from '../models/books';
-import { IRepositoryBook } from '../types/IRepository';
+import { IRepositoryBook } from '../types/repositories/IBookRepository';
 import {
   qyGroupOptions,
   qyBooksFiltering,

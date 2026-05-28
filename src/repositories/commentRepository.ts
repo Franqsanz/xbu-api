@@ -1,5 +1,5 @@
 import commentsModel from '../models/comments';
-import { IRepositoryComment } from '../types/IRepository';
+import { IRepositoryComment } from '../types/repositories/ICommentRepository';
 
 export const commentRepository: IRepositoryComment = {
   async findAll(bookId, limit, offset) {

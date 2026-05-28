@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import { authFirebase } from '../../../config/firebase';
+
 import { UserService } from '../../../services/userService';
+import { AuthService } from '../../../services/authService';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const DOMAIN = process.env.COOKIE_DOMAIN;
@@ -36,19 +37,16 @@ async function createUser(req: Request, res: Response, next: NextFunction) {
 async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const { idToken } = req.body;
-    const expiresIn = 5 * 24 * 60 * 60 * 1000; // 5 días
 
     if (!idToken) {
       return res.status(400).json({ message: 'Token requerido' });
     }
 
-    const sessionCookie = await authFirebase.createSessionCookie(idToken, {
-      expiresIn,
-    });
+    const sessionCookie = await AuthService.createSessionCookie(idToken);
 
     res.cookie('_secure_tk', sessionCookie, {
       ...cookieConfig,
-      maxAge: expiresIn,
+      maxAge: AuthService.sessionDurationMs,
     });
 
     return res.status(200).json({ auth: true });
@@ -66,17 +64,13 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
     }
 
     try {
-      await authFirebase.verifySessionCookie(session, true);
+      await AuthService.verifySessionCookie(session);
     } catch {
       return res.status(401).json({ message: 'Sesión inválida' });
     }
 
     if (req.user?.uid) {
-      try {
-        await authFirebase.revokeRefreshTokens(req.user.uid);
-      } catch (error) {
-        console.error('Error revocando tokens en Firebase:', error);
-      }
+      await AuthService.revokeUserSessions(req.user.uid);
     }
 
     res.clearCookie('_secure_tk', cookieConfig);
@@ -96,21 +90,16 @@ async function refreshSession(req: Request, res: Response, next: NextFunction) {
     }
 
     try {
-      const expiresIn = 5 * 24 * 60 * 60 * 1000; // 5 días
-
-      const sessionCookie = await authFirebase.createSessionCookie(idToken, {
-        expiresIn,
-      });
+      const sessionCookie = await AuthService.createSessionCookie(idToken);
 
       res.cookie('_secure_tk', sessionCookie, {
         ...cookieConfig,
-        maxAge: expiresIn,
+        maxAge: AuthService.sessionDurationMs,
       });
 
       return res.status(200).json({ auth: true });
-    } catch (error) {
+    } catch {
       res.clearCookie('_secure_tk', cookieConfig);
-
       return res.status(401).json({ message: 'Token inválido o expirado' });
     }
   } catch (err) {

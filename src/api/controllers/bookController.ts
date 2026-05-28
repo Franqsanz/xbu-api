@@ -2,68 +2,47 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 
 import { BookService } from '../../services/bookService';
+import { CacheService } from '../../services/cacheService';
 import { BadRequest, NotFound } from '../../utils/errors';
-import { redis } from '../../config/redis';
-import { authFirebase } from '../../config/firebase';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
-const auth = authFirebase;
+const BOOKS_CACHE_TTL = 300; // 5 minutos
 
 async function getBooks(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<Response<IFindBooks>> {
-  const { body } = req;
-  const key = `books_${body}`;
   const { page, limit, offset } = req.pagination!;
 
   try {
-    // Verifica si hay paginación
+    // Sin paginación: respuesta directa, sin cache
     if (!limit || !page) {
-      // Eliminamos la cache
-      await redis.del(key);
-      // Si no hay paginación, simplemente llama al servicio y retorna la respuesta
       const { results, totalBooks } = await BookService.findBooks(limit, offset);
-
-      return res.status(200).json({
-        totalBooks,
-        results,
-      });
+      return res.status(200).json({ totalBooks, results });
     }
 
-    // Se elimina la cache cuando se busca por paginación
-    if (limit && page) await redis.del(key);
+    const cacheKey = `books:p${page}:l${limit}`;
 
-    // Se leen los datos almacenados en cache
-    const cachedData = await redis.get(key);
+    const cachedResponse = await CacheService.get<{
+      info: typeof req.paginationInfo;
+      results: IBook[];
+    }>(cacheKey);
 
-    // Si hay datos en la cache se envian al cliente
-    if (cachedData) {
-      const cachedResponse = JSON.parse(cachedData);
+    if (cachedResponse) {
       return res.status(200).json(cachedResponse);
     }
 
-    // Llamar al servicio que ejecuta las consultas
     const { results, totalBooks } = await BookService.findBooks(limit, offset);
-
-    req.calculatePagination!(totalBooks);
-
-    // Aquí construimos el objeto de respuesta que incluye los resultados de la consulta y la información de paginación
-    const response = {
-      info: req.paginationInfo,
-      results,
-    };
-
-    // Si no hay datos en la cache, se envian a redis los datos de la base
-    await redis.set(key, JSON.stringify(response));
-
-    // Expiramos la cache cada 5 minutos
-    await redis.expire(key, 300);
 
     if (results.length < 1) {
       throw NotFound('No se encontraron más libros');
     }
+
+    req.calculatePagination!(totalBooks);
+    const response = { info: req.paginationInfo, results };
+
+    await CacheService.set(cacheKey, response, BOOKS_CACHE_TTL);
 
     return res.status(200).json(response);
   } catch (err) {
@@ -178,25 +157,10 @@ async function getPathUrlBooks(
   res: Response,
   next: NextFunction
 ): Promise<Response<IBook | null>> {
-  const token = (req.headers['authorization'] || '').split(' ')[1];
-  const session = req.cookies?._secure_tk;
   const { pathUrl } = req.params;
+  const userId = req.user?.uid ?? null;
 
   try {
-    let userId: string | null = null;
-
-    if (token) {
-      const decodedToken = await auth.verifyIdToken(token);
-      userId = decodedToken?.uid;
-    } else if (session) {
-      try {
-        const decoded = await auth.verifySessionCookie(session, true);
-        userId = decoded?.uid;
-      } catch {
-        userId = null;
-      }
-    }
-
     let result;
 
     if (!userId) {
@@ -257,7 +221,7 @@ async function postBooks(
       throw BadRequest('Error al publicar, la solicitud está vacia');
     }
 
-    redis.expire(`books_${bookData}`, 0);
+    await CacheService.invalidatePattern('books:*');
 
     return res.status(201).json(resultBook);
   } catch (err: unknown) {
@@ -292,6 +256,8 @@ async function putBooks(
       throw BadRequest('No se pudo actualizar');
     }
 
+    await CacheService.invalidatePattern('books:*');
+
     return res.status(200).json(result);
   } catch (err) {
     return next(err) as any;
@@ -311,6 +277,8 @@ async function deleteBook(
     if (!book) {
       throw NotFound('Libro no encontrado');
     }
+
+    await CacheService.invalidatePattern('books:*');
 
     return res.status(200).json({
       success: {

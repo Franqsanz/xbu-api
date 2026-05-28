@@ -6,7 +6,7 @@ import {
   qyPathUrlBooksFavorite,
   qyRemoveFavorite,
 } from '../db/userQueries';
-import { IFavoriteOperations } from '../types/IRepository';
+import { IFavoriteOperations } from '../types/repositories/IFavoriteRepository';
 
 export const FavoriteRepository: IFavoriteOperations = {
   async findAllBookFavoriteByUser(userId, limit, offset) {

@@ -1,7 +1,7 @@
 import booksModel from '../models/books';
 import usersModel from '../models/users';
 import { qyCheckUser } from '../db/userQueries';
-import { IRepositoryUser } from '../types/IRepository';
+import { IRepositoryUser } from '../types/repositories/IUserRepository';
 
 export const UserRepository: IRepositoryUser = {
   async findUsers() {
