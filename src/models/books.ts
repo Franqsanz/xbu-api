@@ -82,6 +82,8 @@ const booksSchema = new Schema(
   }
 );
 
+booksSchema.index({ pathUrl: 1 }, { unique: true });
+
 booksSchema.set('toJSON', {
   transform: (_, returnedObject) => {
     const { _id, __v, ...rest } = returnedObject;

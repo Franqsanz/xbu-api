@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { FavoriteService } from '../../services/favoriteService';
+import { CacheService } from '../../services/cacheService';
 import { IBook, IUserAndBooks } from '../../types/types';
 import { NotFound, BadRequest } from '../../utils/errors';
 
@@ -54,6 +55,9 @@ async function patchToggleFavorite(
     if (!result) {
       throw NotFound('Libro no encontrado');
     }
+
+    // Invalida el cache per-user de detalle de libros (que incluye isFavorite)
+    await CacheService.invalidatePattern(`books:path:*:user:${userId}`);
 
     return res.status(200).json(result);
   } catch (err) {

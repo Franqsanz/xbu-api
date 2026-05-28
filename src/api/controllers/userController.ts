@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { caching } from 'cache-manager';
 
 import { UserService } from '../../services/userService';
 import { FeedService } from '../../services/feedService';
+import { CacheService } from '../../services/cacheService';
 import { IUser, IUserAndBooks } from '../../types/types';
 import {
   SuccessMessage,
@@ -12,6 +12,17 @@ import {
   FeedResponse,
 } from '../../types/responses';
 import { NotFound, BadRequest } from '../../utils/errors';
+
+const FOLLOW_STATS_CACHE_TTL = 300; // 5 minutos
+const ME_CACHE_TTL = 300; // 5 minutos
+
+function followStatsKey(userId: string) {
+  return `users:follow-stats:${userId}`;
+}
+
+function meKey(userId: string) {
+  return `users:me:${userId}`;
+}
 
 async function getUsers(
   req: Request,
@@ -35,11 +46,17 @@ async function getCheckUser(
   const userId = req.user.uid;
 
   try {
-    const user = await UserService.findById(userId);
-
-    if (!user) {
-      throw NotFound('Usuario no encontrado');
-    }
+    const user = await CacheService.getOrSet(
+      meKey(userId),
+      async () => {
+        const u = await UserService.findById(userId);
+        if (!u) {
+          throw NotFound('Usuario no encontrado');
+        }
+        return u;
+      },
+      ME_CACHE_TTL
+    );
 
     return res.status(200).json(user);
   } catch (err) {
@@ -94,6 +111,8 @@ async function deleteAccount(
   try {
     await UserService.deleteAccount(userId);
 
+    await CacheService.del(meKey(userId), followStatsKey(userId));
+
     res.clearCookie('_secure_tk', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -145,6 +164,8 @@ async function followUser(
 
     await UserService.followUser(currentUserId, followingId);
 
+    await CacheService.del(followStatsKey(currentUserId), followStatsKey(followingId));
+
     return res.status(201).json({
       success: {
         status: 201,
@@ -173,6 +194,8 @@ async function unfollowUser(
     }
 
     await UserService.unfollowUser(currentUserId, followingId);
+
+    await CacheService.del(followStatsKey(currentUserId), followStatsKey(followingId));
 
     return res.status(200).json({
       success: {
@@ -270,7 +293,11 @@ async function getFollowStats(
       throw NotFound('Usuario no encontrado');
     }
 
-    const { followersCount, followingCount } = await UserService.getFollowStats(userId);
+    const { followersCount, followingCount } = await CacheService.getOrSet(
+      followStatsKey(userId),
+      () => UserService.getFollowStats(userId),
+      FOLLOW_STATS_CACHE_TTL
+    );
 
     return res.status(200).json({
       user: {

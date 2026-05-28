@@ -4,7 +4,6 @@ import {
   qyGroupOptions,
   qyBooksFiltering,
   qyOneBooks,
-  qyPathUrlBooksUpdateView,
   qyPathUrlBooks,
   qySearch,
   qyBooksRandom,
@@ -47,15 +46,14 @@ export const BookRepository: IRepositoryBook = {
   },
 
   async findBySlugUpdateViewFavorite(slug, userId) {
-    const query = qyPathUrlBooksUpdateView(slug);
     const queryAggregate = qyPathUrlBooksFavorite(slug, userId);
 
-    const updateResult = await booksModel.findOneAndUpdate(...query).exec();
-
-    if (!updateResult) {
-      console.log(`Book with pathUrl ${slug} not found for update`);
-      return [];
-    }
+    // Incremento de views fire-and-forget: no bloquea la respuesta.
+    // El aggregate devuelve el snapshot previo (1 atrás), aceptable para un counter aprox.
+    booksModel
+      .updateOne({ pathUrl: slug }, { $inc: { views: 1 } })
+      .exec()
+      .catch((err) => console.error(`Error updating views for ${slug}:`, err));
 
     const result = await booksModel.aggregate(queryAggregate).exec();
 

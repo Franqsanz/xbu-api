@@ -7,6 +7,9 @@ import { BadRequest, NotFound } from '../../utils/errors';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
 const BOOKS_CACHE_TTL = 300; // 5 minutos
+const OPTIONS_CACHE_TTL = 3600; // 1 hora
+const MOST_VIEWED_CACHE_TTL = 600; // 10 minutos
+const RELATED_CACHE_TTL = 1800; // 30 minutos
 
 async function getBooks(
   req: Request,
@@ -76,7 +79,11 @@ async function getAllOptions(
   next: NextFunction
 ): Promise<Response<IBook[]>> {
   try {
-    const result = await BookService.findByGroupFields();
+    const result = await CacheService.getOrSet(
+      'books:options',
+      () => BookService.findByGroupFields(),
+      OPTIONS_CACHE_TTL
+    );
 
     return res.status(200).json(result);
   } catch (err) {
@@ -108,7 +115,11 @@ async function getRelatedBooks(
   const { id } = req.params;
 
   try {
-    const relatedBooks = await BookService.findRelatedBooks(id);
+    const relatedBooks = await CacheService.getOrSet(
+      `books:related:${id}`,
+      () => BookService.findRelatedBooks(id),
+      RELATED_CACHE_TTL
+    );
 
     return res.status(200).json(relatedBooks);
   } catch (err) {
@@ -124,7 +135,11 @@ async function getMoreBooksAuthors(
   const { id } = req.params;
 
   try {
-    const moreBooksAuthors = await BookService.findMoreBooksAuthors(id);
+    const moreBooksAuthors = await CacheService.getOrSet(
+      `books:more-by-authors:${id}`,
+      () => BookService.findMoreBooksAuthors(id),
+      RELATED_CACHE_TTL
+    );
 
     return res.status(200).json(moreBooksAuthors);
   } catch (err) {
@@ -159,25 +174,33 @@ async function getPathUrlBooks(
 ): Promise<Response<IBook | null>> {
   const { pathUrl } = req.params;
   const userId = req.user?.uid ?? null;
+  const cacheKey = `books:path:${pathUrl}:user:${userId ?? 'guest'}`;
 
   try {
-    let result;
+    // Nota: en hit no se incrementa views (throttling natural de 5min por usuario)
+    const bookObject = await CacheService.getOrSet(
+      cacheKey,
+      async () => {
+        let result;
 
-    if (!userId) {
-      result = await BookService.findBySlug(pathUrl);
-    } else {
-      result = await BookService.findBySlugFavorite(pathUrl, userId);
+        if (!userId) {
+          result = await BookService.findBySlug(pathUrl);
+        } else {
+          result = await BookService.findBySlugFavorite(pathUrl, userId);
 
-      if (result && result.length > 0 && result[0]?.userId !== userId) {
-        result = await BookService.findBySlugUpdateViewFavorite(pathUrl, userId);
-      }
-    }
+          if (result && result.length > 0 && result[0]?.userId !== userId) {
+            result = await BookService.findBySlugUpdateViewFavorite(pathUrl, userId);
+          }
+        }
 
-    if (!result || (Array.isArray(result) && result.length === 0)) {
-      throw NotFound('No se encuentra o no existe');
-    }
+        if (!result || (Array.isArray(result) && result.length === 0)) {
+          throw NotFound('No se encuentra o no existe');
+        }
 
-    const bookObject = Array.isArray(result) ? result[0] : result;
+        return Array.isArray(result) ? result[0] : result;
+      },
+      BOOKS_CACHE_TTL
+    );
 
     return res.status(200).json(bookObject);
   } catch (err) {
@@ -197,7 +220,11 @@ async function getMostViewedBooks(
       throw BadRequest('Parámetro detail inválido');
     }
 
-    const result = await BookService.findMostViewedBooks(detail as string);
+    const result = await CacheService.getOrSet(
+      `books:most-viewed:${detail}`,
+      () => BookService.findMostViewedBooks(detail as string),
+      MOST_VIEWED_CACHE_TTL
+    );
 
     return res.status(200).json(result);
   } catch (err) {
