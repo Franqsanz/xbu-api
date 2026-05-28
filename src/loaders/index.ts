@@ -24,7 +24,7 @@ import users from '../api/routes/users';
 import favorites from '../api/routes/favorites';
 import collections from '../api/routes/collections';
 import comments from '../api/routes/comments';
-import swaggerDocument from '../docs/swagger.json';
+import { swaggerSpec } from '../docs/swagger';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -137,7 +137,7 @@ export function registerRoutes(app: Application) {
       res.status(200).redirect('/');
     });
   } else {
-    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+    app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
   }
 
   app.all('*', (req, res: Response) =>
