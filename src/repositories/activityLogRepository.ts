@@ -26,4 +26,13 @@ export const ActivityLogRepository = {
       .lean()
       .exec();
   },
+
+  async deleteAllByUserId(userId: string) {
+    return await activityLogModel.deleteMany({ userId }).exec();
+  },
+
+  async deleteAllByBookIds(bookIds: string[]) {
+    if (bookIds.length === 0) return { deletedCount: 0 };
+    return await activityLogModel.deleteMany({ bookId: { $in: bookIds } }).exec();
+  },
 };

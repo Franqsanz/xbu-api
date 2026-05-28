@@ -16,5 +16,6 @@ export interface ICollectionOperations {
   removeBookFromCollection(userId: string, collectionId: string[], bookId: string): Promise<any>;
   deleteCollections(userId: string, collectionId: string): Promise<any>;
   deleteUserCollections(userId: string): Promise<any>;
+  removeBookRefsFromAll(bookIds: string[]): Promise<any>;
   isBookInAnyCollection(userId: string, bookId: string): Promise<boolean>;
 }

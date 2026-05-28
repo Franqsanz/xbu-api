@@ -48,6 +48,16 @@ export const FavoriteRepository: IFavoriteOperations = {
     return result.deletedCount > 0;
   },
 
+  async removeBookRefsFromAll(bookIds) {
+    if (bookIds.length === 0) return { modifiedCount: 0 };
+    return await favoritesModel
+      .updateMany(
+        { favoriteBooks: { $in: bookIds } },
+        { $pull: { favoriteBooks: { $in: bookIds } } }
+      )
+      .exec();
+  },
+
   async findBySlugFavorite(slug, userId) {
     if (!userId) return null;
 

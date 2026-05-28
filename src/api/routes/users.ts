@@ -439,6 +439,6 @@ router.get('/:userId/follow-stats', getFollowStats);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.delete('/:userId', deleteAccount);
+router.delete('/:userId', verifyToken, deleteAccount);
 
 export default router;

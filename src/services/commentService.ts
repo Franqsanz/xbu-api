@@ -24,6 +24,14 @@ export const commentService: ICommentService = {
     return await commentRepository.deleteAllByUserId(userId);
   },
 
+  async deleteAllByBookIds(bookIds) {
+    return await commentRepository.deleteAllByBookIds(bookIds);
+  },
+
+  async removeAllReactionsByUserId(userId) {
+    return await commentRepository.removeAllReactionsByUserId(userId);
+  },
+
   async create(commentData) {
     const validatedData = commentSchema.parse(commentData);
 

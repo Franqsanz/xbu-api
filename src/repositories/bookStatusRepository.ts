@@ -25,6 +25,15 @@ export const BookStatusRepository: IBookStatusOperations = {
     return await bookStatusesModel.deleteOne({ userId, bookId }).exec();
   },
 
+  async deleteAllByUserId(userId: string) {
+    return await bookStatusesModel.deleteMany({ userId }).exec();
+  },
+
+  async deleteAllByBookIds(bookIds: string[]) {
+    if (bookIds.length === 0) return { deletedCount: 0 };
+    return await bookStatusesModel.deleteMany({ bookId: { $in: bookIds } }).exec();
+  },
+
   async listByUserAndStatus(
     userId: string,
     status: BookStatusValue,

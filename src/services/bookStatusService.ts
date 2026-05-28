@@ -14,6 +14,14 @@ export const BookStatusService: IBookStatusOperations = {
     return await BookStatusRepository.deleteStatus(userId, bookId);
   },
 
+  async deleteAllByUserId(userId) {
+    return await BookStatusRepository.deleteAllByUserId(userId);
+  },
+
+  async deleteAllByBookIds(bookIds) {
+    return await BookStatusRepository.deleteAllByBookIds(bookIds);
+  },
+
   async listByUserAndStatus(userId, status, limit, offset) {
     return await BookStatusRepository.listByUserAndStatus(userId, status, limit, offset);
   },

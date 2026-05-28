@@ -35,6 +35,10 @@ export const CollectionService: ICollectionService = {
     return await CollectionRepository.deleteUserCollections(userId);
   },
 
+  async removeBookRefsFromAll(bookIds) {
+    return await CollectionRepository.removeBookRefsFromAll(bookIds);
+  },
+
   async addBookToCollection(userId, collectionId, bookId, checked) {
     return await CollectionRepository.addBookToCollection(userId, collectionId, bookId, checked);
   },

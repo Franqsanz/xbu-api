@@ -6,4 +6,5 @@ export interface IFavoriteOperations {
   addFavorite(userId: string, id: string): Promise<IBook | null>;
   removeFavorite(userId: string, id: string): Promise<IBook | null>;
   deleteUserFavorites(userId: string): Promise<any>;
+  removeBookRefsFromAll(bookIds: string[]): Promise<any>;
 }

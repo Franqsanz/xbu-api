@@ -3,6 +3,8 @@ import { FollowRepository } from './../repositories/followRepository';
 import { CollectionRepository } from './../repositories/collectionRepository';
 import { FavoriteRepository } from './../repositories/favoriteRepository';
 import { commentRepository } from './../repositories/commentRepository';
+import { BookStatusRepository } from './../repositories/bookStatusRepository';
+import { ActivityLogRepository } from './../repositories/activityLogRepository';
 import { cloudinary } from '../config/cloudinary';
 import { authFirebase } from '../config/firebase';
 import { IFullRepositoryUser } from '../types/repositories/IUserRepository';
@@ -45,20 +47,44 @@ export const UserService: IFullRepositoryUser = {
     }
 
     const books = await UserRepository.findBooksByUserId!(userId);
+    const bookIds = books.map((b: any) => b._id.toString());
 
-    // Eliminar imágenes de libros de Cloudinary
-    for (const book of books) {
-      await cloudinary.uploader.destroy(book.image.public_id);
+    // Borrar imágenes de Cloudinary en paralelo; un fallo no aborta la baja de cuenta
+    await Promise.allSettled(
+      books
+        .filter((b: any) => b.image?.public_id)
+        .map((b: any) => cloudinary.uploader.destroy(b.image.public_id))
+    );
+
+    // Datos propios del usuario
+    await Promise.all([
+      UserRepository.deleteUserBooks(userId),
+      commentRepository.deleteAllByUserId(userId),
+      CollectionRepository.deleteUserCollections(userId),
+      FavoriteRepository.deleteUserFavorites(userId),
+      FollowRepository.deleteUserFollows(userId),
+      BookStatusRepository.deleteAllByUserId(userId),
+      ActivityLogRepository.deleteAllByUserId(userId),
+    ]);
+
+    // Limpiar referencias huérfanas a los libros borrados en datos de otros usuarios
+    if (bookIds.length > 0) {
+      await Promise.all([
+        commentRepository.deleteAllByBookIds(bookIds),
+        FavoriteRepository.removeBookRefsFromAll(bookIds),
+        CollectionRepository.removeBookRefsFromAll(bookIds),
+        BookStatusRepository.deleteAllByBookIds(bookIds),
+        ActivityLogRepository.deleteAllByBookIds(bookIds),
+      ]);
     }
 
-    await UserRepository.deleteUserBooks(userId);
-    await commentRepository.deleteAllByUserId(userId);
-    await CollectionRepository.deleteUserCollections(userId);
-    await FavoriteRepository.deleteUserFavorites(userId);
-    await FollowRepository.deleteUserFollows(userId);
-    await authFirebase.deleteUser(user.uid);
+    // Quitar reacciones que el usuario dejó en comentarios ajenos y recalcular contadores
+    await commentRepository.removeAllReactionsByUserId(userId);
 
-    return await UserRepository.deleteUser(user.uid);
+    // Borrar el documento Mongo antes que Firebase: si Firebase falla, queda un user
+    // sin doc (recuperable), no un doc sin auth (más difícil de reconciliar)
+    await UserRepository.deleteUser(user.uid);
+    await authFirebase.deleteUser(user.uid);
   },
 
   async followUser(followerId: string, followingId: string): Promise<any> {

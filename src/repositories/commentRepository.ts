@@ -184,4 +184,51 @@ export const commentRepository: IRepositoryComment = {
 
     return result.deletedCount > 0;
   },
+
+  async deleteAllByBookIds(bookIds) {
+    if (bookIds.length === 0) return false;
+    const result = await commentsModel.deleteMany({
+      bookId: { $in: bookIds },
+    });
+
+    return result.deletedCount > 0;
+  },
+
+  async removeAllReactionsByUserId(userId) {
+    await commentsModel.updateMany({ 'reactions.userId': userId }, [
+      {
+        $set: {
+          reactions: {
+            $filter: {
+              input: '$reactions',
+              as: 'r',
+              cond: { $ne: ['$$r.userId', userId] },
+            },
+          },
+        },
+      },
+      {
+        $set: {
+          likesCount: {
+            $size: {
+              $filter: {
+                input: '$reactions',
+                as: 'r',
+                cond: { $eq: ['$$r.type', 'like'] },
+              },
+            },
+          },
+          dislikesCount: {
+            $size: {
+              $filter: {
+                input: '$reactions',
+                as: 'r',
+                cond: { $eq: ['$$r.type', 'dislike'] },
+              },
+            },
+          },
+        },
+      },
+    ]);
+  },
 };

@@ -30,4 +30,8 @@ export const FavoriteService: IFavoriteOperations = {
   async deleteUserFavorites(userId) {
     return await FavoriteRepository.deleteUserFavorites(userId);
   },
+
+  async removeBookRefsFromAll(bookIds) {
+    return await FavoriteRepository.removeBookRefsFromAll(bookIds);
+  },
 };

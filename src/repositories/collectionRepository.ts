@@ -108,6 +108,16 @@ export const CollectionRepository: ICollectionOperations = {
     return result.deletedCount > 0;
   },
 
+  async removeBookRefsFromAll(bookIds) {
+    if (bookIds.length === 0) return { modifiedCount: 0 };
+    return await collectionsModel
+      .updateMany(
+        { 'collections.books.bookId': { $in: bookIds } },
+        { $pull: { 'collections.$[].books': { bookId: { $in: bookIds } } } }
+      )
+      .exec();
+  },
+
   async isBookInAnyCollection(userId, bookId) {
     const doc = await collectionsModel
       .findOne({ userId, 'collections.books.bookId': bookId })
