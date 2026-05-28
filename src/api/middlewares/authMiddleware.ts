@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { authFirebase } from '../../config/firebase';
+import { AuthService } from '../../services/authService';
 
 declare global {
   namespace Express {
@@ -30,14 +31,14 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     }
 
     try {
-      const decoded = await authFirebase.verifySessionCookie(session, true);
+      const decoded = await authFirebase.verifySessionCookie(session);
       req.user = decoded;
 
       return next();
     } catch (error: any) {
       if (refreshToken && error.code === 'auth/argument-error') {
         try {
-          const expiresIn = 5 * 24 * 60 * 60 * 1000;
+          const expiresIn = AuthService.sessionDurationMs;
           const newSessionCookie = await authFirebase.createSessionCookie(refreshToken, {
             expiresIn,
           });
@@ -47,7 +48,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
             maxAge: expiresIn,
           });
 
-          const decoded = await authFirebase.verifySessionCookie(newSessionCookie, true);
+          const decoded = await authFirebase.verifySessionCookie(newSessionCookie);
           req.user = decoded;
 
           return next();

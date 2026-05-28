@@ -16,8 +16,8 @@ export async function verifyToken(req: Request, res: Response, next: NextFunctio
       throw UnauthorizedAccess('Token no proporcionado');
     }
 
-    // Verificar la sesión mediante Firebase
-    const decoded = await auth.verifySessionCookie(session, true);
+    // Verificar la sesión mediante Firebase (validación local con claves públicas cacheadas)
+    const decoded = await auth.verifySessionCookie(session);
 
     if (!decoded) {
       throw UnauthorizedAccess('Token inválido');

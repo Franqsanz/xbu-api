@@ -1,6 +1,6 @@
 import { authFirebase } from '../config/firebase';
 
-const SESSION_DURATION_MS = 5 * 24 * 60 * 60 * 1000; // 5 días
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 1 día
 
 export const AuthService = {
   get sessionDurationMs() {
@@ -14,7 +14,7 @@ export const AuthService = {
   },
 
   async verifySessionCookie(sessionCookie: string) {
-    return await authFirebase.verifySessionCookie(sessionCookie, true);
+    return await authFirebase.verifySessionCookie(sessionCookie);
   },
 
   async revokeUserSessions(uid: string): Promise<void> {
