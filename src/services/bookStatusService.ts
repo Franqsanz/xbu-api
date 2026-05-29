@@ -25,4 +25,8 @@ export const BookStatusService: IBookStatusOperations = {
   async listByUserAndStatus(userId, status, limit, offset) {
     return await BookStatusRepository.listByUserAndStatus(userId, status, limit, offset);
   },
+
+  async listBooksByUserAndStatus(userId, status, limit, offset) {
+    return await BookStatusRepository.listBooksByUserAndStatus(userId, status, limit, offset);
+  },
 };

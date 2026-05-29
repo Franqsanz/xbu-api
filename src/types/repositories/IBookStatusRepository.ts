@@ -1,4 +1,4 @@
-import { IBookStatus, BookStatusValue } from '../types';
+import { IBook, IBookStatus, BookStatusValue } from '../types';
 
 export interface IBookStatusOperations {
   getStatus(userId: string, bookId: string): Promise<IBookStatus | null>;
@@ -12,4 +12,10 @@ export interface IBookStatusOperations {
     limit?: number,
     offset?: number
   ): Promise<{ items: IBookStatus[]; total: number }>;
+  listBooksByUserAndStatus(
+    userId: string,
+    status: BookStatusValue,
+    limit?: number,
+    offset?: number
+  ): Promise<{ results: IBook[]; totalBooks: number }>;
 }

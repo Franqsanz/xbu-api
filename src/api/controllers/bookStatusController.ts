@@ -72,4 +72,33 @@ async function deleteBookStatus(
   }
 }
 
-export { getBookStatus, setBookStatus, deleteBookStatus };
+async function getBooksByStatus(req: Request, res: Response, next: NextFunction): Promise<any> {
+  const userId = req.user?.uid;
+  const { status } = req.query as { status?: string };
+  const { limit, offset } = req.pagination!;
+
+  if (!userId) {
+    throw BadRequest('Usuario no autenticado');
+  }
+
+  if (!status || !VALID_STATUSES.includes(status as BookStatusValue)) {
+    throw BadRequest('Estado inválido');
+  }
+
+  try {
+    const { results, totalBooks } = await BookStatusService.listBooksByUserAndStatus(
+      userId,
+      status as BookStatusValue,
+      limit,
+      offset
+    );
+
+    req.calculatePagination!(totalBooks);
+
+    return res.status(200).json({ info: req.paginationInfo, results });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+export { getBookStatus, setBookStatus, deleteBookStatus, getBooksByStatus };
