@@ -63,6 +63,9 @@ const commentsSchema = new Schema(
   }
 );
 
+commentsSchema.index({ bookId: 1, createdAt: -1 });
+commentsSchema.index({ 'author.userId': 1, createdAt: -1 });
+
 commentsSchema.set('toJSON', {
   transform: (_, returnedObject) => {
     const { _id, __v, ...rest } = returnedObject;

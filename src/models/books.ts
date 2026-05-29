@@ -83,6 +83,7 @@ const booksSchema = new Schema(
 );
 
 booksSchema.index({ pathUrl: 1 }, { unique: true });
+booksSchema.index({ userId: 1, createdAt: -1 });
 
 booksSchema.set('toJSON', {
   transform: (_, returnedObject) => {

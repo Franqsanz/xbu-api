@@ -125,6 +125,8 @@ export function registerRoutes(app: Application) {
       </section>
     `);
   });
+
+  app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
   app.use('/api', books);
   app.use('/api/auth', auth);
   app.use('/api/users/comments', comments);
