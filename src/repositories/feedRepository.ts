@@ -51,6 +51,10 @@ export const FeedRepository = {
 
     const fetchUpTo = offset + limit;
 
+    // Los eventos de follow se muestran solo de los usuarios que sigo
+    // (no los míos propios, sería redundante para el usuario).
+    const followActorUids = targetUids.filter((uid) => uid !== userId);
+
     const [bookDocs, commentDocs, statusDocs, followDocs, activityDocs] = await Promise.all([
       booksModel
         .find({ userId: { $in: targetUids } })
@@ -70,12 +74,14 @@ export const FeedRepository = {
         .limit(fetchUpTo)
         .lean()
         .exec(),
-      followsModel
-        .find({ follower: { $in: targetUids } })
-        .sort({ createdAt: -1 })
-        .limit(fetchUpTo)
-        .lean()
-        .exec(),
+      followActorUids.length > 0
+        ? followsModel
+            .find({ follower: { $in: followActorUids } })
+            .sort({ createdAt: -1 })
+            .limit(fetchUpTo)
+            .lean()
+            .exec()
+        : Promise.resolve([]),
       activityLogModel
         .find({ userId: { $in: targetUids } })
         .sort({ createdAt: -1 })
