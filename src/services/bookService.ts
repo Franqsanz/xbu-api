@@ -30,6 +30,10 @@ export const BookService: IRepositoryBook = {
     return await BookRepository.findById(id);
   },
 
+  async findByIdRaw(id) {
+    return await BookRepository.findByIdRaw(id);
+  },
+
   async findBySlug(pathUrl) {
     return await BookRepository.findBySlug(pathUrl);
   },

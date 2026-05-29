@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 
 import { BookService } from '../../services/bookService';
 import { CacheService } from '../../services/cacheService';
-import { BadRequest, NotFound } from '../../utils/errors';
+import { BadRequest, Forbidden, NotFound } from '../../utils/errors';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
 const BOOKS_CACHE_TTL = 300; // 5 minutos
@@ -241,6 +241,8 @@ async function postBooks(
 
   try {
     const bookData = JSON.parse(body.bookData);
+    // Forzamos el userId al del token: no confiamos en lo que mande el cliente
+    bookData.userId = req.user.uid;
 
     const resultBook = await BookService.createBook(bookData, file?.buffer);
 
@@ -275,6 +277,14 @@ async function putBooks(
   const { body, file } = req;
 
   try {
+    const existing = await BookService.findByIdRaw(id);
+    if (!existing) {
+      throw NotFound('Libro no encontrado');
+    }
+    if (existing.userId !== req.user.uid) {
+      throw Forbidden('No tienes permisos para editar este libro');
+    }
+
     const bookData = JSON.parse(body.bookData);
 
     const result = await BookService.updateBook(id, bookData, file?.buffer);
@@ -299,6 +309,14 @@ async function deleteBook(
   const { id } = req.params;
 
   try {
+    const existing = await BookService.findByIdRaw(id);
+    if (!existing) {
+      throw NotFound('Libro no encontrado');
+    }
+    if (existing.userId !== req.user.uid) {
+      throw Forbidden('No tienes permisos para eliminar este libro');
+    }
+
     const book = await BookService.removeBook(id);
 
     if (!book) {

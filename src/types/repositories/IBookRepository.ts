@@ -3,6 +3,7 @@ import { IBook, IFindBooks, IDeleteBook } from '../types';
 export interface IReadBook {
   findBooks(limit: number, offset: number): Promise<IFindBooks>;
   findById(id: string): Promise<IBook | null>;
+  findByIdRaw(id: string): Promise<IBook | null>;
   findBySlug(slug: string): Promise<IBook | null>;
   findBySlugUpdateViewFavorite(slug: string, userId: string): Promise<IBook[] | null>;
   findBySlugFavorite(slug: string, userId?: string | undefined): Promise<IBook[] | null>;

@@ -18,6 +18,7 @@ import { query } from '../middlewares/query';
 import { pagination } from '../middlewares/pagination';
 import { upload } from '../middlewares/multer';
 import { optionalAuth } from '../middlewares/optionalAuth';
+import { verifyToken } from '../middlewares/verifyToken';
 
 const router: Router = express.Router();
 
@@ -264,7 +265,7 @@ router.get('/books/:id', getOneBooks);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post('/books', upload.single('image'), postBooks);
+router.post('/books', verifyToken, upload.single('image'), postBooks);
 
 /**
  * @openapi
@@ -300,7 +301,7 @@ router.post('/books', upload.single('image'), postBooks);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.patch('/books/:id', upload.single('image'), putBooks);
+router.patch('/books/:id', verifyToken, upload.single('image'), putBooks);
 
 /**
  * @openapi
@@ -321,6 +322,6 @@ router.patch('/books/:id', upload.single('image'), putBooks);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.delete('/books/:id', deleteBook);
+router.delete('/books/:id', verifyToken, deleteBook);
 
 export default router;

@@ -40,6 +40,10 @@ export const BookRepository: IRepositoryBook = {
     return await booksModel.findByIdAndUpdate(...query).hint('_id_');
   },
 
+  async findByIdRaw(id) {
+    return await booksModel.findById(id).lean().exec();
+  },
+
   async findBySlug(slug) {
     const query = qyPathUrlBooks(slug);
     return await booksModel.findOne(...query).exec();
