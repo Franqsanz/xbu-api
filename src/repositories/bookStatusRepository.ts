@@ -1,5 +1,6 @@
 import bookStatusesModel from '../models/bookStatuses';
-import { IBookStatus, BookStatusValue } from '../types/types';
+import booksModel from '../models/books';
+import { IBook, IBookStatus, BookStatusValue } from '../types/types';
 import { IBookStatusOperations } from '../types/repositories/IBookStatusRepository';
 
 export const BookStatusRepository: IBookStatusOperations = {
@@ -51,5 +52,42 @@ export const BookStatusRepository: IBookStatusOperations = {
       bookStatusesModel.countDocuments({ userId, status }),
     ]);
     return { items: items as IBookStatus[], total };
+  },
+
+  async listBooksByUserAndStatus(
+    userId: string,
+    status: BookStatusValue,
+    limit: number = 10,
+    offset: number = 0
+  ): Promise<{ results: IBook[]; totalBooks: number }> {
+    const [statuses, totalBooks] = await Promise.all([
+      bookStatusesModel
+        .find({ userId, status })
+        .sort({ updatedAt: -1 })
+        .skip(offset)
+        .limit(limit)
+        .lean()
+        .exec(),
+      bookStatusesModel.countDocuments({ userId, status }),
+    ]);
+
+    if (statuses.length === 0) return { results: [], totalBooks };
+
+    const bookIds = statuses.map((s: any) => s.bookId);
+    const books = await booksModel
+      .find(
+        { _id: { $in: bookIds } },
+        'title authors category language synopsis sourceLink pathUrl image'
+      )
+      .lean()
+      .exec();
+
+    const bookMap = new Map(books.map((b: any) => [b._id.toString(), b]));
+    const results = statuses
+      .map((s: any) => bookMap.get(s.bookId))
+      .filter(Boolean)
+      .map((b: any) => ({ ...b, id: b._id })) as unknown as IBook[];
+
+    return { results, totalBooks };
   },
 };

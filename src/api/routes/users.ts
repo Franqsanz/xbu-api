@@ -17,6 +17,7 @@ import {
   getBookStatus,
   setBookStatus,
   deleteBookStatus,
+  getBooksByStatus,
 } from '../controllers/bookStatusController';
 import { verifyToken } from '../middlewares/verifyToken';
 import { pagination } from '../middlewares/pagination';
@@ -133,6 +134,35 @@ router.get('/me/feed', verifyToken, getFeed);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.get('/me/book-status/:bookId', verifyToken, getBookStatus);
+
+/**
+ * @openapi
+ * /api/users/me/book-status:
+ *   get:
+ *     tags: [BookStatus]
+ *     summary: Lista paginada de libros del usuario filtrados por estado de lectura.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         required: true
+ *         schema: { type: string, enum: [read, reading, want_to_read] }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *     responses:
+ *       200:
+ *         description: Lista paginada de libros.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/me/book-status', verifyToken, pagination, getBooksByStatus);
 
 /**
  * @openapi
