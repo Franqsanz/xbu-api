@@ -8,43 +8,79 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 * **Obtener libros**: Recupera una lista de libros o un libro específico por su ID.
 * **Actualizar libros**: Permite modificar la información de un libro existente.
 * **Eliminar libros**: Eliminar un libro.
-* **Buscar libros**: Ofrece capacidades de búsqueda y filtrado por título, autor, categoria/género, año de publicación.
-* **Agregar libros a favoritos**: Permite marcar libros como favoritos para un acceso rápido.
-* **Crear colecciones de libros**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
-* **Sistema de comentarios:** Permite a los usuarios dejar comentarios en cada libro, con la posibilidad de editarlos, eliminarlos y gestionar reacciones (likes/dislikes) tanto en comentarios propios como de otros usuarios.
+* **Buscar libros**: Ofrece capacidades de búsqueda y filtrado por título, autor, categoría/género y año de publicación.
+* **Favoritos**: Permite marcar libros como favoritos para un acceso rápido.
+* **Colecciones**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
+* **Estado de lectura (reading status)**: Cada usuario puede marcar un libro como `read`, `reading` o `want_to_read`.
+* **Sistema de comentarios**: Permite a los usuarios dejar comentarios en cada libro, con la posibilidad de editarlos, eliminarlos y gestionar reacciones (likes/dislikes).
 * **Sistema de seguimiento**: Permite a los usuarios seguir y dejar de seguir a otros usuarios, con acceso a la lista de seguidores, seguidos y estadísticas de ambos conteos.
-* **Feed de actividad social**: Genera un feed paginado y cronológico para el usuario autenticado, combinando libros publicados y comentarios de los usuarios que sigue.
+* **Feed de actividad social**: Genera un feed paginado y cronológico para el usuario autenticado, combinando libros publicados, comentarios, cambios de reading status, follows y eventos de favoritos/colecciones de los usuarios que sigue (y los del propio usuario).
+* **Cacheo con Redis**: Endpoints de lectura frecuentes cacheados con TTL e invalidación selectiva.
+* **Autenticación con Firebase**: Sesión basada en cookie firmada por Firebase Admin, validación local sin round-trip por request.
 
 ## Arquitectura de la API
 
-![Arquitectura de la API](./architecture.svg)
+```mermaid
+flowchart LR
+    Client[Cliente web/mobile]
+
+    subgraph Express[Express]
+        MW[Middlewares globales<br/>cors · helmet · cookieParser<br/>compression · rate-limit · sentry]
+        Auth[Auth middlewares<br/>authMiddleware · verifyToken · optionalAuth]
+        Routes[Routers<br/>books · auth · users · favorites<br/>collections · comments]
+        Controllers[Controllers]
+        Services[Services]
+        Repos[Repositories]
+    end
+
+    Mongo[(MongoDB<br/>Mongoose)]
+    Redis[(Redis<br/>cache)]
+    Firebase[Firebase Auth]
+    Cloudinary[Cloudinary<br/>book covers]
+    Sentry[Sentry<br/>error tracking]
+
+    Client -->|cookie _secure_tk| MW
+    MW --> Auth
+    Auth --> Routes
+    Routes --> Controllers
+    Controllers --> Services
+    Services --> Repos
+    Repos --> Mongo
+    Controllers -->|cache get/set/invalidate| Redis
+    Auth -->|verifySessionCookie| Firebase
+    Services -->|upload/destroy images| Cloudinary
+    Express -->|errors| Sentry
+```
 
 ## Diagrama de base de datos
 
 ```mermaid
 erDiagram
-    USER ||--|| COLLECTIONS : tiene
-    USER ||--o{ BOOK : publica
-    USER ||--|| FAVORITES : tiene
-    USER ||--o{ COMMENTS : escribe
-    USER ||--o{ FOLLOWS : "sigue (follower)"
-    USER ||--o{ FOLLOWS : "es seguido (following)"
-    USER {
-        string uid PK
+    USERS ||--o{ BOOKS : publica
+    USERS ||--|| COLLECTIONS : tiene
+    USERS ||--|| FAVORITES : tiene
+    USERS ||--o{ COMMENTS : "escribe (author)"
+    USERS ||--o{ FOLLOWS : "follower"
+    USERS ||--o{ FOLLOWS : "following"
+    USERS ||--o{ BOOK_STATUSES : marca
+    USERS ||--o{ ACTIVITY_LOG : genera
+    BOOKS ||--o{ COMMENTS : recibe
+    BOOKS ||--o{ BOOK_STATUSES : "es marcado en"
+    BOOKS ||--o{ ACTIVITY_LOG : referencia
+    COLLECTIONS ||--o{ COLLECTION_ITEM : contiene
+    COLLECTION_ITEM ||--o{ COLLECTION_BOOK : contiene
+    COMMENTS ||--o{ REACTION : contiene
+
+    USERS {
+        ObjectId _id PK
+        string uid UK "Firebase UID"
         string name
         string username UK
-        string picture
         string email UK
+        string picture
         date createdAt
     }
-    FOLLOWS {
-        ObjectId _id PK
-        string follower FK
-        string following FK
-        date createdAt
-    }
-    BOOK ||--o{ COMMENTS : recibe
-    BOOK {
+    BOOKS {
         ObjectId _id PK
         string title
         string[] authors
@@ -54,44 +90,69 @@ erDiagram
         number year
         number numberPages
         string format
-        string pathUrl
-        string url
-        string userId FK
+        string pathUrl UK "slug, indexed unique"
+        string sourceLink
+        object image "url + public_id (Cloudinary)"
+        string userId FK "users.uid"
         number views
         number rating
         date createdAt
         date updatedAt
     }
-    COLLECTIONS {
-        string userId PK
-        string[] collections
-        date createdAt
-        date updatedAt
-    }
-    COLLECTION {
-        string name
-        ObjectId[] bookIds
+    FOLLOWS {
+        ObjectId _id PK
+        string follower FK "users.uid"
+        string following FK "users.uid"
         date createdAt
     }
-    COLLECTIONS ||--o{ COLLECTION : contiene
     FAVORITES {
-        string userId PK
-        ObjectId[] bookIds
+        ObjectId _id PK
+        string userId UK "users.uid"
+        ObjectId[] favoriteBooks "books._id"
         date createdAt
         date updatedAt
+    }
+    COLLECTIONS {
+        ObjectId _id PK
+        string userId UK "users.uid"
+    }
+    COLLECTION_ITEM {
+        ObjectId _id PK
+        string name
+        date createdAt
+    }
+    COLLECTION_BOOK {
+        ObjectId bookId FK "books._id"
+        boolean checked
     }
     COMMENTS {
         ObjectId _id PK
         string text
-        string userId FK
-        string username
-        string avatar
-        ObjectId bookId FK
+        object author "userId, name, username, avatar"
+        string bookId FK "books._id"
         number likesCount
         number dislikesCount
-        string[] likedBy
-        string[] dislikedBy
         boolean isEdited
+        date createdAt
+        date updatedAt
+    }
+    REACTION {
+        string userId FK "users.uid"
+        string type "like | dislike"
+    }
+    BOOK_STATUSES {
+        ObjectId _id PK
+        string userId FK "users.uid"
+        string bookId FK "books._id"
+        string status "read | reading | want_to_read"
+        date createdAt
+        date updatedAt
+    }
+    ACTIVITY_LOG {
+        ObjectId _id PK
+        string userId FK "users.uid"
+        string type "favorite | collection"
+        string bookId FK "books._id"
         date createdAt
         date updatedAt
     }
@@ -99,82 +160,94 @@ erDiagram
 
 ## Esquema de la API
 
-### Rutas de autenticación
+> **Nota sobre la columna "Protegido"**: las rutas montadas bajo `/api/users`, `/api/users/favorites` y `/api/users/collections` pasan por `authMiddleware` global — todas requieren cookie de sesión. Las que además llevan `verifyToken` validan que el `userId` del path coincida con el del token.
+
+### Rutas de autenticación (`/api/auth`)
 
 | Ruta | Método | Protegido | Descripción |
 | --- | --- | --- | --- |
-| `/auth/login` | POST | No | Inicia sesión con idToken de Firebase. |
-| `/auth/register` | POST | Sí | Registra un usuario (crea username). |
-| `/auth/logout` | POST | Sí | Cierra sesión e invalida tokens. |
-| `/auth/refresh` | POST | No | Renueva la sessionCookie. |
+| `/auth/login` | POST | No | Inicia sesión con `idToken` de Firebase. Emite cookie `_secure_tk` (sesión de 1 día). |
+| `/auth/register` | POST | Sí | Registra un usuario (asigna username). |
+| `/auth/logout` | POST | Sí | Revoca refresh tokens y limpia la cookie. |
+| `/auth/refresh` | POST | No | Renueva la session cookie con un `idToken` fresco. |
 
-### Rutas de libros
+### Rutas de libros (`/api`)
 
 | Ruta | Método | Protegido | Descripción |
 | --- | --- | --- | --- |
-| `/books` | GET | No | Recupera una lista de libros. |
-| `/books/:id` | GET | No | Recupera un libro específico por su ID. |
-| `/books` | POST | Sí | Crea un nuevo libro. |
-| `/books/:id` | PATCH | Sí | Actualiza la información de un libro existente. |
-| `/books/:id` | DELETE | Sí | Elimina un libro. |
+| `/books` | GET | No | Lista paginada de libros (cacheada). |
+| `/books/:id` | GET | No | Recupera un libro por ID. |
+| `/books` | POST | Sí | Crea un nuevo libro. Invalida cache de libros. |
+| `/books/:id` | PATCH | Sí | Actualiza un libro. Invalida cache de libros. |
+| `/books/:id` | DELETE | Sí | Elimina un libro. Invalida cache de libros. |
 | `/books/search` | GET | No | Busca libros por título y autor. |
-| `/books/options` | GET | No | Recupera una lista de opciones de filtrado. |
-| `/books/more-books/:id` | GET | No | Recupera un libro aleatorio de una colección. |
-| `/books/related-books/:id` | GET | No | Recupera un libro relacionado con otro. |
-| `/books/more-books-authors/:id` | GET | No | Recupera un libro aleatorio de un autor. |
-| `/books/most-viewed-books` | GET | No | Recupera libros más vistos. |
-| `/books/path/:pathUrl` | GET | No | Recupera un libro por su slug. |
+| `/books/options` | GET | No | Opciones de filtrado (categorías, idiomas, años). Cacheada 1 h. |
+| `/books/more-books/:id` | GET | No | Recupera libros aleatorios. |
+| `/books/related-books/:id` | GET | No | Libros relacionados por categoría. Cacheada 30 min. |
+| `/books/more-books-authors/:id` | GET | No | Más libros del mismo autor. Cacheada 30 min. |
+| `/books/most-viewed-books` | GET | No | Libros más vistos. Cacheada 10 min. |
+| `/books/path/:pathUrl` | GET | Opcional¹ | Recupera un libro por su slug. Cacheada 5 min per-user. Incrementa `views`. |
 
-### Rutas de usuarios
+¹ Usa `optionalAuth`: funciona sin cookie pero, si hay sesión, personaliza la respuesta (`isFavorite`).
+
+### Rutas de usuarios (`/api/users`, todas con `authMiddleware`)
+
+| Ruta | Método | `verifyToken` | Descripción |
+| --- | --- | --- | --- |
+| `/users` | GET | No | Lista de usuarios. |
+| `/users/me` | GET | Sí | Datos del usuario autenticado. Cacheada 5 min per-user. |
+| `/users/me/feed` | GET | Sí | Feed paginado cronológico: libros, comentarios, reading status, follows y eventos de favoritos/colecciones del usuario y sus seguidos. |
+| `/users/me/book-status/:bookId` | GET | Sí | Estado de lectura del usuario para un libro. |
+| `/users/me/book-status/:bookId` | PATCH | Sí | Setea/actualiza el estado (`read` \| `reading` \| `want_to_read`). |
+| `/users/me/book-status/:bookId` | DELETE | Sí | Elimina el estado de lectura. |
+| `/users/profile/:username/books` | GET | No | Perfil público + libros + `followersCount`, `followingCount`, `isFollowing`. |
+| `/users/:userId/:username/books` | GET | Sí | Libros de un usuario. |
+| `/users/:userId` | DELETE | Sí | Elimina la cuenta y limpia todos sus datos relacionados. |
+
+### Rutas de seguimiento (`/api/users`)
+
+| Ruta | Método | `verifyToken` | Descripción |
+| --- | --- | --- | --- |
+| `/users/follow/:targetUserId` | POST | Sí | Sigue a un usuario. Invalida `follow-stats` cache. |
+| `/users/follow/:targetUserId` | DELETE | Sí | Deja de seguir. Invalida `follow-stats` cache. |
+| `/users/:userId/followers` | GET | No | Lista de seguidores. |
+| `/users/:userId/following` | GET | No | Lista de seguidos. |
+| `/users/:userId/follow-stats` | GET | No | Estadísticas de seguimiento. Cacheada 5 min. |
+
+### Rutas de favoritos (`/api/users/favorites`, todas con `authMiddleware`)
+
+| Ruta | Método | Descripción |
+| --- | --- | --- |
+| `/:userId` | GET | Recupera libros favoritos paginados. |
+| `/` | PATCH | Agrega o elimina un libro de favoritos. Invalida cache de detalle per-user. |
+| `/:userId` | DELETE | Elimina todos los favoritos del usuario. |
+
+### Rutas de colecciones (`/api/users/collections`, todas con `authMiddleware`)
+
+| Ruta | Método | Descripción |
+| --- | --- | --- |
+| `/:userId` | GET | Lista de colecciones del usuario. |
+| `/:userId` | POST | Crea una nueva colección. |
+| `/:userId` | DELETE | Elimina todas las colecciones del usuario. |
+| `/collection/:collectionId` | GET | Recupera una colección con sus libros. |
+| `/collection/:collectionId` | PATCH | Actualiza el nombre de una colección. |
+| `/:userId/collection/:collectionId` | DELETE | Elimina una colección puntual. |
+| `/:userId/summary/:bookId` | GET | Colecciones del usuario que contienen un libro. |
+| `/books/toggle` | PATCH | Agrega o quita libro de una colección. |
+| `/remove` | PATCH | Elimina un libro de una colección. |
+
+### Rutas de comentarios (`/api/users/comments`)
 
 | Ruta | Método | Protegido | Descripción |
 | --- | --- | --- | --- |
-| `/users` | GET | No | Recupera una lista de usuarios. |
-| `/users/me` | GET | Sí | Obtiene los datos del usuario autenticado. |
-| `/users/me/feed` | GET | Sí | Recupera el feed de actividad (libros y comentarios de usuarios seguidos), paginado y ordenado cronológicamente. |
-| `/users/profile/:username/books` | GET | No | Recupera libros y perfil de un usuario por su username, incluyendo `followersCount`, `followingCount` e `isFollowing`. |
-| `/users/:userId/:username/books` | GET | Sí | Recupera libros de un usuario. |
-| `/users/:userId` | DELETE | Sí | Elimina la cuenta del usuario. |
+| `/book-comments/:bookId` | GET | No | Comentarios paginados de un libro. |
+| `/user-comments/:userId` | GET | No | Comentarios escritos por un usuario. |
+| `/comment/stats/:bookId` | GET | No | Estadísticas agregadas de comentarios de un libro. |
+| `/comment` | POST | Sí | Crea un comentario. |
+| `/comment/:commentId/:userId` | PATCH | Sí | Edita un comentario propio. |
+| `/comment/:commentId/:userId` | DELETE | Sí | Elimina un comentario propio. |
+| `/comment/:commentId/:userId/reaction` | POST | Sí | Agrega o togglea reacción (`like` / `dislike`). |
 
-### Rutas de seguimiento
-
-| Ruta | Método | Protegido | Descripción |
-| --- | --- | --- | --- |
-| `/users/follow/:targetUserId` | POST | Sí | Sigue a un usuario. |
-| `/users/follow/:targetUserId` | DELETE | Sí | Deja de seguir a un usuario. |
-| `/users/:userId/followers` | GET | No | Recupera la lista de seguidores de un usuario. |
-| `/users/:userId/following` | GET | No | Recupera la lista de usuarios seguidos. |
-| `/users/:userId/follow-stats` | GET | No | Recupera estadísticas de seguimiento (followers y following count). |
-
-### Rutas de favoritos
-
-| Ruta | Método | Protegido | Descripción |
-| --- | --- | --- | --- |
-| `/users/favorites/:userId` | GET | Sí | Recupera libros favoritos. |
-| `/users/favorites` | PATCH | Sí | Agrega o elimina un libro en favoritos. |
-| `/users/favorites/:userId` | DELETE | Sí | Elimina todos los favoritos. |
-
-### Rutas de colecciones
-
-| Ruta | Método | Protegido | Descripción |
-| --- | --- | --- | --- |
-| `/users/collections/:userId` | GET | Sí | Recupera colecciones de un usuario. |
-| `/users/:userId/collections/summary/:bookId` | GET | Sí | Recupera libros de una colección. |
-| `/users/collections/:userId` | POST | Sí | Crea una nueva colección. |
-| `/users/collections/:userId/collection/:collectionId` | DELETE | Sí | Elimina una colección. |
-| `/users/collections/:userId` | DELETE | Sí | Elimina todas las colecciones. |
-| `/users/collections/collection/:collectionId` | GET | Sí | Recupera una colección. |
-| `/users/collections/books/toggle` | PATCH | Sí | Agrega o elimina libro de colección. |
-| `/users/collections/:collectionId` | PATCH | Sí | Actualiza el nombre de una colección. |
-| `/users/collections/remove` | PATCH | Sí | Elimina un libro de una colección. |
-
-### Rutas de comentarios
-
-| Ruta | Método | Protegido | Descripción |
-| --- | --- | --- | --- |
-| `/users/comments/:bookId` | GET | No | Recupera comentarios de un libro. |
-| `/users/comments` | POST | Sí | Crea un comentario en un libro. |
-| `/users/comments/:commentId` | PATCH | Sí | Edita un comentario. |
-| `/users/comments/:commentId` | DELETE | Sí | Elimina un comentario. |
+---
 
 2025 Franco Andrés Sánchez
