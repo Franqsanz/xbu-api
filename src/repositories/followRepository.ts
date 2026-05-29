@@ -2,6 +2,19 @@ import followsModel from '../models/follows';
 import usersModel from '../models/users';
 import { IFollowData, IFollowingData, IFollowStats } from '../types/types';
 
+async function findFollowingSet(
+  currentUserId: string | null,
+  candidateUids: string[]
+): Promise<Set<string>> {
+  if (!currentUserId || candidateUids.length === 0) return new Set();
+  const docs = await followsModel
+    .find({ follower: currentUserId, following: { $in: candidateUids } })
+    .select('following')
+    .lean()
+    .exec();
+  return new Set(docs.map((d: any) => d.following));
+}
+
 export const FollowRepository = {
   async followUser(followerId: string, followingId: string): Promise<any> {
     const newFollow = new followsModel({
@@ -25,7 +38,12 @@ export const FollowRepository = {
     });
   },
 
-  async getFollowers(userId: string, limit: number = 10, offset: number = 0): Promise<IFollowData> {
+  async getFollowers(
+    userId: string,
+    limit: number = 10,
+    offset: number = 0,
+    currentUserId: string | null = null
+  ): Promise<IFollowData> {
     const totalFollowers = await followsModel.countDocuments({
       following: userId,
     });
@@ -38,10 +56,16 @@ export const FollowRepository = {
       .exec();
 
     const followerUids = followerRecords.map((f: any) => f.follower);
-    const followers = await usersModel.find(
-      { uid: { $in: followerUids } },
-      'uid username name picture'
-    );
+    const users = await usersModel
+      .find({ uid: { $in: followerUids } }, 'uid username name picture')
+      .lean()
+      .exec();
+
+    const followingSet = await findFollowingSet(currentUserId, followerUids);
+    const followers = users.map((u: any) => ({
+      ...u,
+      isFollowing: followingSet.has(u.uid),
+    }));
 
     return {
       followers,
@@ -52,7 +76,8 @@ export const FollowRepository = {
   async getFollowing(
     userId: string,
     limit: number = 10,
-    offset: number = 0
+    offset: number = 0,
+    currentUserId: string | null = null
   ): Promise<IFollowingData> {
     const totalFollowing = await followsModel.countDocuments({
       follower: userId,
@@ -66,10 +91,16 @@ export const FollowRepository = {
       .exec();
 
     const followingUids = followingRecords.map((f: any) => f.following);
-    const following = await usersModel.find(
-      { uid: { $in: followingUids } },
-      'uid username name picture'
-    );
+    const users = await usersModel
+      .find({ uid: { $in: followingUids } }, 'uid username name picture')
+      .lean()
+      .exec();
+
+    const followingSet = await findFollowingSet(currentUserId, followingUids);
+    const following = users.map((u: any) => ({
+      ...u,
+      isFollowing: followingSet.has(u.uid),
+    }));
 
     return {
       following,

@@ -131,13 +131,21 @@ interface IFollowStats {
   followingCount: number;
 }
 
+interface IFollowUser {
+  uid: string;
+  username: string;
+  name: string;
+  picture?: string;
+  isFollowing: boolean;
+}
+
 interface IFollowData {
-  followers: IUser[];
+  followers: IFollowUser[];
   totalFollowers: number;
 }
 
 interface IFollowingData {
-  following: IUser[];
+  following: IFollowUser[];
   totalFollowing: number;
 }
 
