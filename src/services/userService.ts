@@ -99,12 +99,22 @@ export const UserService: IFullRepositoryUser = {
     return await FollowRepository.isFollowing(followerId, followingId);
   },
 
-  async getFollowers(userId: string, limit = 10, offset = 0): Promise<IFollowData> {
-    return await FollowRepository.getFollowers(userId, limit, offset);
+  async getFollowers(
+    userId: string,
+    limit = 10,
+    offset = 0,
+    currentUserId: string | null = null
+  ): Promise<IFollowData> {
+    return await FollowRepository.getFollowers(userId, limit, offset, currentUserId);
   },
 
-  async getFollowing(userId: string, limit = 10, offset = 0): Promise<IFollowingData> {
-    return await FollowRepository.getFollowing(userId, limit, offset);
+  async getFollowing(
+    userId: string,
+    limit = 10,
+    offset = 0,
+    currentUserId: string | null = null
+  ): Promise<IFollowingData> {
+    return await FollowRepository.getFollowing(userId, limit, offset, currentUserId);
   },
 
   async getFollowStats(userId: string): Promise<IFollowStats> {

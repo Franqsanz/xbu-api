@@ -226,7 +226,8 @@ async function getFollowers(
     const { followers, totalFollowers } = await UserService.getFollowers(
       userId,
       parseInt(limit as string),
-      parseInt(offset as string)
+      parseInt(offset as string),
+      req.user?.uid ?? null
     );
 
     return res.status(200).json({
@@ -261,7 +262,8 @@ async function getFollowing(
     const { following, totalFollowing } = await UserService.getFollowing(
       userId,
       parseInt(limit as string),
-      parseInt(offset as string)
+      parseInt(offset as string),
+      req.user?.uid ?? null
     );
 
     return res.status(200).json({
