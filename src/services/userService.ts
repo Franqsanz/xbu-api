@@ -5,6 +5,7 @@ import { FavoriteRepository } from './../repositories/favoriteRepository';
 import { commentRepository } from './../repositories/commentRepository';
 import { BookStatusRepository } from './../repositories/bookStatusRepository';
 import { ActivityLogRepository } from './../repositories/activityLogRepository';
+import { BookRatingRepository } from './../repositories/bookRatingRepository';
 import { cloudinary } from '../config/cloudinary';
 import { authFirebase } from '../config/firebase';
 import { IFullRepositoryUser } from '../types/repositories/IUserRepository';
@@ -65,6 +66,7 @@ export const UserService: IFullRepositoryUser = {
       FollowRepository.deleteUserFollows(userId),
       BookStatusRepository.deleteAllByUserId(userId),
       ActivityLogRepository.deleteAllByUserId(userId),
+      BookRatingRepository.deleteAllByUserId(userId),
     ]);
 
     // Limpiar referencias huérfanas a los libros borrados en datos de otros usuarios
@@ -75,6 +77,7 @@ export const UserService: IFullRepositoryUser = {
         CollectionRepository.removeBookRefsFromAll(bookIds),
         BookStatusRepository.deleteAllByBookIds(bookIds),
         ActivityLogRepository.deleteAllByBookIds(bookIds),
+        BookRatingRepository.deleteAllByBookIds(bookIds),
       ]);
     }
 

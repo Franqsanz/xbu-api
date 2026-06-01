@@ -1,5 +1,6 @@
 import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
+import { BookRatingRepository } from '../repositories/bookRatingRepository';
 import { bookSchema } from '../utils/validation';
 import { IRepositoryBook } from '../types/repositories/IBookRepository';
 
@@ -121,6 +122,9 @@ export const BookService: IRepositoryBook = {
     if (book) {
       await cloudinary.uploader.destroy(book.image.public_id);
     }
+
+    // Borrar ratings huérfanos del libro borrado
+    await BookRatingRepository.deleteAllByBookIds([id]);
 
     return deleteOne;
   },

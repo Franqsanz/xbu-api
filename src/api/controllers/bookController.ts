@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 
 import { BookService } from '../../services/bookService';
+import { BookRatingService } from '../../services/bookRatingService';
 import { CacheService } from '../../services/cacheService';
 import { BadRequest, Forbidden, NotFound } from '../../utils/errors';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
@@ -197,7 +198,13 @@ async function getPathUrlBooks(
           throw NotFound('No se encuentra o no existe');
         }
 
-        return Array.isArray(result) ? result[0] : result;
+        const book: any = Array.isArray(result) ? result[0] : result;
+        const bookId = (book.id ?? book._id)?.toString();
+        const stats = bookId
+          ? await BookRatingService.getStats(bookId)
+          : { averageRating: 0, ratingsCount: 0 };
+
+        return { ...book, ...stats };
       },
       BOOKS_CACHE_TTL
     );

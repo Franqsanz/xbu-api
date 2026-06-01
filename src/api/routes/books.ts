@@ -16,6 +16,12 @@ import {
 } from '../controllers/bookController';
 import { query } from '../middlewares/query';
 import { pagination } from '../middlewares/pagination';
+import {
+  getMyRating,
+  getRatingStats,
+  setMyRating,
+  deleteMyRating,
+} from '../controllers/bookRatingController';
 import { upload } from '../middlewares/multer';
 import { optionalAuth } from '../middlewares/optionalAuth';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -234,6 +240,94 @@ router.get('/books/path/:pathUrl', optionalAuth, getPathUrlBooks);
  *         $ref: '#/components/responses/NotFound'
  */
 router.get('/books/:id', getOneBooks);
+
+/**
+ * @openapi
+ * /api/books/{id}/rating/me:
+ *   get:
+ *     tags: [Books]
+ *     summary: Obtiene el rating del usuario actual sobre un libro.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Rating del usuario (null si no rateó).
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *   put:
+ *     tags: [Books]
+ *     summary: Crea o actualiza el rating del usuario actual.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [rating]
+ *             properties:
+ *               rating: { type: integer, minimum: 1, maximum: 5 }
+ *     responses:
+ *       200:
+ *         description: Rating guardado.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *   delete:
+ *     tags: [Books]
+ *     summary: Quita el rating del usuario actual.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Rating eliminado.
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/books/:id/rating/me', verifyToken, getMyRating);
+router.put('/books/:id/rating/me', verifyToken, setMyRating);
+router.delete('/books/:id/rating/me', verifyToken, deleteMyRating);
+
+/**
+ * @openapi
+ * /api/books/{id}/rating/stats:
+ *   get:
+ *     tags: [Books]
+ *     summary: Promedio y cantidad de votos de un libro.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Stats del rating.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 averageRating: { type: number }
+ *                 ratingsCount: { type: integer }
+ */
+router.get('/books/:id/rating/stats', getRatingStats);
 
 /**
  * @openapi
