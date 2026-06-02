@@ -50,7 +50,9 @@ export function registerMW(app: Application) {
   app.options('*', cors(corsOptions));
 
   if (isProduction) {
-    app.use(apiKey);
+    // Solo proteger los endpoints de la API. Sitemap, health y home quedan
+    // accesibles sin api key para SEO, health checks y la landing.
+    app.use('/api', apiKey);
   }
 
   app.use(Sentry.Handlers.requestHandler());
