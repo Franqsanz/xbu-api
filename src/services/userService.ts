@@ -9,7 +9,70 @@ import { BookRatingRepository } from './../repositories/bookRatingRepository';
 import { cloudinary } from '../config/cloudinary';
 import { authFirebase } from '../config/firebase';
 import { IFullRepositoryUser } from '../types/repositories/IUserRepository';
-import { IFollowData, IFollowingData, IFollowStats } from '../types/types';
+import { IFollowData, IFollowingData, IFollowStats, IUser } from '../types/types';
+
+const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
+const RESERVED_USERNAMES = new Set([
+  'admin',
+  'api',
+  'me',
+  'profile',
+  'book',
+  'books',
+  'explore',
+  'login',
+  'logout',
+  'register',
+  'auth',
+  'user',
+  'users',
+  'feed',
+  'home',
+  'about',
+  'help',
+  'support',
+  'settings',
+]);
+
+export type UsernameValidation =
+  | { ok: true }
+  | { ok: false; reason: 'format' | 'reserved' | 'taken' };
+
+export async function validateUsername(
+  username: string,
+  currentUid?: string
+): Promise<UsernameValidation> {
+  const normalized = username?.toLowerCase().trim();
+  if (!normalized || !USERNAME_REGEX.test(normalized)) {
+    return { ok: false, reason: 'format' };
+  }
+  if (RESERVED_USERNAMES.has(normalized)) {
+    return { ok: false, reason: 'reserved' };
+  }
+  const existing = await UserRepository.findByUsername!(normalized);
+  if (existing && (existing as any).uid !== currentUid) {
+    return { ok: false, reason: 'taken' };
+  }
+  return { ok: true };
+}
+
+const CLOUDINARY_AVATAR_OPTIONS = {
+  upload_preset: 'xbu-uploads',
+  folder: `${process.env.CLOUDINARY_FOLDER}/avatars`,
+  format: 'webp' as const,
+  transformation: { quality: 70, width: 400, height: 400, crop: 'fill' as const },
+};
+
+function uploadAvatarToCloudinary(buffer: Buffer): Promise<any> {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(CLOUDINARY_AVATAR_OPTIONS, (err, result) => {
+        if (err) return reject(err);
+        resolve(result);
+      })
+      .end(buffer);
+  });
+}
 
 export const UserService: IFullRepositoryUser = {
   async findUsers() {
@@ -50,12 +113,18 @@ export const UserService: IFullRepositoryUser = {
     const books = await UserRepository.findBooksByUserId!(userId);
     const bookIds = books.map((b: any) => b._id.toString());
 
-    // Borrar imágenes de Cloudinary en paralelo; un fallo no aborta la baja de cuenta
-    await Promise.allSettled(
-      books
-        .filter((b: any) => b.image?.public_id)
-        .map((b: any) => cloudinary.uploader.destroy(b.image.public_id))
-    );
+    // Borrar imágenes de Cloudinary en paralelo (covers de libros + avatar propio
+    // si el usuario subió uno). Un fallo no aborta la baja de cuenta.
+    const cloudinaryDestroys: Promise<any>[] = books
+      .filter((b: any) => b.image?.public_id)
+      .map((b: any) => cloudinary.uploader.destroy(b.image.public_id));
+
+    const userPictureId = (user as any).pictureId;
+    if (userPictureId) {
+      cloudinaryDestroys.push(cloudinary.uploader.destroy(userPictureId));
+    }
+
+    await Promise.allSettled(cloudinaryDestroys);
 
     // Datos propios del usuario
     await Promise.all([
@@ -122,5 +191,81 @@ export const UserService: IFullRepositoryUser = {
 
   async getFollowStats(userId: string): Promise<IFollowStats> {
     return await FollowRepository.getFollowStats(userId);
+  },
+
+  async checkUsernameAvailability(
+    username: string,
+    currentUid?: string
+  ): Promise<UsernameValidation> {
+    return await validateUsername(username, currentUid);
+  },
+
+  async updateMe(
+    uid: string,
+    updates: { name?: string; username?: string; bio?: string },
+    avatarBuffer?: Buffer
+  ): Promise<IUser | null> {
+    const current = await UserRepository.findByUid!(uid);
+    if (!current) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    const patch: Partial<{
+      name: string;
+      username: string;
+      bio: string;
+      picture: string;
+      pictureId: string;
+    }> = {};
+
+    if (typeof updates.name === 'string') {
+      const trimmed = updates.name.trim();
+      if (trimmed.length < 1 || trimmed.length > 60) {
+        throw new Error('Nombre inválido (1 a 60 caracteres)');
+      }
+      patch.name = trimmed;
+    }
+
+    if (typeof updates.bio === 'string') {
+      if (updates.bio.length > 300) {
+        throw new Error('Bio demasiado larga (máx 300 caracteres)');
+      }
+      patch.bio = updates.bio;
+    }
+
+    if (typeof updates.username === 'string') {
+      const normalized = updates.username.toLowerCase().trim();
+      if (normalized !== (current as any).username) {
+        const check = await validateUsername(normalized, uid);
+        if (!check.ok) {
+          throw new Error(
+            check.reason === 'format'
+              ? 'Username inválido (3-20 caracteres, solo a-z, 0-9, _)'
+              : check.reason === 'reserved'
+                ? 'Ese username está reservado'
+                : 'Ese username ya está en uso'
+          );
+        }
+        patch.username = normalized;
+      }
+    }
+
+    if (avatarBuffer) {
+      const uploaded = await uploadAvatarToCloudinary(avatarBuffer);
+      patch.picture = uploaded.secure_url;
+      patch.pictureId = uploaded.public_id;
+
+      // Borrar la imagen anterior si era nuestra (tenía public_id propio)
+      const previousId = (current as any).pictureId;
+      if (previousId) {
+        try {
+          await cloudinary.uploader.destroy(previousId);
+        } catch (err) {
+          console.error('No se pudo borrar avatar anterior:', err);
+        }
+      }
+    }
+
+    return await UserRepository.updateMe!(uid, patch);
   },
 };

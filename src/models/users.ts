@@ -24,6 +24,14 @@ const usersSchema = new Schema(
     picture: {
       type: String,
     },
+    pictureId: {
+      type: String,
+    },
+    bio: {
+      type: String,
+      maxlength: 300,
+      default: '',
+    },
     email: {
       type: String,
       required: true,

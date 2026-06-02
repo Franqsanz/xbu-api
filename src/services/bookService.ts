@@ -6,7 +6,7 @@ import { IRepositoryBook } from '../types/repositories/IBookRepository';
 
 const CLOUDINARY_UPLOAD_OPTIONS = {
   upload_preset: 'xbu-uploads',
-  folder: process.env.CLOUDINARY_FOLDER,
+  folder: `${process.env.CLOUDINARY_FOLDER}/books`,
   format: 'webp' as const,
   transformation: { quality: 60 },
 };

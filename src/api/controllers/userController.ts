@@ -397,6 +397,50 @@ async function getFeed(
   }
 }
 
+async function getCheckUsername(req: Request, res: Response, next: NextFunction): Promise<any> {
+  const username = (req.query.u as string) ?? '';
+  const currentUid = req.user?.uid;
+
+  try {
+    const result = await UserService.checkUsernameAvailability(username, currentUid);
+    return res.status(200).json(result);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function patchMe(req: Request, res: Response, next: NextFunction): Promise<any> {
+  const currentUid = req.user?.uid;
+  const { body, file } = req;
+
+  if (!currentUid) {
+    throw BadRequest('Usuario no autenticado');
+  }
+
+  try {
+    const updates = body.profile ? JSON.parse(body.profile) : {};
+    const updated = await UserService.updateMe(currentUid, updates, file?.buffer);
+
+    if (!updated) {
+      throw NotFound('Usuario no encontrado');
+    }
+
+    await CacheService.del(meKey(currentUid));
+
+    return res.status(200).json(updated);
+  } catch (err: any) {
+    if (
+      err?.message?.includes('inválido') ||
+      err?.message?.includes('en uso') ||
+      err?.message?.includes('reservado') ||
+      err?.message?.includes('larga')
+    ) {
+      return res.status(400).json({ error: { status: 400, message: err.message } });
+    }
+    return next(err) as any;
+  }
+}
+
 export {
   getUsers,
   getCheckUser,
@@ -409,4 +453,6 @@ export {
   getFollowing,
   getFollowStats,
   getFeed,
+  getCheckUsername,
+  patchMe,
 };

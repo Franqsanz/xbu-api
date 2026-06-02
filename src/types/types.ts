@@ -39,6 +39,8 @@ interface IUser extends pkg.Document {
   username: string;
   name: string;
   picture: string;
+  pictureId?: string;
+  bio?: string;
   email: string;
   createdAt: Date;
 }

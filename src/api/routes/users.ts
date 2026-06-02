@@ -12,6 +12,8 @@ import {
   getFollowing,
   getFollowStats,
   getFeed,
+  getCheckUsername,
+  patchMe,
 } from '../controllers/userController';
 import {
   getBookStatus,
@@ -21,6 +23,7 @@ import {
 } from '../controllers/bookStatusController';
 import { verifyToken } from '../middlewares/verifyToken';
 import { pagination } from '../middlewares/pagination';
+import { upload } from '../middlewares/multer';
 
 const router: Router = express.Router();
 
@@ -61,6 +64,69 @@ router.get('/', getUsers);
  *         $ref: '#/components/responses/NotFound'
  */
 router.get('/me', verifyToken, getCheckUser);
+
+/**
+ * @openapi
+ * /api/users/me:
+ *   patch:
+ *     tags: [Users]
+ *     summary: Actualiza datos del perfil del usuario actual.
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               profile:
+ *                 type: string
+ *                 description: JSON stringify con { name?, username?, bio? }
+ *     responses:
+ *       200:
+ *         description: Perfil actualizado.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.patch('/me', verifyToken, upload.single('image'), patchMe);
+
+/**
+ * @openapi
+ * /api/users/check-username:
+ *   get:
+ *     tags: [Users]
+ *     summary: Verifica si un username está disponible.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: u
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Resultado de la validación.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               oneOf:
+ *                 - type: object
+ *                   properties:
+ *                     ok: { type: boolean, enum: [true] }
+ *                 - type: object
+ *                   properties:
+ *                     ok: { type: boolean, enum: [false] }
+ *                     reason: { type: string, enum: [format, reserved, taken] }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/check-username', verifyToken, getCheckUsername);
 
 /**
  * @openapi

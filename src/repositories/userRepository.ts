@@ -19,6 +19,26 @@ export const UserRepository: IRepositoryUser = {
     });
   },
 
+  async findByUsername(username: string) {
+    return await usersModel.findOne({ username: username.toLowerCase().trim() }).lean().exec();
+  },
+
+  async updateMe(
+    uid: string,
+    updates: Partial<{
+      name: string;
+      username: string;
+      bio: string;
+      picture: string;
+      pictureId: string;
+    }>
+  ) {
+    return await usersModel
+      .findOneAndUpdate({ uid }, { $set: updates }, { new: true })
+      .lean()
+      .exec();
+  },
+
   async findUserAndBooks(userId, limit, offset) {
     const user = await usersModel.findOne({ uid: userId }, 'uid name picture createdAt');
 

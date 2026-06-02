@@ -6,7 +6,7 @@ function qyCheckUser(userId: string) {
     uid: userId,
   };
 
-  const projection = 'uid name username picture createdAt';
+  const projection = 'uid name username picture pictureId bio createdAt';
 
   return {
     query,
