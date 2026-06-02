@@ -4,6 +4,7 @@ import commentsModel from '../models/comments';
 import usersModel from '../models/users';
 import bookStatusesModel from '../models/bookStatuses';
 import activityLogModel from '../models/activityLog';
+import bookRatingsModel from '../models/bookRatings';
 
 type FeedActor = {
   uid: string;
@@ -25,13 +26,14 @@ type FeedBook = {
 type StatusValue = 'read' | 'reading' | 'want_to_read';
 
 type FeedActivity = {
-  type: 'book' | 'comment' | 'status' | 'follow' | 'favorite' | 'collection';
+  type: 'book' | 'comment' | 'status' | 'follow' | 'favorite' | 'collection' | 'rating';
   createdAt: Date;
   actor: FeedActor;
   book?: FeedBook;
   target?: FeedActor;
   comment?: { id: string; text: string };
   status?: StatusValue;
+  rating?: number;
 };
 
 export const FeedRepository = {
@@ -55,46 +57,54 @@ export const FeedRepository = {
     // (no los míos propios, sería redundante para el usuario).
     const followActorUids = targetUids.filter((uid) => uid !== userId);
 
-    const [bookDocs, commentDocs, statusDocs, followDocs, activityDocs] = await Promise.all([
-      booksModel
-        .find({ userId: { $in: targetUids } })
-        .sort({ createdAt: -1 })
-        .limit(fetchUpTo)
-        .lean()
-        .exec(),
-      commentsModel
-        .find({ 'author.userId': { $in: targetUids } })
-        .sort({ createdAt: -1 })
-        .limit(fetchUpTo)
-        .lean()
-        .exec(),
-      bookStatusesModel
-        .find({ userId: { $in: targetUids } })
-        .sort({ updatedAt: -1 })
-        .limit(fetchUpTo)
-        .lean()
-        .exec(),
-      followActorUids.length > 0
-        ? followsModel
-            .find({ follower: { $in: followActorUids } })
-            .sort({ createdAt: -1 })
-            .limit(fetchUpTo)
-            .lean()
-            .exec()
-        : Promise.resolve([]),
-      activityLogModel
-        .find({ userId: { $in: targetUids } })
-        .sort({ createdAt: -1 })
-        .limit(fetchUpTo)
-        .lean()
-        .exec(),
-    ]);
+    const [bookDocs, commentDocs, statusDocs, followDocs, activityDocs, ratingDocs] =
+      await Promise.all([
+        booksModel
+          .find({ userId: { $in: targetUids } })
+          .sort({ createdAt: -1 })
+          .limit(fetchUpTo)
+          .lean()
+          .exec(),
+        commentsModel
+          .find({ 'author.userId': { $in: targetUids } })
+          .sort({ createdAt: -1 })
+          .limit(fetchUpTo)
+          .lean()
+          .exec(),
+        bookStatusesModel
+          .find({ userId: { $in: targetUids } })
+          .sort({ updatedAt: -1 })
+          .limit(fetchUpTo)
+          .lean()
+          .exec(),
+        followActorUids.length > 0
+          ? followsModel
+              .find({ follower: { $in: followActorUids } })
+              .sort({ createdAt: -1 })
+              .limit(fetchUpTo)
+              .lean()
+              .exec()
+          : Promise.resolve([]),
+        activityLogModel
+          .find({ userId: { $in: targetUids } })
+          .sort({ createdAt: -1 })
+          .limit(fetchUpTo)
+          .lean()
+          .exec(),
+        bookRatingsModel
+          .find({ userId: { $in: targetUids } })
+          .sort({ updatedAt: -1 })
+          .limit(fetchUpTo)
+          .lean()
+          .exec(),
+      ]);
 
     const referencedBookIds = Array.from(
       new Set([
         ...commentDocs.map((c: any) => c.bookId),
         ...statusDocs.map((s: any) => s.bookId),
         ...activityDocs.map((a: any) => a.bookId),
+        ...ratingDocs.map((r: any) => r.bookId),
       ])
     );
     const actorUids = Array.from(
@@ -105,6 +115,7 @@ export const FeedRepository = {
         ...followDocs.map((f: any) => f.follower),
         ...followDocs.map((f: any) => f.following),
         ...activityDocs.map((a: any) => a.userId),
+        ...ratingDocs.map((r: any) => r.userId),
       ])
     );
 
@@ -226,12 +237,28 @@ export const FeedRepository = {
       })
       .filter((a): a is FeedActivity => a !== null);
 
+    const ratingActivities: FeedActivity[] = ratingDocs
+      .map((r: any): FeedActivity | null => {
+        const actor = actorByUid.get(r.userId);
+        const book = bookById.get(r.bookId);
+        if (!actor || !book) return null;
+        return {
+          type: 'rating',
+          createdAt: r.updatedAt ?? r.createdAt,
+          actor,
+          book,
+          rating: r.rating,
+        };
+      })
+      .filter((a): a is FeedActivity => a !== null);
+
     const merged = [
       ...bookActivities,
       ...commentActivities,
       ...statusActivities,
       ...followActivities,
       ...logActivities,
+      ...ratingActivities,
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     const paginated = merged.slice(offset, offset + limit);
