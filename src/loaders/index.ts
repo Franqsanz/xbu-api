@@ -25,6 +25,7 @@ import favorites from '../api/routes/favorites';
 import collections from '../api/routes/collections';
 import comments from '../api/routes/comments';
 import { swaggerSpec } from '../docs/swagger';
+import { getSitemap } from '../api/controllers/sitemapController';
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -127,6 +128,7 @@ export function registerRoutes(app: Application) {
   });
 
   app.get('/health', (req, res) => res.status(200).json({ status: 'ok' }));
+  app.get('/sitemap.xml', getSitemap);
   app.use('/api', books);
   app.use('/api/auth', auth);
   app.use('/api/users/comments', comments);
