@@ -198,7 +198,8 @@ async function getPathUrlBooks(
           throw NotFound('No se encuentra o no existe');
         }
 
-        const book: any = Array.isArray(result) ? result[0] : result;
+        const raw: any = Array.isArray(result) ? result[0] : result;
+        const book = typeof raw?.toJSON === 'function' ? raw.toJSON() : raw;
         const bookId = (book.id ?? book._id)?.toString();
         const stats = bookId
           ? await BookRatingService.getStats(bookId)
