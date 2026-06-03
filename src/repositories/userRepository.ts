@@ -83,7 +83,7 @@ export const UserRepository: IRepositoryUser = {
   async findUserByUsernameAndBooks(username, limit, offset) {
     const user = await usersModel.findOne(
       { username: { $regex: `^${username.trim()}$`, $options: 'i' } },
-      'uid name picture username createdAt'
+      'uid name picture username bio createdAt'
     );
 
     if (!user) {
