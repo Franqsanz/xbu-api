@@ -15,6 +15,7 @@ export interface IWriteComment {
   update(commentId: string, userId: string, text: string): Promise<IComment | null>;
   delete(commentId: string, userId: string): Promise<IComment | null>;
   deleteAllByUserId(userId: string): Promise<boolean>;
+  countByUserId(userId: string): Promise<number>;
   deleteAllByBookIds(bookIds: string[]): Promise<boolean>;
   removeAllReactionsByUserId(userId: string): Promise<void>;
 }

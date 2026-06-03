@@ -185,6 +185,10 @@ export const commentRepository: IRepositoryComment = {
     return result.deletedCount > 0;
   },
 
+  async countByUserId(userId) {
+    return await commentsModel.countDocuments({ 'author.userId': userId }).exec();
+  },
+
   async deleteAllByBookIds(bookIds) {
     if (bookIds.length === 0) return false;
     const result = await commentsModel.deleteMany({

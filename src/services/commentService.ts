@@ -24,6 +24,10 @@ export const commentService: ICommentService = {
     return await commentRepository.deleteAllByUserId(userId);
   },
 
+  async countByUserId(userId) {
+    return await commentRepository.countByUserId(userId);
+  },
+
   async deleteAllByBookIds(bookIds) {
     return await commentRepository.deleteAllByBookIds(bookIds);
   },

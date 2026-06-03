@@ -30,6 +30,10 @@ export const BookStatusRepository: IBookStatusOperations = {
     return await bookStatusesModel.deleteMany({ userId }).exec();
   },
 
+  async countByUserAndStatus(userId: string, status: BookStatusValue): Promise<number> {
+    return await bookStatusesModel.countDocuments({ userId, status }).exec();
+  },
+
   async deleteAllByBookIds(bookIds: string[]) {
     if (bookIds.length === 0) return { deletedCount: 0 };
     return await bookStatusesModel.deleteMany({ bookId: { $in: bookIds } }).exec();

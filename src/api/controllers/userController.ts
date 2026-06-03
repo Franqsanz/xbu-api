@@ -3,6 +3,9 @@ import { Request, Response, NextFunction } from 'express';
 import { UserService } from '../../services/userService';
 import { FeedService } from '../../services/feedService';
 import { CacheService } from '../../services/cacheService';
+import { BookStatusService } from '../../services/bookStatusService';
+import { BookService } from '../../services/bookService';
+import { commentService } from '../../services/commentService';
 import { IUser, IUserAndBooks } from '../../types/types';
 import {
   SuccessMessage,
@@ -336,12 +339,17 @@ async function getUserAndBooksByUsername(
 
     req.calculatePagination!(totalBooks);
 
-    const [isFollowing, followStats] = await Promise.all([
-      currentUserId && currentUserId !== user.uid
-        ? UserService.isFollowing(currentUserId, user.uid).then(Boolean)
-        : Promise.resolve(false),
-      UserService.getFollowStats(user.uid),
-    ]);
+    const [isFollowing, followStats, readCount, commentsCount, topCategories, booksStats] =
+      await Promise.all([
+        currentUserId && currentUserId !== user.uid
+          ? UserService.isFollowing(currentUserId, user.uid).then(Boolean)
+          : Promise.resolve(false),
+        UserService.getFollowStats(user.uid),
+        BookStatusService.countByUserAndStatus(user.uid, 'read'),
+        commentService.countByUserId(user.uid),
+        BookService.findTopCategoriesByUser(user.uid, 4),
+        BookService.findStatsByUser(user.uid),
+      ]);
 
     const response = {
       info: req.paginationInfo,
@@ -350,6 +358,10 @@ async function getUserAndBooksByUsername(
       isFollowing,
       followersCount: followStats.followersCount,
       followingCount: followStats.followingCount,
+      readCount,
+      commentsCount,
+      topCategories,
+      booksStats,
     };
 
     return res.status(200).json(response);

@@ -22,7 +22,16 @@ function uploadToCloudinary(buffer: Buffer, public_id?: string): Promise<any> {
   });
 }
 
-export const BookService: IRepositoryBook = {
+type IBookService = IRepositoryBook & {
+  findStatsByUser(userId: string): Promise<{
+    totalViews: number;
+    mostViewed: { id: string; title: string; pathUrl: string; views: number } | null;
+    averageRating: number;
+    ratingsCount: number;
+  }>;
+};
+
+export const BookService: IBookService = {
   async findBooks(limit, offset) {
     return await BookRepository.findBooks(limit, offset);
   },
@@ -80,6 +89,22 @@ export const BookService: IRepositoryBook = {
       limit,
       offset
     );
+  },
+
+  async findTopCategoriesByUser(userId, limit) {
+    return await BookRepository.findTopCategoriesByUser(userId, limit);
+  },
+
+  async findBooksStatsByUser(userId) {
+    return await BookRepository.findBooksStatsByUser(userId);
+  },
+
+  async findStatsByUser(userId: string) {
+    const { totalViews, mostViewed, bookIds } = await BookRepository.findBooksStatsByUser(userId);
+    const { averageRating, ratingsCount } =
+      await BookRatingRepository.getAverageForBookIds(bookIds);
+
+    return { totalViews, mostViewed, averageRating, ratingsCount };
   },
 
   async createBook(body, buffer) {

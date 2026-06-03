@@ -21,6 +21,15 @@ export interface IReadBook {
     limit?: number,
     offset?: number
   ): Promise<IFindBooks>;
+  findTopCategoriesByUser(
+    userId: string,
+    limit: number
+  ): Promise<Array<{ name: string; count: number }>>;
+  findBooksStatsByUser(userId: string): Promise<{
+    totalViews: number;
+    mostViewed: { id: string; title: string; pathUrl: string; views: number } | null;
+    bookIds: string[];
+  }>;
 }
 
 export interface IWriteBook {

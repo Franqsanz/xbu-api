@@ -222,6 +222,45 @@ export const BookRepository: IRepositoryBook = {
     };
   },
 
+  async findBooksStatsByUser(userId) {
+    const [agg] = await booksModel
+      .aggregate([
+        { $match: { userId } },
+        {
+          $facet: {
+            totalViews: [{ $group: { _id: null, total: { $sum: '$views' } } }],
+            mostViewed: [
+              { $sort: { views: -1 } },
+              { $limit: 1 },
+              { $project: { id: '$_id', title: 1, pathUrl: 1, views: 1, _id: 0 } },
+            ],
+            ids: [{ $project: { id: { $toString: '$_id' }, _id: 0 } }],
+          },
+        },
+      ])
+      .exec();
+
+    const totalViews = agg?.totalViews?.[0]?.total ?? 0;
+    const mostViewed = agg?.mostViewed?.[0] ?? null;
+    const bookIds = (agg?.ids ?? []).map((d: any) => d.id);
+
+    return { totalViews, mostViewed, bookIds };
+  },
+
+  async findTopCategoriesByUser(userId, limit) {
+    const result = await booksModel
+      .aggregate([
+        { $match: { userId } },
+        { $unwind: '$category' },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: limit },
+      ])
+      .exec();
+
+    return result.map((r) => ({ name: r._id, count: r.count }));
+  },
+
   async createBook(body) {
     const newBook = new booksModel(body);
 

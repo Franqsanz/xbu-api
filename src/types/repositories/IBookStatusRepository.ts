@@ -5,6 +5,7 @@ export interface IBookStatusOperations {
   setStatus(userId: string, bookId: string, status: BookStatusValue): Promise<IBookStatus | null>;
   deleteStatus(userId: string, bookId: string): Promise<{ deletedCount?: number }>;
   deleteAllByUserId(userId: string): Promise<{ deletedCount?: number }>;
+  countByUserAndStatus(userId: string, status: BookStatusValue): Promise<number>;
   deleteAllByBookIds(bookIds: string[]): Promise<{ deletedCount?: number }>;
   listByUserAndStatus(
     userId: string,

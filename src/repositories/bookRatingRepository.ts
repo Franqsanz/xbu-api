@@ -63,6 +63,23 @@ export const BookRatingRepository = {
     );
   },
 
+  async getAverageForBookIds(bookIds: string[]): Promise<BookRatingStats> {
+    if (bookIds.length === 0) return { averageRating: 0, ratingsCount: 0 };
+
+    const [agg] = await bookRatingsModel
+      .aggregate([
+        { $match: { bookId: { $in: bookIds } } },
+        { $group: { _id: null, average: { $avg: '$rating' }, count: { $sum: 1 } } },
+      ])
+      .exec();
+
+    if (!agg) return { averageRating: 0, ratingsCount: 0 };
+    return {
+      averageRating: Math.round(agg.average * 10) / 10,
+      ratingsCount: agg.count,
+    };
+  },
+
   async deleteAllByUserId(userId: string) {
     return await bookRatingsModel.deleteMany({ userId }).exec();
   },
