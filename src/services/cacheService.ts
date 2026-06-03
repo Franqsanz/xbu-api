@@ -1,10 +1,24 @@
 import { redis } from '../config/redis';
 
 /**
+ * Namespace de cache: cambia en cada deploy si está disponible
+ * `RENDER_GIT_COMMIT`, o manualmente vía `CACHE_VERSION`. Las keys
+ * viejas quedan huérfanas y expiran solas — protección contra
+ * respuestas con formato obsoleto al deployar.
+ */
+const CACHE_NAMESPACE =
+  process.env.CACHE_VERSION ?? process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? 'dev';
+
+function ns(key: string): string {
+  return `${CACHE_NAMESPACE}:${key}`;
+}
+
+/**
  * Service de cache sobre Redis. Encapsula el cliente y agrega:
  * - Failover silencioso: si Redis cae, el caller no falla.
  * - Serialización JSON automática.
  * - TTL atómico (set + EX en una sola call).
+ * - Namespace por deploy (ver CACHE_NAMESPACE).
  *
  * Pattern principal: `getOrSet(key, fetcher, ttl)` — leer cache;
  * si no está, ejecutar `fetcher`, guardar y devolver.
@@ -12,7 +26,7 @@ import { redis } from '../config/redis';
 export const CacheService = {
   async get<T = unknown>(key: string): Promise<T | null> {
     try {
-      const cached = await redis.get(key);
+      const cached = await redis.get(ns(key));
       return cached ? (JSON.parse(cached) as T) : null;
     } catch (err) {
       console.error(`[CacheService] get error for "${key}":`, err);
@@ -22,7 +36,7 @@ export const CacheService = {
 
   async set<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
     try {
-      await redis.set(key, JSON.stringify(value), 'EX', ttlSeconds);
+      await redis.set(ns(key), JSON.stringify(value), 'EX', ttlSeconds);
     } catch (err) {
       console.error(`[CacheService] set error for "${key}":`, err);
     }
@@ -31,7 +45,7 @@ export const CacheService = {
   async del(...keys: string[]): Promise<void> {
     if (keys.length === 0) return;
     try {
-      await redis.del(...keys);
+      await redis.del(...keys.map(ns));
     } catch (err) {
       console.error('[CacheService] del error:', err);
     }
@@ -43,7 +57,7 @@ export const CacheService = {
    */
   async invalidatePattern(pattern: string): Promise<void> {
     try {
-      const stream = redis.scanStream({ match: pattern, count: 100 });
+      const stream = redis.scanStream({ match: ns(pattern), count: 100 });
       const keys: string[] = [];
 
       for await (const batch of stream) {
