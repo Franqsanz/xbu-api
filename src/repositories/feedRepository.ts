@@ -26,7 +26,7 @@ type FeedBook = {
 type StatusValue = 'read' | 'reading' | 'want_to_read';
 
 type FeedActivity = {
-  type: 'book' | 'comment' | 'status' | 'follow' | 'favorite' | 'collection' | 'rating';
+  type: 'book' | 'comment' | 'status' | 'follow' | 'favorite' | 'collection' | 'rating' | 'group';
   createdAt: Date;
   actor: FeedActor;
   book?: FeedBook;
@@ -34,6 +34,7 @@ type FeedActivity = {
   comment?: { id: string; text: string };
   status?: StatusValue;
   rating?: number;
+  activities?: FeedActivity[];
 };
 
 export const FeedRepository = {
@@ -261,8 +262,45 @@ export const FeedRepository = {
       ...ratingActivities,
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const paginated = merged.slice(offset, offset + limit);
+    // Agrupar actividades del mismo (actor + libro + día) cuando hay 2+.
+    // Eventos de follow no entran (no tienen libro asociado).
+    const groupBuckets = new Map<string, FeedActivity[]>();
+    const ungrouped: FeedActivity[] = [];
 
-    return { activities: paginated, total: merged.length };
+    for (const act of merged) {
+      if (!act.book) {
+        ungrouped.push(act);
+        continue;
+      }
+      const day = new Date(act.createdAt).toISOString().slice(0, 10);
+      const key = `${act.actor.uid}:${act.book.id}:${day}`;
+      const bucket = groupBuckets.get(key);
+      if (bucket) {
+        bucket.push(act);
+      } else {
+        groupBuckets.set(key, [act]);
+      }
+    }
+
+    const grouped: FeedActivity[] = [...ungrouped];
+    for (const items of groupBuckets.values()) {
+      if (items.length === 1) {
+        grouped.push(items[0]);
+      } else {
+        grouped.push({
+          type: 'group',
+          createdAt: items[0].createdAt,
+          actor: items[0].actor,
+          book: items[0].book,
+          activities: items,
+        });
+      }
+    }
+
+    grouped.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    const paginated = grouped.slice(offset, offset + limit);
+
+    return { activities: paginated, total: grouped.length };
   },
 };
