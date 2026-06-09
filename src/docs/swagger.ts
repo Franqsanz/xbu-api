@@ -23,6 +23,7 @@ const options: swaggerJsdoc.Options = {
       { name: 'Favorites', description: 'Favoritos del usuario' },
       { name: 'Collections', description: 'Colecciones personalizadas' },
       { name: 'Comments', description: 'Comentarios y reacciones' },
+      { name: 'Notifications', description: 'Notificaciones in-app del usuario' },
     ],
     components: {
       securitySchemes: {
@@ -196,6 +197,31 @@ const options: swaggerJsdoc.Options = {
             },
             followersCount: { type: 'integer' },
             followingCount: { type: 'integer' },
+          },
+        },
+        Notification: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            type: { type: 'string', enum: ['follow', 'comment', 'rating'] },
+            read: { type: 'boolean' },
+            createdAt: { type: 'string', format: 'date-time' },
+            rating: { type: 'integer', minimum: 1, maximum: 5, nullable: true },
+            commentId: { type: 'string', nullable: true },
+            actor: { $ref: '#/components/schemas/UserSummary' },
+            book: {
+              type: 'object',
+              nullable: true,
+              properties: {
+                id: { type: 'string' },
+                title: { type: 'string' },
+                pathUrl: { type: 'string' },
+                image: {
+                  type: 'object',
+                  properties: { url: { type: 'string' } },
+                },
+              },
+            },
           },
         },
         Error: {

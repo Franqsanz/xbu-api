@@ -24,6 +24,7 @@ import users from '../api/routes/users';
 import favorites from '../api/routes/favorites';
 import collections from '../api/routes/collections';
 import comments from '../api/routes/comments';
+import notifications from '../api/routes/notifications';
 import { swaggerSpec } from '../docs/swagger';
 import { getSitemap } from '../api/controllers/sitemapController';
 
@@ -137,6 +138,7 @@ export function registerRoutes(app: Application) {
   app.use('/api/users', authMiddleware, users);
   app.use('/api/users/favorites', authMiddleware, favorites);
   app.use('/api/users/collections', authMiddleware, collections);
+  app.use('/api/notifications', notifications);
 
   if (isProduction) {
     app.use('/api-docs', (req, res) => {
