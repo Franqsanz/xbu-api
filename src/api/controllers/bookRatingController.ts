@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { BookRatingService } from '../../services/bookRatingService';
+import { BookService } from '../../services/bookService';
+import { NotificationService } from '../../services/notificationService';
 import { BadRequest } from '../../utils/errors';
 
 async function getMyRating(req: Request, res: Response, next: NextFunction): Promise<any> {
@@ -45,6 +47,24 @@ async function setMyRating(req: Request, res: Response, next: NextFunction): Pro
 
   try {
     await BookRatingService.setRating(userId, bookId, rating);
+
+    (async () => {
+      try {
+        const book = await BookService.findByIdRaw(bookId);
+        if (book?.userId) {
+          await NotificationService.createSafe({
+            userId: book.userId,
+            type: 'rating',
+            actorId: userId,
+            bookId,
+            rating,
+          });
+        }
+      } catch (err) {
+        console.error('[bookRatingController.setRating] notification failed:', err);
+      }
+    })();
+
     return res.status(200).json({ rating });
   } catch (err) {
     return next(err) as any;

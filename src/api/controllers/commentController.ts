@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 
 import { commentService } from '../../services/commentService';
+import { BookService } from '../../services/bookService';
+import { NotificationService } from '../../services/notificationService';
 import { IComment, ICommentStats } from '../../types/types';
 import { BadRequest } from '../../utils/errors';
 
@@ -102,7 +104,24 @@ async function create(
   const { body } = req;
 
   try {
-    await commentService.create(body);
+    const created = await commentService.create(body);
+
+    (async () => {
+      try {
+        const book = await BookService.findByIdRaw(body.bookId);
+        if (book?.userId) {
+          await NotificationService.createSafe({
+            userId: book.userId,
+            type: 'comment',
+            actorId: body.author?.userId,
+            bookId: body.bookId,
+            commentId: (created as any)?._id?.toString(),
+          });
+        }
+      } catch (err) {
+        console.error('[commentController.create] notification failed:', err);
+      }
+    })();
 
     return res.status(201).json({
       success: {

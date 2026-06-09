@@ -6,6 +6,8 @@ import { CacheService } from '../../services/cacheService';
 import { BookStatusService } from '../../services/bookStatusService';
 import { BookService } from '../../services/bookService';
 import { commentService } from '../../services/commentService';
+import { NotificationService } from '../../services/notificationService';
+import { NotificationRepository } from '../../repositories/notificationRepository';
 import { IUser, IUserAndBooks } from '../../types/types';
 import {
   SuccessMessage,
@@ -169,6 +171,12 @@ async function followUser(
 
     await CacheService.del(followStatsKey(currentUserId), followStatsKey(followingId));
 
+    NotificationService.createSafe({
+      userId: followingId,
+      type: 'follow',
+      actorId: currentUserId,
+    });
+
     return res.status(201).json({
       success: {
         status: 201,
@@ -199,6 +207,12 @@ async function unfollowUser(
     await UserService.unfollowUser(currentUserId, followingId);
 
     await CacheService.del(followStatsKey(currentUserId), followStatsKey(followingId));
+
+    NotificationRepository.deleteByActorTypeRef({
+      userId: followingId,
+      actorId: currentUserId,
+      type: 'follow',
+    }).catch((err) => console.error('[unfollowUser] failed to delete follow notification:', err));
 
     return res.status(200).json({
       success: {
