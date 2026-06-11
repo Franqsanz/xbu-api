@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "build": "tsc -p .",
     "migrate:ratings": "ts-node-dev --transpile-only --exit-child -r dotenv/config src/scripts/migrateBookRatings.ts",
+    "migrate:reactions": "ts-node-dev --transpile-only --exit-child -r dotenv/config src/scripts/migrateReactionNotifications.ts",
     "prepare": "husky install || true"
   },
   "lint-staged": {
