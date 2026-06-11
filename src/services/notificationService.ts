@@ -27,6 +27,7 @@ export type EnrichedNotification = {
   createdAt: Date;
   rating?: number;
   commentId?: string;
+  reactionType?: 'like' | 'dislike';
   actor: ActorSummary | null;
   book?: BookSummary | null;
 };
@@ -95,6 +96,7 @@ export const NotificationService = {
       createdAt: n.createdAt,
       rating: n.rating,
       commentId: n.commentId,
+      reactionType: n.reactionType,
       actor: actorByUid.get(n.actorId) ?? null,
       book: n.bookId ? (bookById.get(n.bookId) ?? null) : undefined,
     }));

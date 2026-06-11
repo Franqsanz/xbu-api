@@ -203,11 +203,16 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             id: { type: 'string' },
-            type: { type: 'string', enum: ['follow', 'comment', 'rating'] },
+            type: { type: 'string', enum: ['follow', 'comment', 'rating', 'reaction'] },
             read: { type: 'boolean' },
             createdAt: { type: 'string', format: 'date-time' },
             rating: { type: 'integer', minimum: 1, maximum: 5, nullable: true },
             commentId: { type: 'string', nullable: true },
+            reactionType: {
+              type: 'string',
+              enum: ['like', 'dislike'],
+              nullable: true,
+            },
             actor: { $ref: '#/components/schemas/UserSummary' },
             book: {
               type: 'object',

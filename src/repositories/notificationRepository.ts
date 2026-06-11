@@ -1,6 +1,6 @@
 import notificationsModel from '../models/notifications';
 
-export type NotificationType = 'follow' | 'comment' | 'rating';
+export type NotificationType = 'follow' | 'comment' | 'rating' | 'reaction';
 
 export type CreateNotificationInput = {
   userId: string;
@@ -9,6 +9,7 @@ export type CreateNotificationInput = {
   bookId?: string;
   commentId?: string;
   rating?: number;
+  reactionType?: 'like' | 'dislike';
 };
 
 export const NotificationRepository = {
@@ -50,6 +51,7 @@ export const NotificationRepository = {
     actorId: string;
     type: NotificationType;
     bookId?: string;
+    commentId?: string;
   }) {
     const filter: any = {
       userId: opts.userId,
@@ -57,6 +59,7 @@ export const NotificationRepository = {
       type: opts.type,
     };
     if (opts.bookId) filter.bookId = opts.bookId;
+    if (opts.commentId) filter.commentId = opts.commentId;
     return await notificationsModel.deleteMany(filter).exec();
   },
 

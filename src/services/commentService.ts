@@ -1,5 +1,7 @@
 import { commentRepository } from '../repositories/commentRepository';
 import { UserRepository } from '../repositories/userRepository';
+import { NotificationService } from './notificationService';
+import { NotificationRepository } from '../repositories/notificationRepository';
 import { ICommentService } from '../types/repositories/ICommentRepository';
 import { commentSchema } from '../utils/validation';
 
@@ -91,13 +93,52 @@ export const commentService: ICommentService = {
       throw new Error('Tipo de reacción inválida');
     }
 
+    const authorId = (existingComment as any).author?.userId;
+    const bookId = (existingComment as any).bookId;
+
     // Si el usuario ya tiene la misma reacción, la removemos (toggle)
     const userReaction = existingComment.reactions.find((r) => r.userId.toString() === userId);
     if (userReaction && userReaction.type === reactionType) {
-      return await commentRepository.removeReaction(commentId, userId);
+      const result = await commentRepository.removeReaction(commentId, userId);
+      if (authorId && authorId !== userId) {
+        NotificationRepository.deleteByActorTypeRef({
+          userId: authorId,
+          actorId: userId,
+          type: 'reaction',
+          commentId,
+        }).catch((err) =>
+          console.error('[commentService.addReaction] failed to delete reaction notification:', err)
+        );
+      }
+      return result;
     }
 
-    return await commentRepository.addReaction(commentId, userId, reactionType);
+    const result = await commentRepository.addReaction(commentId, userId, reactionType);
+
+    if (authorId && authorId !== userId) {
+      (async () => {
+        try {
+          await NotificationRepository.deleteByActorTypeRef({
+            userId: authorId,
+            actorId: userId,
+            type: 'reaction',
+            commentId,
+          });
+          await NotificationService.createSafe({
+            userId: authorId,
+            type: 'reaction',
+            actorId: userId,
+            bookId,
+            commentId,
+            reactionType,
+          });
+        } catch (err) {
+          console.error('[commentService.addReaction] notification failed:', err);
+        }
+      })();
+    }
+
+    return result;
   },
 
   async removeReaction(commentId, userId) {
