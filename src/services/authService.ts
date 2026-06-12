@@ -1,6 +1,6 @@
 import { authFirebase } from '../config/firebase';
 
-const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 1 día
+const SESSION_DURATION_MS = 14 * 24 * 60 * 60 * 1000; // 14 días (máximo permitido por Firebase)
 
 export const AuthService = {
   get sessionDurationMs() {
