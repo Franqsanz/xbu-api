@@ -42,8 +42,18 @@ export const NotificationRepository = {
       .exec();
   },
 
+  async setReadStatus(notificationId: string, userId: string, read: boolean) {
+    return await notificationsModel
+      .findOneAndUpdate({ _id: notificationId, userId }, { read }, { new: true, lean: true })
+      .exec();
+  },
+
   async markAllAsRead(userId: string) {
     return await notificationsModel.updateMany({ userId, read: false }, { read: true }).exec();
+  },
+
+  async deleteOne(notificationId: string, userId: string) {
+    return await notificationsModel.findOneAndDelete({ _id: notificationId, userId }).lean().exec();
   },
 
   async deleteByActorTypeRef(opts: {

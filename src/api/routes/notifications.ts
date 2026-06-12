@@ -4,6 +4,8 @@ import {
   listNotifications,
   getUnreadCount,
   markRead,
+  setReadStatus,
+  deleteNotification,
   markAllRead,
 } from '../controllers/notificationController';
 import { verifyToken } from '../middlewares/verifyToken';
@@ -122,5 +124,68 @@ router.patch('/mark-all-read', verifyToken, markAllRead);
  *         $ref: '#/components/responses/NotFound'
  */
 router.patch('/:notificationId/read', verifyToken, markRead);
+
+/**
+ * @openapi
+ * /api/notifications/{notificationId}/status:
+ *   patch:
+ *     tags: [Notifications]
+ *     summary: Cambia el estado de lectura de una notificación (toggle leído/no leído).
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: notificationId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [read]
+ *             properties:
+ *               read: { type: boolean }
+ *     responses:
+ *       200:
+ *         description: Estado actualizado.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Success' }
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.patch('/:notificationId/status', verifyToken, setReadStatus);
+
+/**
+ * @openapi
+ * /api/notifications/{notificationId}:
+ *   delete:
+ *     tags: [Notifications]
+ *     summary: Elimina una notificación.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: notificationId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Notificación eliminada.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Success' }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.delete('/:notificationId', verifyToken, deleteNotification);
 
 export default router;

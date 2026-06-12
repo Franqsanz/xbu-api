@@ -112,7 +112,15 @@ export const NotificationService = {
     return await NotificationRepository.markAsRead(notificationId, userId);
   },
 
+  async setReadStatus(notificationId: string, userId: string, read: boolean) {
+    return await NotificationRepository.setReadStatus(notificationId, userId, read);
+  },
+
   async markAllAsRead(userId: string) {
     return await NotificationRepository.markAllAsRead(userId);
+  },
+
+  async deleteOne(notificationId: string, userId: string) {
+    return await NotificationRepository.deleteOne(notificationId, userId);
   },
 };

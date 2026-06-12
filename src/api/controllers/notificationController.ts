@@ -73,6 +73,57 @@ async function markRead(req: Request, res: Response, next: NextFunction): Promis
   }
 }
 
+async function setReadStatus(req: Request, res: Response, next: NextFunction): Promise<any> {
+  const userId = req.user?.uid;
+  const { notificationId } = req.params;
+  const { read } = req.body as { read?: boolean };
+
+  if (!userId) {
+    throw BadRequest('Usuario no autenticado');
+  }
+  if (typeof read !== 'boolean') {
+    throw BadRequest('Campo "read" requerido (boolean)');
+  }
+
+  try {
+    const updated = await NotificationService.setReadStatus(notificationId, userId, read);
+    if (!updated) {
+      return res.status(404).json({
+        error: { status: 404, message: 'Notificación no encontrada' },
+      });
+    }
+    return res.status(200).json({
+      success: {
+        status: 200,
+        message: read ? 'Marcada como leída' : 'Marcada como no leída',
+      },
+    });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function deleteNotification(req: Request, res: Response, next: NextFunction): Promise<any> {
+  const userId = req.user?.uid;
+  const { notificationId } = req.params;
+
+  if (!userId) {
+    throw BadRequest('Usuario no autenticado');
+  }
+
+  try {
+    const deleted = await NotificationService.deleteOne(notificationId, userId);
+    if (!deleted) {
+      return res.status(404).json({
+        error: { status: 404, message: 'Notificación no encontrada' },
+      });
+    }
+    return res.status(200).json({ success: { status: 200, message: 'Notificación eliminada' } });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function markAllRead(req: Request, res: Response, next: NextFunction): Promise<any> {
   const userId = req.user?.uid;
 
@@ -90,4 +141,11 @@ async function markAllRead(req: Request, res: Response, next: NextFunction): Pro
   }
 }
 
-export { listNotifications, getUnreadCount, markRead, markAllRead };
+export {
+  listNotifications,
+  getUnreadCount,
+  markRead,
+  setReadStatus,
+  deleteNotification,
+  markAllRead,
+};
