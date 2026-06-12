@@ -31,6 +31,13 @@ import { getSitemap } from '../api/controllers/sitemapController';
 const isProduction = process.env.NODE_ENV === 'production';
 
 export function registerMW(app: Application) {
+  // Render (y la mayoría de hosts) ponen un proxy delante del app. Sin
+  // esto, req.ip apunta al proxy y express-rate-limit emite warnings y
+  // no puede limitar por IP real.
+  if (isProduction) {
+    app.set('trust proxy', 1);
+  }
+
   const corsOptions = {
     origin: ALLOWED_ORIGIN,
     methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
