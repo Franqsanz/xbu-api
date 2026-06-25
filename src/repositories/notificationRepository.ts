@@ -76,4 +76,9 @@ export const NotificationRepository = {
   async deleteAllByUserId(userId: string) {
     return await notificationsModel.deleteMany({ $or: [{ userId }, { actorId: userId }] }).exec();
   },
+
+  async deleteAllByBookIds(bookIds: string[]) {
+    if (bookIds.length === 0) return { deletedCount: 0 };
+    return await notificationsModel.deleteMany({ bookId: { $in: bookIds } }).exec();
+  },
 };

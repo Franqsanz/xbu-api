@@ -6,6 +6,8 @@ import { commentRepository } from './../repositories/commentRepository';
 import { BookStatusRepository } from './../repositories/bookStatusRepository';
 import { ActivityLogRepository } from './../repositories/activityLogRepository';
 import { BookRatingRepository } from './../repositories/bookRatingRepository';
+import { BookProgressRepository } from './../repositories/bookProgressRepository';
+import { NotificationRepository } from './../repositories/notificationRepository';
 import { cloudinary } from '../config/cloudinary';
 import { authFirebase } from '../config/firebase';
 import { IFullRepositoryUser } from '../types/repositories/IUserRepository';
@@ -113,11 +115,23 @@ export const UserService: IFullRepositoryUser = {
     const books = await UserRepository.findBooksByUserId!(userId);
     const bookIds = books.map((b: any) => b._id.toString());
 
-    // Borrar imágenes de Cloudinary en paralelo (covers de libros + avatar propio
-    // si el usuario subió uno). Un fallo no aborta la baja de cuenta.
-    const cloudinaryDestroys: Promise<any>[] = books
-      .filter((b: any) => b.image?.public_id)
-      .map((b: any) => cloudinary.uploader.destroy(b.image.public_id));
+    // Borrar assets en Cloudinary en paralelo: portadas (image), archivos de libros
+    // propios (file, raw + authenticated) y avatar del user. Fallos no abortan la baja.
+    const cloudinaryDestroys: Promise<any>[] = [];
+
+    for (const b of books as any[]) {
+      if (b.image?.public_id) {
+        cloudinaryDestroys.push(cloudinary.uploader.destroy(b.image.public_id));
+      }
+      if (b.file?.public_id) {
+        cloudinaryDestroys.push(
+          cloudinary.uploader.destroy(b.file.public_id, {
+            resource_type: 'raw',
+            type: 'authenticated',
+          })
+        );
+      }
+    }
 
     const userPictureId = (user as any).pictureId;
     if (userPictureId) {
@@ -134,8 +148,10 @@ export const UserService: IFullRepositoryUser = {
       FavoriteRepository.deleteUserFavorites(userId),
       FollowRepository.deleteUserFollows(userId),
       BookStatusRepository.deleteAllByUserId(userId),
+      BookProgressRepository.deleteAllByUserId(userId),
       ActivityLogRepository.deleteAllByUserId(userId),
       BookRatingRepository.deleteAllByUserId(userId),
+      NotificationRepository.deleteAllByUserId(userId),
     ]);
 
     // Limpiar referencias huérfanas a los libros borrados en datos de otros usuarios
@@ -145,8 +161,10 @@ export const UserService: IFullRepositoryUser = {
         FavoriteRepository.removeBookRefsFromAll(bookIds),
         CollectionRepository.removeBookRefsFromAll(bookIds),
         BookStatusRepository.deleteAllByBookIds(bookIds),
+        BookProgressRepository.deleteAllByBookIds(bookIds),
         ActivityLogRepository.deleteAllByBookIds(bookIds),
         BookRatingRepository.deleteAllByBookIds(bookIds),
+        NotificationRepository.deleteAllByBookIds(bookIds),
       ]);
     }
 
