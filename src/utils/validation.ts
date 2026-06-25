@@ -40,6 +40,12 @@ const bookSchema = z.object({
   rating: z.number().optional(),
 });
 
+const bookOriginalSchema = bookSchema.extend({
+  acceptedAuthorship: z.literal(true, {
+    message: 'Debes confirmar que sos el autor o tenés derechos sobre el libro.',
+  }),
+});
+
 const commentSchema = z.object({
   text: z
     .string()
@@ -52,4 +58,4 @@ const commentSchema = z.object({
   bookId: z.string().min(1, 'El ID del libro no puede estar vacío'),
 });
 
-export { bookSchema, commentSchema };
+export { bookSchema, bookOriginalSchema, commentSchema };

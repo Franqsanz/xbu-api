@@ -62,6 +62,23 @@ const booksSchema = new Schema(
         type: String,
       },
     },
+    kind: {
+      type: String,
+      enum: ['reference', 'original'],
+      default: 'reference',
+      required: true,
+    },
+    file: {
+      url: { type: String },
+      public_id: { type: String },
+      type: { type: String, enum: ['pdf', 'epub'] },
+      size: { type: Number },
+      pages: { type: Number },
+    },
+    authorshipAccepted: {
+      at: { type: Date },
+      ip: { type: String },
+    },
     userId: {
       type: String,
     },

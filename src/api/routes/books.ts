@@ -11,6 +11,8 @@ import {
   getPathUrlBooks,
   getMostViewedBooks,
   postBooks,
+  postOriginalBook,
+  getBookReadUrl,
   putBooks,
   deleteBook,
 } from '../controllers/bookController';
@@ -22,7 +24,7 @@ import {
   setMyRating,
   deleteMyRating,
 } from '../controllers/bookRatingController';
-import { upload } from '../middlewares/multer';
+import { upload, uploadOriginal } from '../middlewares/multer';
 import { optionalAuth } from '../middlewares/optionalAuth';
 import { verifyToken } from '../middlewares/verifyToken';
 
@@ -363,10 +365,82 @@ router.post('/books', verifyToken, upload.single('image'), postBooks);
 
 /**
  * @openapi
+ * /api/books/original:
+ *   post:
+ *     tags: [Books]
+ *     summary: Publica un libro propio del autor (PDF o EPUB).
+ *     security:
+ *       - cookieAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image, bookFile, bookData]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *               bookFile:
+ *                 type: string
+ *                 format: binary
+ *                 description: Archivo PDF o EPUB (máx. 50MB).
+ *               bookData:
+ *                 type: string
+ *                 description: JSON stringify con los campos del libro más `acceptedAuthorship` en true.
+ *     responses:
+ *       201:
+ *         description: Libro propio creado.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Book' }
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ */
+router.post('/books/original', verifyToken, uploadOriginal, postOriginalBook);
+
+/**
+ * @openapi
+ * /api/books/{id}/read:
+ *   get:
+ *     tags: [Books]
+ *     summary: URL firmada de corta duración para leer el archivo del libro.
+ *     description: Sólo aplica a libros con `kind = 'original'`. La URL expira en 10 minutos.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: URL firmada.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 url: { type: string }
+ *                 type: { type: string, enum: [pdf, epub] }
+ *                 expiresAt: { type: integer }
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ */
+router.get('/books/:id/read', verifyToken, getBookReadUrl);
+
+/**
+ * @openapi
  * /api/books/{id}:
  *   patch:
  *     tags: [Books]
  *     summary: Actualiza un libro existente.
+ *     description: Si el libro es `kind = 'original'` admite reemplazar el archivo enviando `bookFile`. Al reemplazarlo se borran todos los progresos de lectura asociados al libro.
  *     security:
  *       - cookieAuth: []
  *     parameters:
@@ -384,18 +458,26 @@ router.post('/books', verifyToken, upload.single('image'), postBooks);
  *               image:
  *                 type: string
  *                 format: binary
+ *                 description: Nueva portada (opcional).
+ *               bookFile:
+ *                 type: string
+ *                 format: binary
+ *                 description: Nuevo archivo PDF o EPUB (sólo si el libro es de tipo `original`).
  *               bookData:
  *                 type: string
+ *                 description: JSON stringify con los campos del libro a actualizar.
  *     responses:
  *       200:
  *         description: Libro actualizado.
  *         content:
  *           application/json:
  *             schema: { $ref: '#/components/schemas/Book' }
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.patch('/books/:id', verifyToken, upload.single('image'), putBooks);
+router.patch('/books/:id', verifyToken, uploadOriginal, putBooks);
 
 /**
  * @openapi

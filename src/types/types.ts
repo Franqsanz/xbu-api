@@ -1,6 +1,22 @@
 import { DecodedIdToken } from 'firebase-admin/auth';
 import pkg from 'mongoose';
 
+type BookKind = 'reference' | 'original';
+type BookFileType = 'pdf' | 'epub';
+
+interface IBookFile {
+  url: string;
+  public_id: string;
+  type: BookFileType;
+  size: number;
+  pages?: number;
+}
+
+interface IAuthorshipAcceptance {
+  at: Date;
+  ip?: string;
+}
+
 interface IBook extends pkg.Document {
   title: string;
   authors: string[];
@@ -16,6 +32,9 @@ interface IBook extends pkg.Document {
     url: string;
     public_id: string;
   };
+  kind: BookKind;
+  file?: IBookFile;
+  authorshipAccepted?: IAuthorshipAcceptance;
   userId: string;
   views: number;
 }
@@ -163,6 +182,9 @@ interface IBookStatus {
 
 export {
   IBook,
+  IBookFile,
+  BookKind,
+  BookFileType,
   IFindBooks,
   IDeleteBook,
   IUser,

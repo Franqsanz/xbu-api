@@ -21,6 +21,11 @@ import {
   deleteBookStatus,
   getBooksByStatus,
 } from '../controllers/bookStatusController';
+import {
+  getBookProgress,
+  setBookProgress,
+  deleteBookProgress,
+} from '../controllers/bookProgressController';
 import { verifyToken } from '../middlewares/verifyToken';
 import { pagination } from '../middlewares/pagination';
 import { upload } from '../middlewares/multer';
@@ -296,6 +301,77 @@ router.patch('/me/book-status/:bookId', verifyToken, setBookStatus);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.delete('/me/book-status/:bookId', verifyToken, deleteBookStatus);
+
+/**
+ * @openapi
+ * /api/users/me/book-progress/{bookId}:
+ *   get:
+ *     tags: [BookProgress]
+ *     summary: Progreso de lectura del libro para el usuario actual.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Progreso o null si no hay.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 progress:
+ *                   nullable: true
+ *                   type: object
+ *                   properties:
+ *                     position: {}
+ *                     type: { type: string, enum: [pdf, epub] }
+ *                     percentage: { type: number, nullable: true }
+ *                     updatedAt: { type: string, format: date-time }
+ *   patch:
+ *     tags: [BookProgress]
+ *     summary: Actualiza el progreso de lectura (upsert).
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookId
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [position, type]
+ *             properties:
+ *               position: {}
+ *               type: { type: string, enum: [pdf, epub] }
+ *               percentage: { type: number, minimum: 0, maximum: 100 }
+ *     responses:
+ *       200:
+ *         description: Progreso actualizado.
+ *   delete:
+ *     tags: [BookProgress]
+ *     summary: Elimina el progreso de lectura del libro.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: bookId
+ *         required: true
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Progreso eliminado.
+ */
+router.get('/me/book-progress/:bookId', verifyToken, getBookProgress);
+router.patch('/me/book-progress/:bookId', verifyToken, setBookProgress);
+router.delete('/me/book-progress/:bookId', verifyToken, deleteBookProgress);
 
 /**
  * @openapi

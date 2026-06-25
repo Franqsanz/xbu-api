@@ -276,13 +276,79 @@ async function postBooks(
   }
 }
 
+async function postOriginalBook(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IBook>> {
+  const files = req.files as
+    | { image?: Express.Multer.File[]; bookFile?: Express.Multer.File[] }
+    | undefined;
+  const imageFile = files?.image?.[0];
+  const bookFile = files?.bookFile?.[0];
+
+  try {
+    if (!imageFile) throw BadRequest('Falta la portada del libro.');
+    if (!bookFile) throw BadRequest('Falta el archivo del libro (PDF o EPUB).');
+
+    const bookData = JSON.parse(req.body.bookData);
+    bookData.userId = req.user.uid;
+
+    const resultBook = await BookService.createOriginalBook(
+      bookData,
+      imageFile.buffer,
+      bookFile.buffer,
+      req.ip
+    );
+
+    if (!resultBook) {
+      throw BadRequest('Error al publicar, la solicitud está vacia');
+    }
+
+    await CacheService.invalidatePattern('books:*');
+
+    return res.status(201).json(resultBook);
+  } catch (err: unknown) {
+    if (err instanceof ZodError) {
+      const errorMessages = err.issues.map((error) => error.message);
+      return res.status(400).json({
+        error: {
+          status: 400,
+          message: errorMessages,
+        },
+      });
+    }
+
+    return next(err) as any;
+  }
+}
+
+async function getBookReadUrl(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<{ url: string; type: string; expiresAt: number }>> {
+  const { id } = req.params;
+
+  try {
+    const result = await BookService.getReadUrl(id, req.user.uid);
+    return res.status(200).json(result);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function putBooks(
   req: Request,
   res: Response,
   next: NextFunction
 ): Promise<Response<IBook | null>> {
   const { id } = req.params;
-  const { body, file } = req;
+  const files = req.files as
+    | { image?: Express.Multer.File[]; bookFile?: Express.Multer.File[] }
+    | undefined;
+  const imageFile = files?.image?.[0];
+  const bookFile = files?.bookFile?.[0];
 
   try {
     const existing = await BookService.findByIdRaw(id);
@@ -293,9 +359,13 @@ async function putBooks(
       throw Forbidden('No tienes permisos para editar este libro');
     }
 
-    const bookData = JSON.parse(body.bookData);
+    const bookData = JSON.parse(req.body.bookData);
 
-    const result = await BookService.updateBook(id, bookData, file?.buffer);
+    if (bookFile && existing.kind !== 'original') {
+      throw BadRequest('Solo los libros propios admiten reemplazar el archivo.');
+    }
+
+    const result = await BookService.updateBook(id, bookData, imageFile?.buffer, bookFile?.buffer);
 
     if (!result) {
       throw BadRequest('No se pudo actualizar');
@@ -355,6 +425,8 @@ export {
   getPathUrlBooks,
   getMostViewedBooks,
   postBooks,
+  postOriginalBook,
+  getBookReadUrl,
   putBooks,
   deleteBook,
 };

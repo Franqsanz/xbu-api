@@ -1,7 +1,11 @@
 import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
 import { BookRatingRepository } from '../repositories/bookRatingRepository';
-import { bookSchema } from '../utils/validation';
+import { BookProgressRepository } from '../repositories/bookProgressRepository';
+import { bookSchema, bookOriginalSchema } from '../utils/validation';
+import { parseBookFile } from '../utils/parseBookFile';
+import { NotFound, BadRequest } from '../utils/errors';
+import { IBook, IBookFile, BookFileType } from '../types/types';
 import { IRepositoryBook } from '../types/repositories/IBookRepository';
 
 const CLOUDINARY_UPLOAD_OPTIONS = {
@@ -11,11 +15,29 @@ const CLOUDINARY_UPLOAD_OPTIONS = {
   transformation: { quality: 60 },
 };
 
+const READ_URL_TTL_SECONDS = 600;
+
 function uploadToCloudinary(buffer: Buffer, public_id?: string): Promise<any> {
   return new Promise((resolve, reject) => {
     cloudinary.uploader
       .upload_stream(
         { ...CLOUDINARY_UPLOAD_OPTIONS, ...(public_id ? { public_id } : {}) },
+        (err, result) => (err ? reject(err) : resolve(result))
+      )
+      .end(buffer);
+  });
+}
+
+function uploadEbookToCloudinary(buffer: Buffer, type: BookFileType): Promise<any> {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder: `${process.env.CLOUDINARY_FOLDER}/book-files`,
+          resource_type: 'raw',
+          type: 'authenticated',
+          format: type,
+        },
         (err, result) => (err ? reject(err) : resolve(result))
       )
       .end(buffer);
@@ -29,6 +51,16 @@ type IBookService = IRepositoryBook & {
     averageRating: number;
     ratingsCount: number;
   }>;
+  createOriginalBook(
+    body: any,
+    imageBuffer: Buffer,
+    fileBuffer: Buffer,
+    requesterIp?: string
+  ): Promise<IBook>;
+  getReadUrl(
+    bookId: string,
+    userId: string
+  ): Promise<{ url: string; type: BookFileType; expiresAt: number }>;
 };
 
 export const BookService: IBookService = {
@@ -119,7 +151,7 @@ export const BookService: IBookService = {
     return await BookRepository.createBook(validateBook);
   },
 
-  async updateBook(id, body, buffer?) {
+  async updateBook(id, body, buffer?, fileBuffer?) {
     const { url, public_id } = body.image;
     let image: { url: string; public_id?: string };
 
@@ -138,6 +170,32 @@ export const BookService: IBookService = {
       image = { url, public_id };
     }
 
+    if (fileBuffer) {
+      const existing = await BookRepository.findByIdRaw(id);
+      const parsed = await parseBookFile(fileBuffer);
+
+      if (existing?.file?.public_id) {
+        await cloudinary.uploader.destroy(existing.file.public_id, {
+          resource_type: 'raw',
+          type: 'authenticated',
+        });
+      }
+
+      const fileResult = await uploadEbookToCloudinary(fileBuffer, parsed.type);
+
+      body.file = {
+        url: fileResult.secure_url,
+        public_id: fileResult.public_id,
+        type: parsed.type,
+        size: fileBuffer.length,
+        pages: parsed.pages,
+      };
+
+      // El archivo cambió: los progresos de TODOS los lectores quedan
+      // apuntando a contenido viejo. Los limpiamos.
+      await BookProgressRepository.deleteAllByBookIds([id]);
+    }
+
     return await BookRepository.updateBook(id, body, image);
   },
 
@@ -146,11 +204,82 @@ export const BookService: IBookService = {
 
     if (book) {
       await cloudinary.uploader.destroy(book.image.public_id);
+      if (book.file?.public_id) {
+        await cloudinary.uploader.destroy(book.file.public_id, {
+          resource_type: 'raw',
+          type: 'authenticated',
+        });
+      }
     }
 
-    // Borrar ratings huérfanos del libro borrado
-    await BookRatingRepository.deleteAllByBookIds([id]);
+    // Borrar ratings y progreso de lectura huérfanos del libro borrado
+    await Promise.all([
+      BookRatingRepository.deleteAllByBookIds([id]),
+      BookProgressRepository.deleteAllByBookIds([id]),
+    ]);
 
     return deleteOne;
+  },
+
+  async createOriginalBook(body, imageBuffer, fileBuffer, requesterIp) {
+    const validated = bookOriginalSchema.parse(body);
+    const parsed = await parseBookFile(fileBuffer);
+
+    const [imageResult, fileResult] = await Promise.all([
+      uploadToCloudinary(imageBuffer),
+      uploadEbookToCloudinary(fileBuffer, parsed.type),
+    ]);
+
+    const file: IBookFile = {
+      url: fileResult.secure_url,
+      public_id: fileResult.public_id,
+      type: parsed.type,
+      size: fileBuffer.length,
+      pages: parsed.pages,
+    };
+
+    // Quitamos el flag del payload persistido — sirve sólo como gate; el
+    // registro auditable queda en `authorshipAccepted`.
+    const { acceptedAuthorship: _accepted, ...rest } = validated;
+
+    const payload = {
+      ...rest,
+      image: {
+        url: imageResult.secure_url,
+        public_id: imageResult.public_id,
+      },
+      kind: 'original' as const,
+      file,
+      authorshipAccepted: {
+        at: new Date(),
+        ip: requesterIp,
+      },
+    };
+
+    return await BookRepository.createBook(payload);
+  },
+
+  async getReadUrl(bookId, userId) {
+    const book = await BookRepository.findByIdRaw(bookId);
+
+    if (!book) throw NotFound('Libro no encontrado');
+    if (book.kind !== 'original' || !book.file?.public_id) {
+      throw BadRequest('Este libro no tiene archivo para lectura.');
+    }
+
+    // El uid se acepta como prueba de sesión: el endpoint está detrás de
+    // verifyToken. La URL firmada caduca en 10 minutos.
+    void userId;
+
+    const expiresAt = Math.floor(Date.now() / 1000) + READ_URL_TTL_SECONDS;
+
+    const url = cloudinary.utils.private_download_url(book.file.public_id, book.file.type, {
+      resource_type: 'raw',
+      type: 'authenticated',
+      expires_at: expiresAt,
+      attachment: false,
+    });
+
+    return { url, type: book.file.type, expiresAt };
   },
 };

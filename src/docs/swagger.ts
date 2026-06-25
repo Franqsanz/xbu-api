@@ -20,6 +20,7 @@ const options: swaggerJsdoc.Options = {
       { name: 'Follow', description: 'Sistema de seguimiento entre usuarios' },
       { name: 'Feed', description: 'Feed de actividad social del usuario' },
       { name: 'BookStatus', description: 'Estado de lectura por libro' },
+      { name: 'BookProgress', description: 'Progreso de lectura (página/CFI) por libro' },
       { name: 'Favorites', description: 'Favoritos del usuario' },
       { name: 'Collections', description: 'Colecciones personalizadas' },
       { name: 'Comments', description: 'Comentarios y reacciones' },
@@ -82,10 +83,49 @@ const options: swaggerJsdoc.Options = {
                 public_id: { type: 'string' },
               },
             },
+            kind: {
+              type: 'string',
+              enum: ['reference', 'original'],
+              description:
+                '`reference`: libro recomendado (link externo). `original`: libro propio con archivo subido.',
+            },
+            file: {
+              type: 'object',
+              nullable: true,
+              description: 'Sólo para `kind = original`.',
+              properties: {
+                url: { type: 'string' },
+                public_id: { type: 'string' },
+                type: { type: 'string', enum: ['pdf', 'epub'] },
+                size: { type: 'integer', description: 'Tamaño en bytes.' },
+                pages: { type: 'integer', nullable: true },
+              },
+            },
+            authorshipAccepted: {
+              type: 'object',
+              nullable: true,
+              description: 'Aceptación de autoría registrada al subir un libro propio (audit log).',
+              properties: {
+                at: { type: 'string', format: 'date-time' },
+                ip: { type: 'string', nullable: true },
+              },
+            },
             userId: { type: 'string' },
             views: { type: 'integer' },
             rating: { type: 'number', minimum: 0, maximum: 5 },
             createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' },
+          },
+        },
+        BookProgress: {
+          type: 'object',
+          properties: {
+            position: {
+              description: 'PDF: número de página (integer). EPUB: CFI (string).',
+              oneOf: [{ type: 'integer' }, { type: 'string' }],
+            },
+            type: { type: 'string', enum: ['pdf', 'epub'] },
+            percentage: { type: 'number', minimum: 0, maximum: 100, nullable: true },
             updatedAt: { type: 'string', format: 'date-time' },
           },
         },
