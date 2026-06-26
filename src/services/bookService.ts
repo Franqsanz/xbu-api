@@ -267,8 +267,10 @@ export const BookService: IBookService = {
       throw BadRequest('Este libro no tiene archivo para lectura.');
     }
 
-    // El uid se acepta como prueba de sesión: el endpoint está detrás de
-    // verifyToken. La URL firmada caduca en 10 minutos.
+    // Acceso gateado por el endpoint (verifyToken). URL firmada con TTL
+    // corto. Esta URL apunta al endpoint REST de download de Cloudinary —
+    // pdf.js la lee como stream sin problema. Para EPUB el front descarga
+    // el blob primero y se lo pasa a epub.js (ver EpubViewer).
     void userId;
 
     const expiresAt = Math.floor(Date.now() / 1000) + READ_URL_TTL_SECONDS;
