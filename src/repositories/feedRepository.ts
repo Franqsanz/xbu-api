@@ -21,6 +21,7 @@ type FeedBook = {
   authors: string[];
   category: string[];
   synopsis: string;
+  kind?: 'reference' | 'original';
 };
 
 type StatusValue = 'read' | 'reading' | 'want_to_read';
@@ -124,7 +125,7 @@ export const FeedRepository = {
       referencedBookIds.length > 0
         ? booksModel
             .find({ _id: { $in: referencedBookIds } })
-            .select('title pathUrl image authors category synopsis')
+            .select('title pathUrl image authors category synopsis kind')
             .lean()
             .exec()
         : Promise.resolve([]),
@@ -155,6 +156,7 @@ export const FeedRepository = {
           authors: b.authors,
           category: b.category,
           synopsis: b.synopsis,
+          kind: b.kind,
         },
       ])
     );
@@ -175,6 +177,7 @@ export const FeedRepository = {
             authors: b.authors,
             category: b.category,
             synopsis: b.synopsis,
+            kind: b.kind,
           },
         };
       })
