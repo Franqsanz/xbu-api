@@ -4,6 +4,7 @@ import {
   create,
   update,
   findAll,
+  findReplies,
   findByUserId,
   deleteComment,
   addReaction,
@@ -46,6 +47,38 @@ const router: Router = express.Router();
  *                   items: { $ref: '#/components/schemas/Comment' }
  */
 router.get('/book-comments/:bookId', pagination, query, findAll);
+
+/**
+ * @openapi
+ * /api/users/comments/comment/{commentId}/replies:
+ *   get:
+ *     tags: [Comments]
+ *     summary: Lista las respuestas a un comentario.
+ *     parameters:
+ *       - in: path
+ *         name: commentId
+ *         required: true
+ *         schema: { type: string }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *       - in: query
+ *         name: offset
+ *         schema: { type: integer, default: 0 }
+ *     responses:
+ *       200:
+ *         description: Respuestas al comentario.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 results:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/Comment' }
+ *                 total: { type: integer }
+ */
+router.get('/comment/:commentId/replies', findReplies);
 
 /**
  * @openapi
@@ -114,6 +147,10 @@ router.get('/comment/stats/:bookId', findStats);
  *                 type: string
  *                 maxLength: 1500
  *               bookId: { type: string }
+ *               parentId:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Si está presente, el comentario es una respuesta al comment con ese id.
  *               author:
  *                 type: object
  *                 required: [userId]

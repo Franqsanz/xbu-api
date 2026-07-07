@@ -1,6 +1,6 @@
 import notificationsModel from '../models/notifications';
 
-export type NotificationType = 'follow' | 'comment' | 'rating' | 'reaction';
+export type NotificationType = 'follow' | 'comment' | 'rating' | 'reaction' | 'reply';
 
 export type CreateNotificationInput = {
   userId: string;

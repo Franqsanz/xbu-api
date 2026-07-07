@@ -9,7 +9,7 @@ const notificationSchema = new Schema(
     },
     type: {
       type: String,
-      enum: ['follow', 'comment', 'rating', 'reaction'],
+      enum: ['follow', 'comment', 'rating', 'reaction', 'reply'],
       required: true,
     },
     actorId: {

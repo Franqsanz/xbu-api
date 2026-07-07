@@ -243,7 +243,10 @@ const options: swaggerJsdoc.Options = {
           type: 'object',
           properties: {
             id: { type: 'string' },
-            type: { type: 'string', enum: ['follow', 'comment', 'rating', 'reaction'] },
+            type: {
+              type: 'string',
+              enum: ['follow', 'comment', 'rating', 'reaction', 'reply'],
+            },
             read: { type: 'boolean' },
             createdAt: { type: 'string', format: 'date-time' },
             rating: { type: 'integer', minimum: 1, maximum: 5, nullable: true },

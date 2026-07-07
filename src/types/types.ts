@@ -109,6 +109,9 @@ interface IComment extends pkg.Document {
   text: string;
   author: IAuthor;
   bookId: string;
+  parentId: string | null;
+  replyToId: string | null;
+  repliesCount: number;
   reactions: IReaction[];
   likesCount: number;
   dislikesCount: number;

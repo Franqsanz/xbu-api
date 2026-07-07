@@ -106,22 +106,27 @@ async function create(
   try {
     const created = await commentService.create(body);
 
-    (async () => {
-      try {
-        const book = await BookService.findByIdRaw(body.bookId);
-        if (book?.userId) {
-          await NotificationService.createSafe({
-            userId: book.userId,
-            type: 'comment',
-            actorId: body.author?.userId,
-            bookId: body.bookId,
-            commentId: (created as any)?._id?.toString(),
-          });
+    // Sólo notificamos al autor del libro cuando el comentario es top-level.
+    // Si es una respuesta, la notificación relevante va al autor del comment
+    // padre (la emite `commentService.create`).
+    if (!body?.parentId) {
+      (async () => {
+        try {
+          const book = await BookService.findByIdRaw(body.bookId);
+          if (book?.userId && book.userId !== body.author?.userId) {
+            await NotificationService.createSafe({
+              userId: book.userId,
+              type: 'comment',
+              actorId: body.author?.userId,
+              bookId: body.bookId,
+              commentId: (created as any)?._id?.toString(),
+            });
+          }
+        } catch (err) {
+          console.error('[commentController.create] notification failed:', err);
         }
-      } catch (err) {
-        console.error('[commentController.create] notification failed:', err);
-      }
-    })();
+      })();
+    }
 
     return res.status(201).json({
       success: {
@@ -129,6 +134,26 @@ async function create(
         message: 'Comentario creado',
       },
     });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
+async function findReplies(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<IComment[]>> {
+  const { commentId } = req.params;
+  const { limit = 10, offset = 0 } = req.query;
+
+  try {
+    const { results, total } = await commentService.findReplies(
+      commentId,
+      Number(limit),
+      Number(offset)
+    );
+    return res.status(200).json({ results, total });
   } catch (err) {
     return next(err) as any;
   }
@@ -310,4 +335,13 @@ async function findStats(
 //   }
 // };
 
-export { findAll, findByUserId, create, update, deleteComment, addReaction, findStats };
+export {
+  findAll,
+  findReplies,
+  findByUserId,
+  create,
+  update,
+  deleteComment,
+  addReaction,
+  findStats,
+};

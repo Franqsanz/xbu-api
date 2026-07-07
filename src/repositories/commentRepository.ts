@@ -3,20 +3,39 @@ import { IRepositoryComment } from '../types/repositories/ICommentRepository';
 
 export const commentRepository: IRepositoryComment = {
   async findAll(bookId, limit, offset) {
+    // Sólo los comentarios top-level (sin `parentId`). Las respuestas se
+    // piden aparte por `findReplies(commentId)`.
+    const filter = { bookId, parentId: null };
     const results = await commentsModel
-      .find({ bookId })
+      .find(filter)
       .sort({ createdAt: -1 })
       .limit(limit)
       .skip(offset)
       .lean()
       .exec();
 
-    const totalComments = await commentsModel.countDocuments({ bookId });
+    const totalComments = await commentsModel.countDocuments(filter);
 
     return {
       totalComments,
       results,
     };
+  },
+
+  async findReplies(parentId, limit, offset) {
+    // Las respuestas se ordenan asc para leerse cronológicamente.
+    const filter = { parentId };
+    const results = await commentsModel
+      .find(filter)
+      .sort({ createdAt: 1 })
+      .limit(limit)
+      .skip(offset)
+      .lean()
+      .exec();
+
+    const total = await commentsModel.countDocuments(filter);
+
+    return { results, total };
   },
 
   async findById(commentId) {
@@ -39,8 +58,14 @@ export const commentRepository: IRepositoryComment = {
 
   async create(commentData) {
     const newComment = new commentsModel(commentData);
+    const saved = await newComment.save();
 
-    return await newComment.save();
+    // Si es una respuesta, incrementamos `repliesCount` del padre.
+    if (commentData?.parentId) {
+      await commentsModel.updateOne({ _id: commentData.parentId }, { $inc: { repliesCount: 1 } });
+    }
+
+    return saved;
   },
 
   async update(commentId, userId, text) {
@@ -72,6 +97,20 @@ export const commentRepository: IRepositoryComment = {
       })
       .lean()
       .exec();
+
+    if (deletedComment) {
+      if (deletedComment.parentId) {
+        // Era una respuesta: bajamos el contador del padre.
+        await commentsModel.updateOne(
+          { _id: deletedComment.parentId },
+          { $inc: { repliesCount: -1 } }
+        );
+      } else {
+        // Era top-level: borramos también sus respuestas para no dejar
+        // huérfanas.
+        await commentsModel.deleteMany({ parentId: commentId }).exec();
+      }
+    }
 
     return deletedComment;
   },

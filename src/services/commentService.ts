@@ -10,6 +10,10 @@ export const commentService: ICommentService = {
     return await commentRepository.findAll(bookId, limit, offset);
   },
 
+  async findReplies(parentId, limit = 10, offset = 0) {
+    return await commentRepository.findReplies(parentId, limit, offset);
+  },
+
   async findByUserId(userId, limit = 10, offset = 0) {
     return await commentRepository.findByUserId(userId, limit, offset);
   },
@@ -46,9 +50,29 @@ export const commentService: ICommentService = {
       throw new Error('Usuario no encontrado');
     }
 
+    // Si viene como respuesta, validamos que el padre exista y sea top-level.
+    // No aceptamos árboles de más de un nivel.
+    let parentId: string | null = null;
+    let parent: any = null;
+    if ((commentData as any)?.parentId) {
+      parent = await commentRepository.findById((commentData as any).parentId);
+      if (!parent) {
+        throw new Error('Comentario padre no encontrado');
+      }
+      if (parent.parentId) {
+        throw new Error('Solo se admite un nivel de respuestas');
+      }
+      if (parent.bookId !== validatedData.bookId) {
+        throw new Error('El comentario padre no pertenece a este libro');
+      }
+      parentId = parent._id.toString();
+    }
+
     const commentToCreate = {
       text: validatedData.text,
       bookId: validatedData.bookId,
+      parentId,
+      replyToId: (commentData as any)?.replyToId ?? null,
       author: {
         userId: user.uid,
         name: user.name,
@@ -57,7 +81,20 @@ export const commentService: ICommentService = {
       },
     };
 
-    return await commentRepository.create(commentToCreate);
+    const created = await commentRepository.create(commentToCreate);
+
+    // Notificación de respuesta al autor del comment padre (si no soy yo mismo).
+    if (parent && parent.author?.userId && parent.author.userId !== user.uid) {
+      NotificationService.createSafe({
+        userId: parent.author.userId,
+        type: 'reply',
+        actorId: user.uid,
+        bookId: validatedData.bookId,
+        commentId: (created as any)._id?.toString(),
+      }).catch((err) => console.error('[commentService.create] reply notification failed:', err));
+    }
+
+    return created;
   },
 
   async update(commentId, userId, text) {

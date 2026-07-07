@@ -32,6 +32,25 @@ const commentsSchema = new Schema(
       type: String,
       required: true,
     },
+    // Threading de un solo nivel: si `parentId` está seteado, el comentario
+    // es una respuesta al comment original. Las respuestas de respuestas se
+    // anclan al mismo padre — no formamos árboles de más de un nivel.
+    parentId: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    // Cuando `parentId` está seteado y la respuesta es a otra respuesta del
+    // mismo hilo, guardamos aquí el id del reply target para poder ordenar
+    // el hilo por thread en la UI. Sigue siendo modelo de 1 nivel.
+    replyToId: {
+      type: String,
+      default: null,
+    },
+    repliesCount: {
+      type: Number,
+      default: 0,
+    },
     reactions: [
       {
         userId: {
@@ -63,7 +82,8 @@ const commentsSchema = new Schema(
   }
 );
 
-commentsSchema.index({ bookId: 1, createdAt: -1 });
+commentsSchema.index({ bookId: 1, parentId: 1, createdAt: -1 });
+commentsSchema.index({ parentId: 1, createdAt: 1 });
 commentsSchema.index({ 'author.userId': 1, createdAt: -1 });
 
 commentsSchema.set('toJSON', {

@@ -6,6 +6,11 @@ export interface IReadComment {
     limit: number,
     offset: number
   ): Promise<{ results: IComment[]; totalComments: number }>;
+  findReplies(
+    parentId: string,
+    limit: number,
+    offset: number
+  ): Promise<{ results: IComment[]; total: number }>;
   findById(commentId: string): Promise<IComment | null>;
   findByUserId(userId: string, limit: number, offset: number): Promise<IComment[]>;
 }
