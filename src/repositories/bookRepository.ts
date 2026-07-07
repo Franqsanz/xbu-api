@@ -229,6 +229,15 @@ export const BookRepository: IRepositoryBook = {
         {
           $facet: {
             totalViews: [{ $group: { _id: null, total: { $sum: '$views' } } }],
+            // Priorizamos el libro más visto de autoría propia: para un autor
+            // eso es lo relevante. Si el user no tiene originales, caemos al
+            // más visto de sus publicaciones (reseñas).
+            mostViewedOriginal: [
+              { $match: { kind: 'original' } },
+              { $sort: { views: -1 } },
+              { $limit: 1 },
+              { $project: { id: '$_id', title: 1, pathUrl: 1, views: 1, _id: 0 } },
+            ],
             mostViewed: [
               { $sort: { views: -1 } },
               { $limit: 1 },
@@ -241,7 +250,7 @@ export const BookRepository: IRepositoryBook = {
       .exec();
 
     const totalViews = agg?.totalViews?.[0]?.total ?? 0;
-    const mostViewed = agg?.mostViewed?.[0] ?? null;
+    const mostViewed = agg?.mostViewedOriginal?.[0] ?? agg?.mostViewed?.[0] ?? null;
     const bookIds = (agg?.ids ?? []).map((d: any) => d.id);
 
     return { totalViews, mostViewed, bookIds };
