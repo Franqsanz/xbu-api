@@ -27,6 +27,7 @@ import {
 import { upload, uploadOriginal } from '../middlewares/multer';
 import { optionalAuth } from '../middlewares/optionalAuth';
 import { verifyToken } from '../middlewares/verifyToken';
+import { reportBook } from '../controllers/reportController';
 
 const router: Router = express.Router();
 
@@ -433,6 +434,52 @@ router.post('/books/original', verifyToken, uploadOriginal, postOriginalBook);
  *         $ref: '#/components/responses/NotFound'
  */
 router.get('/books/:id/read', verifyToken, getBookReadUrl);
+
+/**
+ * @openapi
+ * /api/books/{id}/report:
+ *   post:
+ *     tags: [Books]
+ *     summary: Reporta un libro por copyright, contenido inapropiado, spam u otro motivo.
+ *     description: Anónimo entre usuarios. El autor del libro no ve quién reportó — solo el admin recibe un email.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: string }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [type]
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 enum: [copyright, inappropriate, spam, other]
+ *               description:
+ *                 type: string
+ *                 maxLength: 2000
+ *                 description: Requerido si `type = other`.
+ *               contactEmail:
+ *                 type: string
+ *                 description: Email de contacto opcional (útil para reclamos de titular de derechos).
+ *     responses:
+ *       201:
+ *         description: Reporte recibido.
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       429:
+ *         description: Demasiados reportes en las últimas 24 h.
+ */
+router.post('/books/:id/report', verifyToken, reportBook);
 
 /**
  * @openapi

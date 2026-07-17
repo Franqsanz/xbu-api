@@ -2,6 +2,7 @@ import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
 import { BookRatingRepository } from '../repositories/bookRatingRepository';
 import { BookProgressRepository } from '../repositories/bookProgressRepository';
+import { ReportRepository } from '../repositories/reportRepository';
 import { bookSchema, bookOriginalSchema } from '../utils/validation';
 import { parseBookFile } from '../utils/parseBookFile';
 import { NotFound, BadRequest } from '../utils/errors';
@@ -212,10 +213,11 @@ export const BookService: IBookService = {
       }
     }
 
-    // Borrar ratings y progreso de lectura huérfanos del libro borrado
+    // Borrar ratings, progreso y reportes huérfanos del libro borrado
     await Promise.all([
       BookRatingRepository.deleteAllByBookIds([id]),
       BookProgressRepository.deleteAllByBookIds([id]),
+      ReportRepository.deleteAllByBookIds([id]),
     ]);
 
     return deleteOne;
