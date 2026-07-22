@@ -95,8 +95,10 @@ export const UserService: IFullRepositoryUser = {
   },
 
   async saveUser(decodedToken, username) {
+    const fallbackName = (decodedToken as any).email?.split('@')[0] ?? 'usuario';
     const userToSave = {
       ...decodedToken,
+      name: (decodedToken as any).name || fallbackName,
       username: username,
       createdAt: new Date(),
     };
