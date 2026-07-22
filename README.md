@@ -4,23 +4,26 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 
 ## Características
 
-* **Crear libros**: Permite añadir nuevos libros.
+* **Crear libros**: Permite añadir nuevos libros. Soporta dos flujos: reseña (metadata + portada) y publicación original (metadata + portada + archivo PDF/EPUB propio).
 * **Obtener libros**: Recupera una lista de libros o un libro específico por su ID.
 * **Actualizar libros**: Permite modificar la información de un libro existente.
-* **Eliminar libros**: Eliminar un libro.
+* **Eliminar libros**: Elimina un libro y limpia sus assets en Cloudinary, ratings, comentarios, favoritos, colecciones, progresos, statuses, reportes y notificaciones asociadas.
 * **Buscar libros**: Ofrece capacidades de búsqueda y filtrado por título, autor, categoría/género y año de publicación.
+* **Libros originales (`kind: 'original'`)**: Los usuarios pueden publicar su propio libro subiendo un archivo (PDF/EPUB) que se almacena en Cloudinary como `raw` con `type: 'authenticated'`. El acceso al archivo se realiza mediante una URL firmada de corta duración generada en cada request al endpoint de lectura.
+* **Progreso de lectura**: Persiste la última página o CFI leída por el usuario en cada libro para retomar exactamente donde dejó, tanto en visor PDF como EPUB.
 * **Favoritos**: Permite marcar libros como favoritos para un acceso rápido.
 * **Colecciones**: Permite organizar libros en colecciones personalizadas según las preferencias del usuario.
 * **Estado de lectura (reading status)**: Cada usuario puede marcar un libro como `read`, `reading` o `want_to_read`.
-* **Sistema de comentarios**: Permite a los usuarios dejar comentarios en cada libro, con la posibilidad de editarlos, eliminarlos y gestionar reacciones (likes/dislikes).
+* **Sistema de comentarios con respuestas anidadas**: Los usuarios pueden dejar comentarios en cada libro y responderlos formando hilos de un nivel (`parentId` apunta al comentario raíz y `replyToId` a la respuesta específica). Soporta edición, borrado en cascada y reacciones (likes/dislikes).
 * **Rating de libros**: Cada usuario puede calificar un libro con un voto del 1 al 5. La API agrega el promedio y la cantidad total de votos.
 * **Sistema de seguimiento**: Permite a los usuarios seguir y dejar de seguir a otros usuarios, con acceso a la lista de seguidores, seguidos y estadísticas de ambos conteos.
 * **Feed de actividad social**: Genera un feed paginado y cronológico para el usuario autenticado, combinando libros publicados, comentarios, ratings, cambios de reading status, follows y eventos de favoritos/colecciones de los usuarios que sigue (y los del propio usuario). Las actividades del mismo usuario sobre el mismo libro en un mismo día se agrupan en una sola entrada.
-* **Notificaciones in-app**: El usuario recibe notificaciones por follows, comentarios en sus libros, calificaciones recibidas y reacciones (like/dislike) sobre sus comentarios. Soporta marcar como leídas, marcar como no leídas, eliminar y obtener el conteo de no leídas para el badge.
+* **Notificaciones in-app**: El usuario recibe notificaciones por follows, comentarios en sus libros, respuestas a sus comentarios, calificaciones recibidas y reacciones (like/dislike) sobre sus comentarios. Soporta marcar como leídas, marcar como no leídas, eliminar y obtener el conteo de no leídas para el badge.
+* **Reportes de libros**: Los usuarios pueden reportar libros por copyright, contenido inapropiado, spam u otro motivo. Los reportes son anónimos entre usuarios y disparan un email al administrador vía Resend con la información del libro, el reportante y el titular. Rate limit de 5 reportes por día por usuario.
 * **Perfil editable**: El usuario puede actualizar su `name`, `username` y `bio`, y subir/reemplazar su avatar a Cloudinary.
 * **Sitemap dinámico**: Endpoint `/sitemap.xml` con cache que enumera todas las páginas públicas para SEO.
 * **Cacheo con Redis**: Endpoints de lectura frecuentes cacheados con TTL e invalidación selectiva. Las cache keys llevan un namespace por commit (`RENDER_GIT_COMMIT`) — cada deploy invalida automáticamente las entradas viejas, evitando servir respuestas con formato obsoleto.
-* **Autenticación con Firebase**: Sesión basada en cookie firmada por Firebase Admin (14 días), validación local sin round-trip por request.
+* **Autenticación con Firebase**: Sesión basada en cookie firmada por Firebase Admin (14 días), validación local sin round-trip por request. Soporta login con Google (popup OAuth) y con enlace de correo electrónico (passwordless email link).
 
 ## Arquitectura de la API
 
@@ -39,8 +42,9 @@ flowchart LR
 
     Mongo[(MongoDB<br/>Mongoose)]
     Redis[(Redis<br/>cache · namespaced<br/>por deploy)]
-    Firebase[Firebase Auth]
-    Cloudinary[Cloudinary<br/>book covers · avatars]
+    Firebase[Firebase Auth<br/>Google · Email link]
+    Cloudinary[Cloudinary<br/>book covers · avatars<br/>book files raw · authenticated]
+    Resend[Resend<br/>reportes al admin]
     Sentry[Sentry<br/>error tracking]
 
     Client -->|cookie _secure_tk| MW
@@ -52,7 +56,8 @@ flowchart LR
     Repos --> Mongo
     Controllers -->|cache get/set/invalidate| Redis
     Auth -->|verifySessionCookie| Firebase
-    Services -->|upload/destroy images| Cloudinary
+    Services -->|upload/destroy · signed URL| Cloudinary
+    Services -->|email admin| Resend
     Express -->|errors| Sentry
 ```
 
@@ -68,16 +73,21 @@ erDiagram
     USERS ||--o{ FOLLOWS : "following"
     USERS ||--o{ BOOK_STATUSES : marca
     USERS ||--o{ BOOK_RATINGS : "vota (userId)"
+    USERS ||--o{ BOOK_PROGRESS : "lee (userId)"
     USERS ||--o{ ACTIVITY_LOG : genera
     USERS ||--o{ NOTIFICATIONS : "destinatario (userId)"
     USERS ||--o{ NOTIFICATIONS : "actor (actorId)"
+    USERS ||--o{ REPORTS : "reporta (reporterId)"
     BOOKS ||--o{ COMMENTS : recibe
     BOOKS ||--o{ BOOK_STATUSES : "es marcado en"
     BOOKS ||--o{ BOOK_RATINGS : "es calificado en"
+    BOOKS ||--o{ BOOK_PROGRESS : "es leído en"
     BOOKS ||--o{ ACTIVITY_LOG : referencia
     BOOKS ||--o{ NOTIFICATIONS : referencia
+    BOOKS ||--o{ REPORTS : "es reportado en"
     COLLECTIONS ||--o{ COLLECTION_ITEM : contiene
     COLLECTION_ITEM ||--o{ COLLECTION_BOOK : contiene
+    COMMENTS ||--o{ COMMENTS : "es padre de (parentId)"
     COMMENTS ||--o{ REACTION : contiene
     COMMENTS ||--o{ NOTIFICATIONS : referencia
 
@@ -102,8 +112,10 @@ erDiagram
         number numberPages
         string format
         string pathUrl UK "slug, indexed unique"
-        string sourceLink
+        string sourceLink "link externo (reseñas)"
+        string kind "review | original"
         object image "url + public_id (Cloudinary)"
+        object file "url + public_id (Cloudinary raw+auth, solo originales)"
         string userId FK "users.uid"
         number views
         number rating "legacy, no usar"
@@ -116,6 +128,15 @@ erDiagram
         string bookId FK "books._id"
         number rating "1..5"
         date createdAt
+        date updatedAt
+    }
+    BOOK_PROGRESS {
+        ObjectId _id PK
+        string userId FK "users.uid"
+        string bookId FK "books._id"
+        number page "PDF: número de página"
+        string cfi "EPUB: Canonical Fragment Identifier"
+        number percentage "0..100"
         date updatedAt
     }
     FOLLOWS {
@@ -149,6 +170,9 @@ erDiagram
         string text
         object author "userId, name, username, avatar"
         string bookId FK "books._id"
+        ObjectId parentId FK "comments._id (top-level: null)"
+        ObjectId replyToId FK "comments._id (opcional, respuesta específica)"
+        number repliesCount "solo top-level"
         number likesCount
         number dislikesCount
         boolean isEdited
@@ -178,13 +202,26 @@ erDiagram
     NOTIFICATIONS {
         ObjectId _id PK
         string userId FK "users.uid (destinatario)"
-        string type "follow | comment | rating | reaction"
+        string type "follow | comment | reply | rating | reaction"
         string actorId FK "users.uid (quien generó)"
         string bookId FK "books._id (opcional)"
         string commentId FK "comments._id (opcional)"
         number rating "1..5 (solo type=rating)"
         string reactionType "like | dislike (solo type=reaction)"
         boolean read
+        date createdAt
+    }
+    REPORTS {
+        ObjectId _id PK
+        string bookId FK "books._id"
+        string reporterId FK "users.uid"
+        string type "copyright | inappropriate | spam | other"
+        string description
+        string contactEmail
+        string status "open | reviewed | dismissed"
+        date reviewedAt
+        string reviewedBy
+        string reviewNote
         date createdAt
     }
 ```
@@ -197,8 +234,8 @@ erDiagram
 
 | Ruta | Método | Protegido | Descripción |
 | --- | --- | --- | --- |
-| `/auth/login` | POST | No | Inicia sesión con `idToken` de Firebase. Emite cookie `_secure_tk` (sesión de 14 días). |
-| `/auth/register` | POST | Sí | Registra un usuario (asigna username). |
+| `/auth/login` | POST | No | Inicia sesión con `idToken` de Firebase. Emite cookie `_secure_tk` (sesión de 14 días). Acepta tokens generados por Google popup o email link passwordless. |
+| `/auth/register` | POST | Sí | Registra un usuario (asigna username). Si el token no trae `name` (caso email link), se genera un fallback a partir del email. |
 | `/auth/logout` | POST | Sí | Revoca refresh tokens y limpia la cookie. |
 | `/auth/refresh` | POST | No | Renueva la session cookie con un `idToken` fresco. |
 
@@ -208,9 +245,12 @@ erDiagram
 | --- | --- | --- | --- |
 | `/books` | GET | No | Lista paginada de libros (cacheada). |
 | `/books/:id` | GET | No | Recupera un libro por ID. |
-| `/books` | POST | Sí | Crea un nuevo libro. Invalida cache de libros. |
-| `/books/:id` | PATCH | Sí | Actualiza un libro. Invalida cache de libros. |
-| `/books/:id` | DELETE | Sí | Elimina un libro. Invalida cache de libros. |
+| `/books` | POST | Sí | Crea un libro de reseña (multipart: metadata + `image`). Invalida cache de libros. |
+| `/books/original` | POST | Sí | Publica un libro original (multipart: metadata + `image` + `file` PDF/EPUB). El archivo se sube a Cloudinary como `raw` + `type: 'authenticated'`. |
+| `/books/:id/read` | GET | Sí | Devuelve una URL firmada de corta duración para descargar el archivo del libro original (para el visor del cliente). |
+| `/books/:id/report` | POST | Sí | Reporta un libro (motivos: `copyright` \| `inappropriate` \| `spam` \| `other`). Anónimo entre usuarios; envía email al admin vía Resend. Rate limit de 5 reportes/día por usuario. |
+| `/books/:id` | PATCH | Sí | Actualiza un libro (multipart admite `image` y `file`). Invalida cache de libros. |
+| `/books/:id` | DELETE | Sí | Elimina un libro y limpia sus dependencias (comentarios, ratings, favoritos, colecciones, statuses, progresos, notificaciones, reportes, assets de Cloudinary). |
 | `/books/search` | GET | No | Busca libros por título y autor. |
 | `/books/options` | GET | No | Opciones de filtrado (categorías, idiomas, años). Cacheada 1 h. |
 | `/books/more-books/:id` | GET | No | Recupera libros aleatorios. |
@@ -218,9 +258,9 @@ erDiagram
 | `/books/more-books-authors/:id` | GET | No | Más libros del mismo autor. Cacheada 30 min. |
 | `/books/most-viewed-books` | GET | No | Libros más vistos. Cacheada 10 min. |
 | `/books/path/:pathUrl` | GET | Opcional¹ | Recupera un libro por su slug. Cacheada 5 min per-user. Incrementa `views`. |
-| `/books/:id/rating` | GET | Sí | Rating del libro asignado por el usuario actual. |
-| `/books/:id/rating` | PUT | Sí | Crea/actualiza el rating (1..5) del usuario actual. Dispara notificación al autor del libro. |
-| `/books/:id/rating` | DELETE | Sí | Elimina el rating del usuario actual. |
+| `/books/:id/rating/me` | GET | Sí | Rating del libro asignado por el usuario actual. |
+| `/books/:id/rating/me` | PUT | Sí | Crea/actualiza el rating (1..5) del usuario actual. Dispara notificación al autor del libro. |
+| `/books/:id/rating/me` | DELETE | Sí | Elimina el rating del usuario actual. |
 | `/books/:id/rating/stats` | GET | No | Promedio y cantidad de votos del libro. |
 
 ¹ Usa `optionalAuth`: funciona sin cookie pero, si hay sesión, personaliza la respuesta (`isFavorite`).
@@ -230,17 +270,20 @@ erDiagram
 | Ruta | Método | `verifyToken` | Descripción |
 | --- | --- | --- | --- |
 | `/users` | GET | No | Lista de usuarios. |
-| `/users/me` | GET | Sí | Datos del usuario autenticado. Cacheada 5 min per-user. |
+| `/users/me` | GET | Sí | Datos del usuario autenticado. Cacheada 5 min per-user. Devuelve 404 si el usuario está autenticado en Firebase pero aún no completó el registro. |
 | `/users/me` | PATCH | Sí | Actualiza nombre, username, bio. Acepta multipart con `image` (avatar). Sube/reemplaza imagen en Cloudinary. |
 | `/users/check-username` | GET | Sí | Verifica si un `username` está disponible (formato, reservado, ocupado). |
-| `/users/me/feed` | GET | Sí | Feed paginado cronológico: libros, comentarios, ratings, reading status, follows y eventos de favoritos/colecciones. Las actividades del mismo (user + libro + día) se agrupan en `type: 'group'`. |
+| `/users/me/feed` | GET | Sí | Feed paginado cronológico: libros, comentarios, ratings, reading status, follows y eventos de favoritos/colecciones. Las actividades del mismo (user + libro + día) se agrupan en `type: 'group'`. Los libros originales se marcan con `kind: 'original'` para el chip del cliente. |
 | `/users/me/book-status/:bookId` | GET | Sí | Estado de lectura del usuario para un libro. |
 | `/users/me/book-status` | GET | Sí | Lista paginada de libros del usuario filtrados por estado (`status` query). |
 | `/users/me/book-status/:bookId` | PATCH | Sí | Setea/actualiza el estado (`read` \| `reading` \| `want_to_read`). |
 | `/users/me/book-status/:bookId` | DELETE | Sí | Elimina el estado de lectura. |
-| `/users/profile/:username/books` | GET | No | Perfil público + libros + `followersCount`, `followingCount`, `isFollowing`, `readCount`, `commentsCount`, `topCategories`, `booksStats` (total views, rating promedio, libro más visto). |
+| `/users/me/book-progress/:bookId` | GET | Sí | Progreso de lectura del usuario para un libro (página PDF o CFI EPUB + porcentaje). |
+| `/users/me/book-progress/:bookId` | PATCH | Sí | Guarda/actualiza el progreso. Pensado para llamarse con `keepalive: true` desde el visor al salir. |
+| `/users/me/book-progress/:bookId` | DELETE | Sí | Elimina el progreso guardado. |
+| `/users/profile/:username/books` | GET | No | Perfil público + libros + `followersCount`, `followingCount`, `isFollowing`, `readCount`, `commentsCount`, `topCategories`, `booksStats` (total views, rating promedio, libro más visto — con preferencia por libros `kind: 'original'` del propio usuario). |
 | `/users/:userId/:username/books` | GET | Sí | Libros de un usuario. |
-| `/users/:userId` | DELETE | Sí | Elimina la cuenta y limpia todos sus datos relacionados. |
+| `/users/:userId` | DELETE | Sí | Elimina la cuenta y limpia todos sus datos relacionados (comentarios, ratings, favoritos, colecciones, statuses, progresos, notificaciones, reportes, activity log, libros propios y sus assets). |
 
 ### Rutas de seguimiento (`/api/users`)
 
@@ -278,19 +321,20 @@ erDiagram
 
 | Ruta | Método | Protegido | Descripción |
 | --- | --- | --- | --- |
-| `/book-comments/:bookId` | GET | No | Comentarios paginados de un libro. |
+| `/book-comments/:bookId` | GET | No | Comentarios top-level paginados de un libro (filtra `parentId: null`). |
+| `/comment/:commentId/replies` | GET | No | Respuestas paginadas de un comentario top-level. |
 | `/user-comments/:userId` | GET | No | Comentarios escritos por un usuario. |
 | `/comment/stats/:bookId` | GET | No | Estadísticas agregadas de comentarios de un libro. |
-| `/comment` | POST | Sí | Crea un comentario. Dispara notificación al autor del libro. |
+| `/comment` | POST | Sí | Crea un comentario o respuesta (body: `text`, `bookId`, `parentId?`, `replyToId?`). Si es respuesta, actualiza `repliesCount` del padre y dispara notificación tipo `reply` al autor del comentario padre. Si es top-level, dispara notificación tipo `comment` al autor del libro. |
 | `/comment/:commentId/:userId` | PATCH | Sí | Edita un comentario propio. |
-| `/comment/:commentId/:userId` | DELETE | Sí | Elimina un comentario propio. |
+| `/comment/:commentId/:userId` | DELETE | Sí | Elimina un comentario propio. Si es top-level, cascadea el borrado a sus respuestas; si es respuesta, decrementa `repliesCount` del padre. |
 | `/comment/:commentId/:userId/reaction` | POST | Sí | Agrega o togglea reacción (`like` / `dislike`). Dispara notificación al autor del comentario. |
 
 ### Rutas de notificaciones (`/api/notifications`, todas con `verifyToken`)
 
 | Ruta | Método | Descripción |
 | --- | --- | --- |
-| `/` | GET | Lista paginada de notificaciones (más recientes primero). Cada item viene enriquecido con `actor` y `book` cuando aplica. |
+| `/` | GET | Lista paginada de notificaciones (más recientes primero). Cada item viene enriquecido con `actor` y `book` cuando aplica. Tipos: `follow` · `comment` · `reply` · `rating` · `reaction`. |
 | `/unread-count` | GET | Cantidad de notificaciones no leídas. Endpoint liviano pensado para polling (front lo consulta cada 30 s). |
 | `/mark-all-read` | PATCH | Marca todas las notificaciones del usuario como leídas. |
 | `/:notificationId/read` | PATCH | Marca una notificación como leída. |
@@ -304,6 +348,21 @@ erDiagram
 | `/health` | GET | Healthcheck. Devuelve `{ status: 'ok' }`. |
 | `/sitemap.xml` | GET | Sitemap XML dinámico con todas las páginas públicas. Cacheado en Redis. |
 | `/api-docs` | GET | Swagger UI con la documentación interactiva (solo en preview/dev). |
+
+## Variables de entorno relevantes
+
+| Variable | Uso |
+| --- | --- |
+| `MONGODB_URI` | Conexión a MongoDB. |
+| `REDIS_URL` | Conexión a Redis para cache. |
+| `RENDER_GIT_COMMIT` | SHA usado como namespace de las cache keys. |
+| `FIREBASE_*` | Credenciales de Firebase Admin (project id, client email, private key). |
+| `CLOUDINARY_*` | Credenciales de Cloudinary y `CLOUDINARY_FOLDER` para el path. |
+| `RESEND_API_KEY` | API key de Resend para emails transaccionales (reportes). Opcional: si no está seteada, el envío de mail es no-op y los reportes solo se persisten. |
+| `ADMIN_EMAIL` | Destinatario de las notificaciones de reportes. |
+| `REPORTS_FROM_EMAIL` | Remitente de los reportes. Default `onboarding@resend.dev`. |
+| `COOKIE_DOMAIN` | Dominio de la session cookie en producción. |
+| `SENTRY_DSN` | DSN de Sentry para error tracking. |
 
 ---
 
