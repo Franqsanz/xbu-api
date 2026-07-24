@@ -2,6 +2,7 @@ import express, { Router } from 'express';
 
 import {
   getUsers,
+  searchUsers,
   getCheckUser,
   getUserAndBooks,
   getUserAndBooksByUsername,
@@ -15,6 +16,7 @@ import {
   getCheckUsername,
   patchMe,
 } from '../controllers/userController';
+import { optionalAuth } from '../middlewares/optionalAuth';
 import {
   getBookStatus,
   setBookStatus,
@@ -48,6 +50,26 @@ const router: Router = express.Router();
  *               items: { $ref: '#/components/schemas/User' }
  */
 router.get('/', getUsers);
+
+/**
+ * @openapi
+ * /api/users/search:
+ *   get:
+ *     tags: [Users]
+ *     summary: Busca usuarios por nombre o username.
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema: { type: string }
+ *         required: true
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, minimum: 1, maximum: 20, default: 10 }
+ *     responses:
+ *       200:
+ *         description: Lista de usuarios coincidentes con isFollowing calculado si hay sesión.
+ */
+router.get('/search', optionalAuth, searchUsers);
 
 /**
  * @openapi

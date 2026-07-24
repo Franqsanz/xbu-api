@@ -18,6 +18,22 @@ export interface IReadUser {
   findBooksByUserId?(userId: string): Promise<IBook[]>;
 }
 
+export interface IUserSearchOperations {
+  searchUsers(
+    query: string,
+    currentUserId: string | null,
+    limit?: number
+  ): Promise<
+    Array<{
+      uid: string;
+      name: string;
+      username: string;
+      picture?: string;
+      isFollowing: boolean;
+    }>
+  >;
+}
+
 export interface IWriteUser {
   createUser(userToSave: IUserToSave): Promise<IUser>;
   saveUser?(
@@ -71,4 +87,5 @@ export type IRepositoryUser = IReadUser & IWriteUser;
 export type IFullRepositoryUser = IReadUser &
   IFirebaseUserOperations &
   IFollowOperations &
-  IProfileEditOperations;
+  IProfileEditOperations &
+  IUserSearchOperations;

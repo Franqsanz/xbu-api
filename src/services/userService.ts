@@ -1,5 +1,5 @@
 import { UserRepository } from './../repositories/userRepository';
-import { FollowRepository } from './../repositories/followRepository';
+import { FollowRepository, findFollowingSet } from './../repositories/followRepository';
 import { CollectionRepository } from './../repositories/collectionRepository';
 import { FavoriteRepository } from './../repositories/favoriteRepository';
 import { commentRepository } from './../repositories/commentRepository';
@@ -92,6 +92,21 @@ export const UserService: IFullRepositoryUser = {
 
   async findUserByUsernameAndBooks(username, limit, offset) {
     return await UserRepository.findUserByUsernameAndBooks(username, limit, offset);
+  },
+
+  async searchUsers(query: string, currentUserId: string | null, limit = 10) {
+    const q = (query ?? '').trim();
+    if (q.length < 2) return [];
+    const users = await UserRepository.searchUsers(q, limit, currentUserId ?? undefined);
+    const uids = users.map((u: any) => u.uid);
+    const followingSet = await findFollowingSet(currentUserId, uids);
+    return users.map((u: any) => ({
+      uid: u.uid,
+      name: u.name,
+      username: u.username,
+      picture: u.picture,
+      isFollowing: followingSet.has(u.uid),
+    }));
   },
 
   async saveUser(decodedToken, username) {

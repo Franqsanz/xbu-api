@@ -2,8 +2,17 @@ import booksModel from '../models/books';
 import usersModel from '../models/users';
 import { qyCheckUser } from '../db/userQueries';
 import { IRepositoryUser } from '../types/repositories/IUserRepository';
+import { IUser } from '../types/types';
 
-export const UserRepository: IRepositoryUser = {
+type UserRepositoryType = IRepositoryUser & {
+  searchUsers(
+    query: string,
+    limit?: number,
+    excludeUid?: string
+  ): Promise<Array<Pick<IUser, 'uid' | 'name' | 'username' | 'picture'>>>;
+};
+
+export const UserRepository: UserRepositoryType = {
   async findUsers() {
     return await usersModel.find();
   },
@@ -21,6 +30,18 @@ export const UserRepository: IRepositoryUser = {
 
   async findByUsername(username: string) {
     return await usersModel.findOne({ username: username.toLowerCase().trim() }).lean().exec();
+  },
+
+  async searchUsers(query: string, limit = 10, excludeUid?: string) {
+    const q = query.trim();
+    if (!q) return [];
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(escaped, 'i');
+    const filter: any = {
+      $or: [{ name: regex }, { username: regex }],
+    };
+    if (excludeUid) filter.uid = { $ne: excludeUid };
+    return await usersModel.find(filter, 'uid name username picture').limit(limit).lean().exec();
   },
 
   async updateMe(

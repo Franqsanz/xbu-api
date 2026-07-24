@@ -467,8 +467,23 @@ async function patchMe(req: Request, res: Response, next: NextFunction): Promise
   }
 }
 
+async function searchUsers(req: Request, res: Response, next: NextFunction): Promise<any> {
+  const query = (req.query.q as string) ?? '';
+  const currentUserId = req.user?.uid ?? null;
+  const limitRaw = Number(req.query.limit ?? 10);
+  const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 20) : 10;
+
+  try {
+    const results = await UserService.searchUsers(query, currentUserId, limit);
+    return res.status(200).json(results);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 export {
   getUsers,
+  searchUsers,
   getCheckUser,
   getUserAndBooks,
   getUserAndBooksByUsername,

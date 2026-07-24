@@ -2,7 +2,7 @@ import followsModel from '../models/follows';
 import usersModel from '../models/users';
 import { IFollowData, IFollowingData, IFollowStats } from '../types/types';
 
-async function findFollowingSet(
+export async function findFollowingSet(
   currentUserId: string | null,
   candidateUids: string[]
 ): Promise<Set<string>> {
