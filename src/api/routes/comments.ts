@@ -132,7 +132,15 @@ router.get('/comment/stats/:bookId', findStats);
  * /api/users/comments/comment:
  *   post:
  *     tags: [Comments]
- *     summary: Crea un comentario en un libro.
+ *     summary: Crea un comentario o una respuesta en un libro.
+ *     description: |
+ *       Si `parentId` no viene, se crea un comentario top-level y se dispara
+ *       una notificación tipo `comment` al autor del libro. Si `parentId`
+ *       viene, se crea una respuesta al comentario padre (que debe ser
+ *       top-level), se incrementa `repliesCount` del padre y se dispara una
+ *       notificación tipo `reply` al autor del comentario padre. `replyToId`
+ *       es opcional y sirve solo a la UI para indicar a qué respuesta puntual
+ *       se está contestando; el hilo lógico sigue siendo `parentId`.
  *     security:
  *       - cookieAuth: []
  *     requestBody:
@@ -150,7 +158,11 @@ router.get('/comment/stats/:bookId', findStats);
  *               parentId:
  *                 type: string
  *                 nullable: true
- *                 description: Si está presente, el comentario es una respuesta al comment con ese id.
+ *                 description: Id del comentario top-level al que responde. Omitir para crear top-level.
+ *               replyToId:
+ *                 type: string
+ *                 nullable: true
+ *                 description: Id de la respuesta puntual dentro del hilo (opcional, solo UI).
  *               author:
  *                 type: object
  *                 required: [userId]
@@ -161,7 +173,10 @@ router.get('/comment/stats/:bookId', findStats);
  *                   avatar: { type: string }
  *     responses:
  *       201:
- *         description: Comentario creado.
+ *         description: Comentario o respuesta creado.
+ *         content:
+ *           application/json:
+ *             schema: { $ref: '#/components/schemas/Comment' }
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  *       401:
@@ -213,6 +228,10 @@ router.patch('/comment/:commentId/:userId', authMiddleware, update);
  *   delete:
  *     tags: [Comments]
  *     summary: Elimina un comentario propio.
+ *     description: |
+ *       Si el comentario es top-level, se eliminan también todas sus
+ *       respuestas en cascada. Si es una respuesta, se decrementa
+ *       `repliesCount` del padre.
  *     security:
  *       - cookieAuth: []
  *     parameters:

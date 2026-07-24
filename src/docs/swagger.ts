@@ -170,6 +170,20 @@ const options: swaggerJsdoc.Options = {
             id: { type: 'string' },
             text: { type: 'string', maxLength: 1500 },
             bookId: { type: 'string' },
+            parentId: {
+              type: 'string',
+              nullable: true,
+              description: 'Id del comentario raíz del hilo. Null si es top-level.',
+            },
+            replyToId: {
+              type: 'string',
+              nullable: true,
+              description: 'Id de la respuesta puntual a la que se contesta (para UI anidada).',
+            },
+            repliesCount: {
+              type: 'integer',
+              description: 'Cantidad de respuestas. Solo válido en top-level.',
+            },
             author: {
               type: 'object',
               properties: {
