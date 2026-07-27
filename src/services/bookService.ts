@@ -46,6 +46,10 @@ function uploadEbookToCloudinary(buffer: Buffer, type: BookFileType): Promise<an
 }
 
 type IBookService = IRepositoryBook & {
+  findBooksByCursor(
+    cursorId: string | null,
+    limit: number
+  ): Promise<{ results: IBook[]; totalBooks: number | null }>;
   findStatsByUser(userId: string): Promise<{
     totalViews: number;
     mostViewed: { id: string; title: string; pathUrl: string; views: number } | null;
@@ -67,6 +71,10 @@ type IBookService = IRepositoryBook & {
 export const BookService: IBookService = {
   async findBooks(limit, offset) {
     return await BookRepository.findBooks(limit, offset);
+  },
+
+  async findBooksByCursor(cursorId: string | null, limit: number) {
+    return await BookRepository.findBooksByCursor!(cursorId, limit);
   },
 
   async findById(id) {

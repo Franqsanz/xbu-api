@@ -46,7 +46,7 @@ const router: Router = express.Router();
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Comment' }
  */
-router.get('/book-comments/:bookId', pagination, query, findAll);
+router.get('/book-comments/:bookId', findAll);
 
 /**
  * @openapi

@@ -5,46 +5,53 @@ import { BookService } from '../../services/bookService';
 import { BookRatingService } from '../../services/bookRatingService';
 import { CacheService } from '../../services/cacheService';
 import { BadRequest, Forbidden, NotFound } from '../../utils/errors';
+import { encodeIdCursor, decodeIdCursor } from '../../utils/cursor';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
+
+const BOOKS_PAGE_SIZE = 10;
+const BOOKS_MAX_LIMIT = 50;
 
 const BOOKS_CACHE_TTL = 300; // 5 minutos
 const OPTIONS_CACHE_TTL = 3600; // 1 hora
 const MOST_VIEWED_CACHE_TTL = 600; // 10 minutos
 const RELATED_CACHE_TTL = 1800; // 30 minutos
 
-async function getBooks(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<IFindBooks>> {
-  const { page, limit, offset } = req.pagination!;
+async function getBooks(req: Request, res: Response, next: NextFunction): Promise<Response<any>> {
+  const rawCursor = (req.query.cursor as string) || null;
+  const rawLimit = Number(req.query.limit ?? BOOKS_PAGE_SIZE);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(rawLimit, 1), BOOKS_MAX_LIMIT)
+    : BOOKS_PAGE_SIZE;
+
+  const cursorId = rawCursor ? decodeIdCursor(rawCursor) : null;
+  if (rawCursor && !cursorId) {
+    return next(BadRequest('Cursor inválido.')) as any;
+  }
 
   try {
-    // Sin paginación: respuesta directa, sin cache
-    if (!limit || !page) {
-      const { results, totalBooks } = await BookService.findBooks(limit, offset);
-      return res.status(200).json({ totalBooks, results });
-    }
+    const cacheKey = `books:cursor:${cursorId ?? 'first'}:l${limit}`;
 
-    const cacheKey = `books:p${page}:l${limit}`;
-
-    const cachedResponse = await CacheService.get<{
-      info: typeof req.paginationInfo;
-      results: IBook[];
-    }>(cacheKey);
-
+    const cachedResponse = await CacheService.get<any>(cacheKey);
     if (cachedResponse) {
       return res.status(200).json(cachedResponse);
     }
 
-    const { results, totalBooks } = await BookService.findBooks(limit, offset);
+    const { results, totalBooks } = await BookService.findBooksByCursor(cursorId, limit);
 
-    if (results.length < 1) {
-      throw NotFound('No se encontraron más libros');
-    }
+    const last = results[results.length - 1];
+    const nextCursor = results.length === limit && last ? encodeIdCursor(String(last._id)) : null;
+    const nextUrl = nextCursor
+      ? `${req.protocol}://${req.hostname}${req.baseUrl}${req.path}?cursor=${nextCursor}&limit=${limit}`
+      : null;
 
-    req.calculatePagination!(totalBooks);
-    const response = { info: req.paginationInfo, results };
+    const info: {
+      nextCursor: string | null;
+      nextUrl: string | null;
+      totalBooks?: number;
+    } = { nextCursor, nextUrl };
+    if (totalBooks !== null) info.totalBooks = totalBooks;
+
+    const response = { info, results };
 
     await CacheService.set(cacheKey, response, BOOKS_CACHE_TTL);
 

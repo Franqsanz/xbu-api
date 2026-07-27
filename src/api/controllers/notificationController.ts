@@ -2,36 +2,53 @@ import { Request, Response, NextFunction } from 'express';
 
 import { NotificationService } from '../../services/notificationService';
 import { BadRequest } from '../../utils/errors';
+import { encodeCompositeCursor, decodeCompositeCursor } from '../../utils/cursor';
+
+const NOTIFICATIONS_PAGE_SIZE = 20;
+const NOTIFICATIONS_MAX_LIMIT = 50;
 
 async function listNotifications(req: Request, res: Response, next: NextFunction): Promise<any> {
   const userId = req.user?.uid;
-  const { limit = 20, offset = 0 } = req.query;
 
   if (!userId) {
     throw BadRequest('Usuario no autenticado');
   }
 
+  const rawCursor = (req.query.cursor as string) || null;
+  const rawLimit = Number(req.query.limit ?? NOTIFICATIONS_PAGE_SIZE);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(rawLimit, 1), NOTIFICATIONS_MAX_LIMIT)
+    : NOTIFICATIONS_PAGE_SIZE;
+
+  const cursor = rawCursor ? decodeCompositeCursor(rawCursor) : null;
+  if (rawCursor && !cursor) {
+    return next(BadRequest('Cursor inválido.')) as any;
+  }
+
   try {
-    const parsedLimit = parseInt(limit as string);
-    const parsedOffset = parseInt(offset as string);
-    const { notifications, total } = await NotificationService.listForUser(
+    const { notifications, total, rawResults } = await NotificationService.listForUserByCursor(
       userId,
-      parsedLimit,
-      parsedOffset
+      cursor,
+      limit
     );
 
-    const nextPage =
-      parsedOffset + notifications.length < total ? parsedOffset / parsedLimit + 1 : null;
+    const last = rawResults[rawResults.length - 1];
+    const nextCursor =
+      rawResults.length === limit && last
+        ? encodeCompositeCursor(last.createdAt, String(last._id))
+        : null;
+    const nextUrl = nextCursor
+      ? `${req.protocol}://${req.hostname}${req.baseUrl}${req.path}?cursor=${nextCursor}&limit=${limit}`
+      : null;
 
-    return res.status(200).json({
-      notifications,
-      info: {
-        total,
-        limit: parsedLimit,
-        offset: parsedOffset,
-        nextPage,
-      },
-    });
+    const info: {
+      nextCursor: string | null;
+      nextUrl: string | null;
+      total?: number;
+    } = { nextCursor, nextUrl };
+    if (total !== null) info.total = total;
+
+    return res.status(200).json({ info, notifications });
   } catch (err) {
     return next(err) as any;
   }

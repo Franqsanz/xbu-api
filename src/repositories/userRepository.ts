@@ -10,6 +10,11 @@ type UserRepositoryType = IRepositoryUser & {
     limit?: number,
     excludeUid?: string
   ): Promise<Array<Pick<IUser, 'uid' | 'name' | 'username' | 'picture'>>>;
+  findUserByUsernameAndBooksByCursor(
+    username: string,
+    cursorId: string | null,
+    limit: number
+  ): Promise<{ user: IUser | null; results: any[]; totalBooks: number | null }>;
 };
 
 export const UserRepository: UserRepositoryType = {
@@ -131,5 +136,38 @@ export const UserRepository: UserRepositoryType = {
       results,
       totalBooks,
     };
+  },
+
+  async findUserByUsernameAndBooksByCursor(
+    username: string,
+    cursorId: string | null,
+    limit: number
+  ) {
+    const user = await usersModel.findOne(
+      { username: { $regex: `^${username.trim()}$`, $options: 'i' } },
+      'uid name picture username bio createdAt'
+    );
+
+    if (!user) {
+      return {
+        user: null,
+        results: [],
+        totalBooks: null,
+      };
+    }
+
+    const filter: any = { userId: user.uid };
+    if (cursorId) filter._id = { $lt: cursorId };
+
+    const results = await booksModel
+      .find(filter, 'title category language authors pathUrl image')
+      .sort({ _id: -1 })
+      .limit(limit)
+      .exec();
+
+    // Total solo en la primera página.
+    const totalBooks = cursorId ? null : await booksModel.countDocuments({ userId: user.uid });
+
+    return { user, results, totalBooks };
   },
 };

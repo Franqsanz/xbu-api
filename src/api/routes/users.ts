@@ -434,7 +434,7 @@ router.delete('/me/book-progress/:bookId', verifyToken, deleteBookProgress);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.get('/profile/:username/books', pagination, getUserAndBooksByUsername);
+router.get('/profile/:username/books', getUserAndBooksByUsername);
 
 /**
  * @openapi

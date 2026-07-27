@@ -32,6 +32,31 @@ export const NotificationRepository = {
     return { results, total };
   },
 
+  async findByUserByCursor(
+    userId: string,
+    cursor: { date: Date; id: string } | null,
+    limit: number
+  ) {
+    const filter: any = { userId };
+    if (cursor) {
+      filter.$or = [
+        { createdAt: { $lt: cursor.date } },
+        { createdAt: cursor.date, _id: { $lt: cursor.id } },
+      ];
+    }
+    const results = await notificationsModel
+      .find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
+
+    // Solo contamos total en la primera página (sin cursor).
+    const total = cursor ? null : await notificationsModel.countDocuments({ userId }).exec();
+
+    return { results, total };
+  },
+
   async countUnread(userId: string) {
     return await notificationsModel.countDocuments({ userId, read: false }).exec();
   },

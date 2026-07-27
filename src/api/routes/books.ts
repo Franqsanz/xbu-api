@@ -40,43 +40,46 @@ router.get('/', (req, res: Response) => {
  * /api/books:
  *   get:
  *     tags: [Books]
- *     summary: Lista paginada de libros.
+ *     summary: Lista paginada de libros (cursor pagination).
+ *     description: |
+ *       Paginación keyset. Sin `cursor` devuelve la primera página y
+ *       `totalBooks`. Con `cursor` devuelve la siguiente página (sin
+ *       `totalBooks` para ahorrar la query de count).
  *     parameters:
  *       - in: query
- *         name: page
- *         schema: { type: integer, default: 1 }
+ *         name: cursor
+ *         schema: { type: string }
+ *         description: Cursor opaco devuelto por la request anterior. Omitir para primera página.
  *       - in: query
  *         name: limit
- *         schema: { type: integer, default: 10 }
- *       - in: query
- *         name: authors
- *         schema: { type: string }
- *         description: Filtro por autor.
- *       - in: query
- *         name: category
- *         schema: { type: string }
- *         description: Filtro por categoría.
- *       - in: query
- *         name: year
- *         schema: { type: integer }
- *       - in: query
- *         name: language
- *         schema: { type: string }
+ *         schema: { type: integer, default: 10, maximum: 50 }
  *     responses:
  *       200:
- *         description: Lista paginada de libros.
+ *         description: Página de libros.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 info:
- *                   $ref: '#/components/schemas/Info'
+ *                   type: object
+ *                   properties:
+ *                     nextCursor:
+ *                       type: string
+ *                       nullable: true
+ *                       description: Cursor para la próxima página. Null si no hay más.
+ *                     nextUrl:
+ *                       type: string
+ *                       nullable: true
+ *                       description: URL absoluta para la próxima página.
+ *                     totalBooks:
+ *                       type: integer
+ *                       description: Total de libros. Solo en la primera página.
  *                 results:
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Book' }
  */
-router.get('/books', pagination, query, getBooks);
+router.get('/books', getBooks);
 
 /**
  * @openapi

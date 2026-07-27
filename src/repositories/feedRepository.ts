@@ -7,14 +7,12 @@ import activityLogModel from '../models/activityLog';
 import bookRatingsModel from '../models/bookRatings';
 
 type FeedActor = {
-  uid: string;
   username: string;
   name: string;
   picture?: string;
 };
 
 type FeedBook = {
-  id: string;
   title: string;
   pathUrl: string;
   image: { url: string };
@@ -32,7 +30,7 @@ type FeedActivity = {
   actor: FeedActor;
   book?: FeedBook;
   target?: FeedActor;
-  comment?: { id: string; text: string };
+  comment?: { text: string };
   status?: StatusValue;
   rating?: number;
   activities?: FeedActivity[];
@@ -41,9 +39,9 @@ type FeedActivity = {
 export const FeedRepository = {
   async getFeed(
     userId: string,
-    limit: number = 10,
-    offset: number = 0
-  ): Promise<{ activities: FeedActivity[]; total: number }> {
+    cursor: { date: Date } | null,
+    limit: number = 10
+  ): Promise<{ activities: FeedActivity[]; total: number | null; hasMore: boolean }> {
     const followingRecords = await followsModel
       .find({ follower: userId })
       .select('following')
@@ -53,7 +51,10 @@ export const FeedRepository = {
     const followingUids = followingRecords.map((f: any) => f.following);
     const targetUids = Array.from(new Set([...followingUids, userId]));
 
-    const fetchUpTo = offset + limit;
+    // Traemos un ítem extra para saber si hay más páginas.
+    const fetchUpTo = limit + 1;
+    const cutoffCreated = cursor ? { createdAt: { $lt: cursor.date } } : {};
+    const cutoffUpdated = cursor ? { updatedAt: { $lt: cursor.date } } : {};
 
     // Los eventos de follow se muestran solo de los usuarios que sigo
     // (no los míos propios, sería redundante para el usuario).
@@ -62,39 +63,39 @@ export const FeedRepository = {
     const [bookDocs, commentDocs, statusDocs, followDocs, activityDocs, ratingDocs] =
       await Promise.all([
         booksModel
-          .find({ userId: { $in: targetUids } })
+          .find({ userId: { $in: targetUids }, ...cutoffCreated })
           .sort({ createdAt: -1 })
           .limit(fetchUpTo)
           .lean()
           .exec(),
         commentsModel
-          .find({ 'author.userId': { $in: targetUids } })
+          .find({ 'author.userId': { $in: targetUids }, ...cutoffCreated })
           .sort({ createdAt: -1 })
           .limit(fetchUpTo)
           .lean()
           .exec(),
         bookStatusesModel
-          .find({ userId: { $in: targetUids } })
+          .find({ userId: { $in: targetUids }, ...cutoffUpdated })
           .sort({ updatedAt: -1 })
           .limit(fetchUpTo)
           .lean()
           .exec(),
         followActorUids.length > 0
           ? followsModel
-              .find({ follower: { $in: followActorUids } })
+              .find({ follower: { $in: followActorUids }, ...cutoffCreated })
               .sort({ createdAt: -1 })
               .limit(fetchUpTo)
               .lean()
               .exec()
           : Promise.resolve([]),
         activityLogModel
-          .find({ userId: { $in: targetUids } })
+          .find({ userId: { $in: targetUids }, ...cutoffCreated })
           .sort({ createdAt: -1 })
           .limit(fetchUpTo)
           .lean()
           .exec(),
         bookRatingsModel
-          .find({ userId: { $in: targetUids } })
+          .find({ userId: { $in: targetUids }, ...cutoffUpdated })
           .sort({ updatedAt: -1 })
           .limit(fetchUpTo)
           .lean()
@@ -139,17 +140,13 @@ export const FeedRepository = {
     ]);
 
     const actorByUid = new Map<string, FeedActor>(
-      actors.map((u: any) => [
-        u.uid,
-        { uid: u.uid, username: u.username, name: u.name, picture: u.picture },
-      ])
+      actors.map((u: any) => [u.uid, { username: u.username, name: u.name, picture: u.picture }])
     );
 
     const bookById = new Map<string, FeedBook>(
       referencedBooks.map((b: any) => [
         b._id.toString(),
         {
-          id: b._id.toString(),
           title: b.title,
           pathUrl: b.pathUrl,
           image: b.image,
@@ -170,7 +167,6 @@ export const FeedRepository = {
           createdAt: b.createdAt,
           actor,
           book: {
-            id: b._id.toString(),
             title: b.title,
             pathUrl: b.pathUrl,
             image: b.image,
@@ -193,7 +189,7 @@ export const FeedRepository = {
           createdAt: c.createdAt,
           actor,
           book,
-          comment: { id: c._id.toString(), text: c.text },
+          comment: { text: c.text },
         };
       })
       .filter((a): a is FeedActivity => a !== null);
@@ -215,9 +211,10 @@ export const FeedRepository = {
 
     const followActivities: FeedActivity[] = followDocs
       .map((f: any): FeedActivity | null => {
+        if (f.follower === f.following) return null;
         const actor = actorByUid.get(f.follower);
         const target = actorByUid.get(f.following);
-        if (!actor || !target || actor.uid === target.uid) return null;
+        if (!actor || !target) return null;
         return {
           type: 'follow',
           createdAt: f.createdAt,
@@ -276,7 +273,7 @@ export const FeedRepository = {
         continue;
       }
       const day = new Date(act.createdAt).toISOString().slice(0, 10);
-      const key = `${act.actor.uid}:${act.book.id}:${day}`;
+      const key = `${act.actor.username}:${act.book.pathUrl}:${day}`;
       const bucket = groupBuckets.get(key);
       if (bucket) {
         bucket.push(act);
@@ -302,8 +299,13 @@ export const FeedRepository = {
 
     grouped.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-    const paginated = grouped.slice(offset, offset + limit);
+    // Traemos un item extra para saber si hay siguiente página.
+    const hasMore = grouped.length > limit;
+    const activities = hasMore ? grouped.slice(0, limit) : grouped;
 
-    return { activities: paginated, total: grouped.length };
+    // Total solo en la primera página. Evita recomputar en cada scroll.
+    const total = cursor ? null : grouped.length;
+
+    return { activities, total, hasMore };
   },
 };

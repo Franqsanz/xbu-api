@@ -94,6 +94,18 @@ export const UserService: IFullRepositoryUser = {
     return await UserRepository.findUserByUsernameAndBooks(username, limit, offset);
   },
 
+  async findUserByUsernameAndBooksByCursor(
+    username: string,
+    cursorId: string | null,
+    limit: number
+  ) {
+    return await (UserRepository as any).findUserByUsernameAndBooksByCursor(
+      username,
+      cursorId,
+      limit
+    );
+  },
+
   async searchUsers(query: string, currentUserId: string | null, limit = 10) {
     const q = (query ?? '').trim();
     if (q.length < 2) return [];

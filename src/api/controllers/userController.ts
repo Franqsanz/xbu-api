@@ -17,6 +17,12 @@ import {
   FeedResponse,
 } from '../../types/responses';
 import { NotFound, BadRequest } from '../../utils/errors';
+import {
+  encodeDateCursor,
+  decodeDateCursor,
+  encodeIdCursor,
+  decodeIdCursor,
+} from '../../utils/cursor';
 
 const FOLLOW_STATS_CACHE_TTL = 300; // 5 minutos
 const ME_CACHE_TTL = 300; // 5 minutos
@@ -335,23 +341,40 @@ async function getUserAndBooksByUsername(
   req: Request,
   res: Response,
   next: NextFunction
-): Promise<Response<IUserAndBooks>> {
+): Promise<any> {
   const { username } = req.params;
   const currentUserId = req.user?.uid;
-  const { limit, offset } = req.pagination!;
+
+  const rawCursor = (req.query.cursor as string) || null;
+  const rawLimit = Number(req.query.limit ?? 10);
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 50) : 10;
+
+  const cursorId = rawCursor ? decodeIdCursor(rawCursor) : null;
+  if (rawCursor && !cursorId) {
+    return next(BadRequest('Cursor inválido.')) as any;
+  }
 
   try {
-    const { user, results, totalBooks } = await UserService.findUserByUsernameAndBooks(
-      username,
-      limit,
-      offset
-    );
+    const { user, results, totalBooks } = await (
+      UserService as any
+    ).findUserByUsernameAndBooksByCursor(username, cursorId, limit);
 
     if (!user) {
       throw NotFound('Usuario no encontrado');
     }
 
-    req.calculatePagination!(totalBooks);
+    const last = results[results.length - 1];
+    const nextCursor = results.length === limit && last ? encodeIdCursor(String(last._id)) : null;
+    const nextUrl = nextCursor
+      ? `${req.protocol}://${req.hostname}${req.baseUrl}${req.path}?cursor=${nextCursor}&limit=${limit}`
+      : null;
+
+    const info: {
+      nextCursor: string | null;
+      nextUrl: string | null;
+      totalBooks?: number;
+    } = { nextCursor, nextUrl };
+    if (totalBooks !== null) info.totalBooks = totalBooks;
 
     const [isFollowing, followStats, readCount, commentsCount, topCategories, booksStats] =
       await Promise.all([
@@ -366,9 +389,8 @@ async function getUserAndBooksByUsername(
       ]);
 
     const response = {
-      info: req.paginationInfo,
+      info,
       user,
-      results,
       isFollowing,
       followersCount: followStats.followersCount,
       followingCount: followStats.followingCount,
@@ -376,6 +398,7 @@ async function getUserAndBooksByUsername(
       commentsCount,
       topCategories,
       booksStats,
+      results,
     };
 
     return res.status(200).json(response);
@@ -384,40 +407,39 @@ async function getUserAndBooksByUsername(
   }
 }
 
-async function getFeed(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<FeedResponse>> {
+async function getFeed(req: Request, res: Response, next: NextFunction): Promise<any> {
   const currentUserId = req.user?.uid;
-  const { limit = 10, offset = 0 } = req.query;
 
   if (!currentUserId) {
     throw BadRequest('Usuario no autenticado');
   }
 
-  const parsedLimit = parseInt(limit as string);
-  const parsedOffset = parseInt(offset as string);
+  const rawCursor = (req.query.cursor as string) || null;
+  const rawLimit = Number(req.query.limit ?? 10);
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 30) : 10;
+
+  const cursor = rawCursor ? decodeDateCursor(rawCursor) : null;
+  if (rawCursor && !cursor) {
+    return next(BadRequest('Cursor inválido.')) as any;
+  }
 
   try {
-    const { activities, total } = await FeedService.getFeed(
-      currentUserId,
-      parsedLimit,
-      parsedOffset
-    );
+    const { activities, total, hasMore } = await FeedService.getFeed(currentUserId, cursor, limit);
 
-    const nextPage =
-      parsedOffset + activities.length < total ? parsedOffset / parsedLimit + 1 : null;
+    const last = activities[activities.length - 1];
+    const nextCursor = hasMore && last ? encodeDateCursor(new Date(last.createdAt)) : null;
+    const nextUrl = nextCursor
+      ? `${req.protocol}://${req.hostname}${req.baseUrl}${req.path}?cursor=${nextCursor}&limit=${limit}`
+      : null;
 
-    return res.status(200).json({
-      activities,
-      info: {
-        total,
-        limit: parsedLimit,
-        offset: parsedOffset,
-        nextPage,
-      },
-    });
+    const info: {
+      nextCursor: string | null;
+      nextUrl: string | null;
+      total?: number;
+    } = { nextCursor, nextUrl };
+    if (total !== null) info.total = total;
+
+    return res.status(200).json({ info, activities });
   } catch (err) {
     return next(err) as any;
   }

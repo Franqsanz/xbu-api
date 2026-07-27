@@ -10,6 +10,10 @@ export const commentService: ICommentService = {
     return await commentRepository.findAll(bookId, limit, offset);
   },
 
+  async findAllByCursor(bookId: string, cursor: { date: Date; id: string } | null, limit: number) {
+    return await (commentRepository as any).findAllByCursor(bookId, cursor, limit);
+  },
+
   async findReplies(parentId, limit = 10, offset = 0) {
     return await commentRepository.findReplies(parentId, limit, offset);
   },

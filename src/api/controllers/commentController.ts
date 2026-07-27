@@ -5,30 +5,44 @@ import { BookService } from '../../services/bookService';
 import { NotificationService } from '../../services/notificationService';
 import { IComment, ICommentStats } from '../../types/types';
 import { BadRequest } from '../../utils/errors';
+import { encodeCompositeCursor, decodeCompositeCursor } from '../../utils/cursor';
 
-async function findAll(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<Response<IComment[]>> {
+async function findAll(req: Request, res: Response, next: NextFunction): Promise<any> {
   const { bookId } = req.params;
-  const { limit, offset, page } = req.pagination! || {};
+
+  const rawCursor = (req.query.cursor as string) || null;
+  const rawLimit = Number(req.query.limit ?? 10);
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 50) : 10;
+
+  const cursor = rawCursor ? decodeCompositeCursor(rawCursor) : null;
+  if (rawCursor && !cursor) {
+    return next(BadRequest('Cursor inválido.')) as any;
+  }
 
   try {
-    if (!limit || !page) {
-      throw BadRequest('Faltan los parametros "page" y "limit"');
-    }
+    const { results, totalComments } = await (commentService as any).findAllByCursor(
+      bookId,
+      cursor,
+      limit
+    );
 
-    const { results, totalComments } = await commentService.findAll(bookId, limit, offset);
+    const last = results[results.length - 1];
+    const nextCursor =
+      results.length === limit && last
+        ? encodeCompositeCursor(last.createdAt, String(last._id))
+        : null;
+    const nextUrl = nextCursor
+      ? `${req.protocol}://${req.hostname}${req.baseUrl}${req.path}?cursor=${nextCursor}&limit=${limit}`
+      : null;
 
-    req.calculatePagination!(totalComments);
+    const info: {
+      nextCursor: string | null;
+      nextUrl: string | null;
+      totalComments?: number;
+    } = { nextCursor, nextUrl };
+    if (totalComments !== null) info.totalComments = totalComments;
 
-    const response = {
-      info: req.paginationInfo,
-      results,
-    };
-
-    return res.status(200).json(response);
+    return res.status(200).json({ info, results });
   } catch (err) {
     return next(err) as any;
   }

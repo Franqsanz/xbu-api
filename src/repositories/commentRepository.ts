@@ -22,6 +22,28 @@ export const commentRepository: IRepositoryComment = {
     };
   },
 
+  async findAllByCursor(bookId: string, cursor: { date: Date; id: string } | null, limit: number) {
+    const filter: any = { bookId, parentId: null };
+    if (cursor) {
+      filter.$or = [
+        { createdAt: { $lt: cursor.date } },
+        { createdAt: cursor.date, _id: { $lt: cursor.id } },
+      ];
+    }
+    const results = await commentsModel
+      .find(filter)
+      .sort({ createdAt: -1, _id: -1 })
+      .limit(limit)
+      .lean()
+      .exec();
+
+    const totalComments = cursor
+      ? null
+      : await commentsModel.countDocuments({ bookId, parentId: null });
+
+    return { totalComments, results };
+  },
+
   async findReplies(parentId, limit, offset) {
     // Las respuestas se ordenan asc para leerse cronológicamente.
     const filter = { parentId };

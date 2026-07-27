@@ -15,6 +15,11 @@ export interface IReadUser {
     limit: number,
     offset: number
   ): Promise<IUserAndBooks>;
+  findUserByUsernameAndBooksByCursor?(
+    username: string,
+    cursorId: string | null,
+    limit: number
+  ): Promise<{ user: IUser | null; results: any[]; totalBooks: number | null }>;
   findBooksByUserId?(userId: string): Promise<IBook[]>;
 }
 

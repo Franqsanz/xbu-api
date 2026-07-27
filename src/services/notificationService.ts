@@ -1,3 +1,5 @@
+import { Types } from 'mongoose';
+
 import usersModel from '../models/users';
 import booksModel from '../models/books';
 import {
@@ -7,14 +9,12 @@ import {
 } from '../repositories/notificationRepository';
 
 type ActorSummary = {
-  uid: string;
   username: string;
   name: string;
   picture?: string;
 };
 
 type BookSummary = {
-  id: string;
   title: string;
   pathUrl: string;
   image?: { url: string };
@@ -26,7 +26,6 @@ export type EnrichedNotification = {
   read: boolean;
   createdAt: Date;
   rating?: number;
-  commentId?: string;
   reactionType?: 'like' | 'dislike';
   actor: ActorSummary | null;
   book?: BookSummary | null;
@@ -46,8 +45,16 @@ export const NotificationService = {
     }
   },
 
-  async listForUser(userId: string, limit: number, offset: number) {
-    const { results, total } = await NotificationRepository.findByUser(userId, limit, offset);
+  async listForUserByCursor(
+    userId: string,
+    cursor: { date: Date; id: string } | null,
+    limit: number
+  ) {
+    const { results, total } = await NotificationRepository.findByUserByCursor(
+      userId,
+      cursor,
+      limit
+    );
 
     const actorUids = Array.from(new Set(results.map((n: any) => n.actorId)));
     const bookIds = Array.from(
@@ -64,7 +71,13 @@ export const NotificationService = {
         : Promise.resolve([]),
       bookIds.length > 0
         ? booksModel
-            .find({ _id: { $in: bookIds } })
+            .find({
+              _id: {
+                $in: bookIds
+                  .filter((id: string) => Types.ObjectId.isValid(id))
+                  .map((id: string) => new Types.ObjectId(id)),
+              },
+            })
             .select('title pathUrl image')
             .lean()
             .exec()
@@ -72,19 +85,15 @@ export const NotificationService = {
     ]);
 
     const actorByUid = new Map<string, ActorSummary>(
-      actors.map((u: any) => [
-        u.uid,
-        { uid: u.uid, username: u.username, name: u.name, picture: u.picture },
-      ])
+      actors.map((u: any) => [u.uid, { username: u.username, name: u.name, picture: u.picture }])
     );
     const bookById = new Map<string, BookSummary>(
       books.map((b: any) => [
         b._id.toString(),
         {
-          id: b._id.toString(),
           title: b.title,
           pathUrl: b.pathUrl,
-          image: b.image,
+          image: b.image ? { url: b.image.url } : undefined,
         },
       ])
     );
@@ -95,13 +104,12 @@ export const NotificationService = {
       read: n.read,
       createdAt: n.createdAt,
       rating: n.rating,
-      commentId: n.commentId,
       reactionType: n.reactionType,
       actor: actorByUid.get(n.actorId) ?? null,
       book: n.bookId ? (bookById.get(n.bookId) ?? null) : undefined,
     }));
 
-    return { notifications: enriched, total };
+    return { notifications: enriched, total, rawResults: results };
   },
 
   async countUnread(userId: string) {

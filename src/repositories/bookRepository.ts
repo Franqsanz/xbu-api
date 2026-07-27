@@ -15,7 +15,8 @@ import { qyPathUrlBooksFavorite } from '../db/userQueries';
 
 export const BookRepository: IRepositoryBook = {
   async findBooks(limit, offset) {
-    // Aquí obtenemos los libros de la base de datos usando el método skip y limit
+    // Legacy: paginación por offset (mantenida para llamados internos sin
+    // paginación como `findBooks(0, 0)` en el sitemap y contextos batch).
     const results = await booksModel
       .find({}, 'title category language authors pathUrl image views')
       .skip(offset)
@@ -25,13 +26,27 @@ export const BookRepository: IRepositoryBook = {
       })
       .exec();
 
-    // Aquí obtenemos el número total de libros en la base de datos
     const totalBooks = await booksModel.countDocuments();
 
     return {
       results,
       totalBooks,
     };
+  },
+
+  async findBooksByCursor(cursorId: string | null, limit: number) {
+    const filter = cursorId ? { _id: { $lt: cursorId } } : {};
+    const results = await booksModel
+      .find(filter, 'title category language authors pathUrl image views')
+      .sort({ _id: -1 })
+      .limit(limit)
+      .exec();
+
+    // Solo contamos total en la primera página. Ahorra un countDocuments en
+    // cada scroll — el count no cambia mientras el user pagina.
+    const totalBooks = cursorId ? null : await booksModel.countDocuments();
+
+    return { results, totalBooks };
   },
 
   async findById(id) {

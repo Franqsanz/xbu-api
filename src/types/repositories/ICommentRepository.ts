@@ -6,6 +6,11 @@ export interface IReadComment {
     limit: number,
     offset: number
   ): Promise<{ results: IComment[]; totalComments: number }>;
+  findAllByCursor?(
+    bookId: string,
+    cursor: { date: Date; id: string } | null,
+    limit: number
+  ): Promise<{ results: IComment[]; totalComments: number | null }>;
   findReplies(
     parentId: string,
     limit: number,
