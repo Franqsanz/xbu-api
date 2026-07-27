@@ -1,3 +1,5 @@
+import commentsModel from '../models/comments';
+
 import { UserRepository } from './../repositories/userRepository';
 import { FollowRepository, findFollowingSet } from './../repositories/followRepository';
 import { CollectionRepository } from './../repositories/collectionRepository';
@@ -316,6 +318,21 @@ export const UserService: IFullRepositoryUser = {
       }
     }
 
-    return await UserRepository.updateMe!(uid, patch);
+    const updated = await UserRepository.updateMe!(uid, patch);
+
+    // Propagar cambios de nombre/username/avatar al snapshot denormalizado
+    // en cada comentario del usuario. Ejecuta en background para no bloquear
+    // la respuesta al cliente.
+    const commentPatch: Record<string, string> = {};
+    if (patch.name !== undefined) commentPatch['author.name'] = patch.name;
+    if (patch.username !== undefined) commentPatch['author.username'] = patch.username;
+    if (patch.picture !== undefined) commentPatch['author.avatar'] = patch.picture;
+    if (Object.keys(commentPatch).length > 0) {
+      commentsModel
+        .updateMany({ 'author.userId': uid }, { $set: commentPatch })
+        .catch((err) => console.error('[updateMe] failed to propagate to comments:', err));
+    }
+
+    return updated;
   },
 };
