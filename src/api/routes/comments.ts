@@ -13,6 +13,7 @@ import {
 import { query } from '../middlewares/query';
 import { pagination } from '../middlewares/pagination';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { mutationLimiter } from '../middlewares/rateLimit';
 
 const router: Router = express.Router();
 
@@ -21,18 +22,26 @@ const router: Router = express.Router();
  * /api/users/comments/book-comments/{bookId}:
  *   get:
  *     tags: [Comments]
- *     summary: Lista paginada de comentarios de un libro.
+ *     summary: Lista paginada de comentarios top-level de un libro.
+ *     description: |
+ *       Sólo los comentarios raíz (sin `parentId`). Las respuestas se piden
+ *       con `GET /comment/{commentId}/replies`.
+ *
+ *       Soporta paginación por cursor (default) y por página (`?page=N`).
  *     parameters:
  *       - in: path
  *         name: bookId
  *         required: true
  *         schema: { type: string }
  *       - in: query
+ *         name: cursor
+ *         schema: { type: string }
+ *       - in: query
  *         name: page
- *         schema: { type: integer, default: 1 }
+ *         schema: { type: integer, minimum: 1 }
  *       - in: query
  *         name: limit
- *         schema: { type: integer, default: 5 }
+ *         schema: { type: integer, default: 5, maximum: 50 }
  *     responses:
  *       200:
  *         description: Comentarios del libro.
@@ -41,7 +50,10 @@ const router: Router = express.Router();
  *             schema:
  *               type: object
  *               properties:
- *                 info: { $ref: '#/components/schemas/Info' }
+ *                 info:
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/CursorInfo'
+ *                     - $ref: '#/components/schemas/PageInfo'
  *                 results:
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Comment' }
@@ -182,7 +194,7 @@ router.get('/comment/stats/:bookId', findStats);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.post('/comment', authMiddleware, create);
+router.post('/comment', mutationLimiter, authMiddleware, create);
 
 /**
  * @openapi
@@ -220,7 +232,7 @@ router.post('/comment', authMiddleware, create);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.patch('/comment/:commentId/:userId', authMiddleware, update);
+router.patch('/comment/:commentId/:userId', mutationLimiter, authMiddleware, update);
 
 /**
  * @openapi
@@ -251,7 +263,7 @@ router.patch('/comment/:commentId/:userId', authMiddleware, update);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.delete('/comment/:commentId/:userId', authMiddleware, deleteComment);
+router.delete('/comment/:commentId/:userId', mutationLimiter, authMiddleware, deleteComment);
 
 /**
  * @openapi
@@ -287,6 +299,6 @@ router.delete('/comment/:commentId/:userId', authMiddleware, deleteComment);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.post('/comment/:commentId/:userId/reaction', authMiddleware, addReaction);
+router.post('/comment/:commentId/:userId/reaction', mutationLimiter, authMiddleware, addReaction);
 
 export default router;

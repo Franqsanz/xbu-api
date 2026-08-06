@@ -17,6 +17,7 @@ import {
   patchMe,
 } from '../controllers/userController';
 import { optionalAuth } from '../middlewares/optionalAuth';
+import { mutationLimiter } from '../middlewares/rateLimit';
 import {
   getBookStatus,
   setBookStatus,
@@ -121,7 +122,7 @@ router.get('/me', verifyToken, getCheckUser);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.patch('/me', verifyToken, upload.single('image'), patchMe);
+router.patch('/me', mutationLimiter, verifyToken, upload.single('image'), patchMe);
 
 /**
  * @openapi
@@ -163,18 +164,22 @@ router.get('/check-username', verifyToken, getCheckUsername);
  *     summary: Feed de actividad social paginado.
  *     description: |
  *       Devuelve la actividad cronológica de los usuarios que sigue el actual y la propia.
- *       Tipos de actividad: `book` (publicación), `comment`, `status` (estado de lectura),
- *       `follow` (siguió a otro usuario), `favorite` (guardó en favoritos),
- *       `collection` (agregó a una colección).
+ *       Tipos: `book`, `comment`, `status`, `follow`, `favorite`, `collection`, `rating`.
+ *
+ *       Soporta paginación por cursor (default) y por página (`?page=N`). En modo
+ *       page el feed hace fetch de hasta 500 items y aplica slice.
  *     security:
  *       - cookieAuth: []
  *     parameters:
  *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 10 }
+ *         name: cursor
+ *         schema: { type: string }
  *       - in: query
- *         name: offset
- *         schema: { type: integer, default: 0 }
+ *         name: page
+ *         schema: { type: integer, minimum: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10, maximum: 30 }
  *     responses:
  *       200:
  *         description: Activities ordenadas por fecha desc.
@@ -183,16 +188,13 @@ router.get('/check-username', verifyToken, getCheckUsername);
  *             schema:
  *               type: object
  *               properties:
+ *                 info:
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/CursorInfo'
+ *                     - $ref: '#/components/schemas/PageInfo'
  *                 activities:
  *                   type: array
  *                   items: { $ref: '#/components/schemas/FeedActivity' }
- *                 info:
- *                   type: object
- *                   properties:
- *                     total: { type: integer }
- *                     limit: { type: integer }
- *                     offset: { type: integer }
- *                     nextPage: { type: integer, nullable: true }
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
@@ -295,7 +297,7 @@ router.get('/me/book-status', verifyToken, pagination, getBooksByStatus);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.patch('/me/book-status/:bookId', verifyToken, setBookStatus);
+router.patch('/me/book-status/:bookId', mutationLimiter, verifyToken, setBookStatus);
 
 /**
  * @openapi
@@ -322,7 +324,7 @@ router.patch('/me/book-status/:bookId', verifyToken, setBookStatus);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.delete('/me/book-status/:bookId', verifyToken, deleteBookStatus);
+router.delete('/me/book-status/:bookId', mutationLimiter, verifyToken, deleteBookStatus);
 
 /**
  * @openapi
@@ -402,35 +404,61 @@ router.delete('/me/book-progress/:bookId', verifyToken, deleteBookProgress);
  *     tags: [Users]
  *     summary: Perfil y libros de un usuario por username.
  *     description: |
- *       Incluye `followersCount`, `followingCount` e `isFollowing` (true si el actual sigue
- *       al perfil consultado).
+ *       Incluye `followersCount`, `followingCount`, `isFollowing`, `readCount`,
+ *       `commentsCount`, `topCategories` y `booksStats`.
+ *
+ *       Soporta paginación por cursor (default) y por página (`?page=N`).
  *     parameters:
  *       - in: path
  *         name: username
  *         required: true
  *         schema: { type: string }
  *       - in: query
+ *         name: cursor
+ *         schema: { type: string }
+ *       - in: query
  *         name: page
- *         schema: { type: integer, default: 1 }
+ *         schema: { type: integer, minimum: 1 }
  *       - in: query
  *         name: limit
- *         schema: { type: integer, default: 10 }
+ *         schema: { type: integer, default: 10, maximum: 50 }
  *     responses:
  *       200:
- *         description: Perfil + lista paginada de libros publicados.
+ *         description: Perfil + libros publicados.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 info: { $ref: '#/components/schemas/Info' }
+ *                 info:
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/CursorInfo'
+ *                     - $ref: '#/components/schemas/PageInfo'
  *                 user: { $ref: '#/components/schemas/User' }
- *                 results:
- *                   type: array
- *                   items: { $ref: '#/components/schemas/Book' }
  *                 isFollowing: { type: boolean }
  *                 followersCount: { type: integer }
  *                 followingCount: { type: integer }
+ *                 readCount: { type: integer }
+ *                 commentsCount: { type: integer }
+ *                 topCategories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name: { type: string }
+ *                       count: { type: integer }
+ *                 booksStats:
+ *                   type: object
+ *                   properties:
+ *                     totalViews: { type: integer }
+ *                     mostViewed:
+ *                       type: object
+ *                       nullable: true
+ *                     averageRating: { type: number }
+ *                     ratingsCount: { type: integer }
+ *                 results:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/Book' }
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
@@ -490,7 +518,7 @@ router.get('/:userId/:username/books', verifyToken, pagination, getUserAndBooks)
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.post('/follow/:targetUserId', verifyToken, followUser);
+router.post('/follow/:targetUserId', mutationLimiter, verifyToken, followUser);
 
 /**
  * @openapi
@@ -513,7 +541,7 @@ router.post('/follow/:targetUserId', verifyToken, followUser);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.delete('/follow/:targetUserId', verifyToken, unfollowUser);
+router.delete('/follow/:targetUserId', mutationLimiter, verifyToken, unfollowUser);
 
 /**
  * @openapi
@@ -633,6 +661,6 @@ router.get('/:userId/follow-stats', getFollowStats);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.delete('/:userId', verifyToken, deleteAccount);
+router.delete('/:userId', mutationLimiter, verifyToken, deleteAccount);
 
 export default router;

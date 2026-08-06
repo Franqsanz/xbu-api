@@ -20,36 +20,38 @@ const router: Router = express.Router();
  *     summary: Lista paginada de notificaciones del usuario autenticado.
  *     description: |
  *       Devuelve las notificaciones del usuario en orden cronológico descendente
- *       (más recientes primero). Cada item viene enriquecido con `actor` (el
- *       usuario que disparó la acción) y `book` (si la notificación está
- *       asociada a un libro). Tipos posibles: `follow`, `comment`, `rating`.
+ *       (más recientes primero). Cada item viene enriquecido con `actor` y `book`
+ *       cuando aplica. Tipos: `follow`, `comment`, `reply`, `rating`, `reaction`.
+ *
+ *       Soporta paginación por cursor (default, infinite scroll) y por página
+ *       (`?page=N`, backoffice). Ver `/api/books` para el detalle del contrato.
  *     security:
  *       - cookieAuth: []
  *     parameters:
  *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 20 }
+ *         name: cursor
+ *         schema: { type: string }
  *       - in: query
- *         name: offset
- *         schema: { type: integer, default: 0 }
+ *         name: page
+ *         schema: { type: integer, minimum: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20, maximum: 50 }
  *     responses:
  *       200:
- *         description: Lista de notificaciones con paginación.
+ *         description: Lista de notificaciones.
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 info:
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/CursorInfo'
+ *                     - $ref: '#/components/schemas/PageInfo'
  *                 notifications:
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Notification' }
- *                 info:
- *                   type: object
- *                   properties:
- *                     total: { type: integer }
- *                     limit: { type: integer }
- *                     offset: { type: integer }
- *                     nextPage: { type: integer, nullable: true }
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */

@@ -6,6 +6,7 @@ import { BookRatingService } from '../../services/bookRatingService';
 import { CacheService } from '../../services/cacheService';
 import { BadRequest, Forbidden, NotFound } from '../../utils/errors';
 import { encodeIdCursor, decodeIdCursor } from '../../utils/cursor';
+import { buildPageInfo, isPageMode, parsePageParams } from '../../utils/paginate';
 import { IBook, IDeleteBook, IFindBooks } from '../../types/types';
 
 const BOOKS_PAGE_SIZE = 10;
@@ -17,6 +18,26 @@ const MOST_VIEWED_CACHE_TTL = 600; // 10 minutos
 const RELATED_CACHE_TTL = 1800; // 30 minutos
 
 async function getBooks(req: Request, res: Response, next: NextFunction): Promise<Response<any>> {
+  // Modo offset (`?page=N`): pensado para backoffice / paginación numerada.
+  // Response con info { total, totalPages, nextPage, prevPage, nextPageLink,
+  // prevPageLink } — compatible con el shape previo a la migración a cursor.
+  if (isPageMode(req)) {
+    const { page, limit, offset } = parsePageParams(req, BOOKS_PAGE_SIZE, BOOKS_MAX_LIMIT);
+    try {
+      const cacheKey = `books:page:${page}:l${limit}`;
+      const cached = await CacheService.get<any>(cacheKey);
+      if (cached) return res.status(200).json(cached);
+
+      const { results, totalBooks } = await BookService.findBooks(limit, offset);
+      const info = buildPageInfo({ req, page, limit, total: totalBooks });
+      const response = { info: { ...info, totalBooks }, results };
+      await CacheService.set(cacheKey, response, BOOKS_CACHE_TTL);
+      return res.status(200).json(response);
+    } catch (err) {
+      return next(err) as any;
+    }
+  }
+
   const rawCursor = (req.query.cursor as string) || null;
   const rawLimit = Number(req.query.limit ?? BOOKS_PAGE_SIZE);
   const limit = Number.isFinite(rawLimit)

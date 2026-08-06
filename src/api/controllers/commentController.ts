@@ -6,9 +6,22 @@ import { NotificationService } from '../../services/notificationService';
 import { IComment, ICommentStats } from '../../types/types';
 import { BadRequest } from '../../utils/errors';
 import { encodeCompositeCursor, decodeCompositeCursor } from '../../utils/cursor';
+import { buildPageInfo, isPageMode, parsePageParams } from '../../utils/paginate';
 
 async function findAll(req: Request, res: Response, next: NextFunction): Promise<any> {
   const { bookId } = req.params;
+
+  // Modo offset (`?page=N`) — backoffice / paginación numerada.
+  if (isPageMode(req)) {
+    const { page, limit, offset } = parsePageParams(req, 5, 50);
+    try {
+      const { results, totalComments } = await commentService.findAll(bookId, limit, offset);
+      const info = buildPageInfo({ req, page, limit, total: totalComments });
+      return res.status(200).json({ info: { ...info, totalComments }, results });
+    } catch (err) {
+      return next(err) as any;
+    }
+  }
 
   const rawCursor = (req.query.cursor as string) || null;
   const rawLimit = Number(req.query.limit ?? 10);

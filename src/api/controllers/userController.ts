@@ -23,6 +23,10 @@ import {
   encodeIdCursor,
   decodeIdCursor,
 } from '../../utils/cursor';
+import { buildPageInfo, isPageMode, parsePageParams } from '../../utils/paginate';
+
+const FEED_MAX_LIMIT = 30;
+const FEED_OFFSET_CAP = 500; // Cap para modo offset (backoffice).
 
 const FOLLOW_STATS_CACHE_TTL = 300; // 5 minutos
 const ME_CACHE_TTL = 300; // 5 minutos
@@ -345,6 +349,48 @@ async function getUserAndBooksByUsername(
   const { username } = req.params;
   const currentUserId = req.user?.uid;
 
+  // Modo offset (`?page=N`) — backoffice.
+  if (isPageMode(req)) {
+    const { page, limit, offset } = parsePageParams(req, 10, 50);
+    try {
+      const { user, results, totalBooks } = await UserService.findUserByUsernameAndBooks(
+        username,
+        limit,
+        offset
+      );
+      if (!user) throw NotFound('Usuario no encontrado');
+
+      const info = buildPageInfo({ req, page, limit, total: totalBooks });
+
+      const [isFollowing, followStats, readCount, commentsCount, topCategories, booksStats] =
+        await Promise.all([
+          currentUserId && currentUserId !== user.uid
+            ? UserService.isFollowing(currentUserId, user.uid).then(Boolean)
+            : Promise.resolve(false),
+          UserService.getFollowStats(user.uid),
+          BookStatusService.countByUserAndStatus(user.uid, 'read'),
+          commentService.countByUserId(user.uid),
+          BookService.findTopCategoriesByUser(user.uid, 4),
+          BookService.findStatsByUser(user.uid),
+        ]);
+
+      return res.status(200).json({
+        info: { ...info, totalBooks },
+        user,
+        isFollowing,
+        followersCount: followStats.followersCount,
+        followingCount: followStats.followingCount,
+        readCount,
+        commentsCount,
+        topCategories,
+        booksStats,
+        results,
+      });
+    } catch (err) {
+      return next(err) as any;
+    }
+  }
+
   const rawCursor = (req.query.cursor as string) || null;
   const rawLimit = Number(req.query.limit ?? 10);
   const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 50) : 10;
@@ -412,6 +458,22 @@ async function getFeed(req: Request, res: Response, next: NextFunction): Promise
 
   if (!currentUserId) {
     throw BadRequest('Usuario no autenticado');
+  }
+
+  // Modo offset (`?page=N`) — para backoffice. Trae hasta FEED_OFFSET_CAP
+  // activities y hace slice. El feed es un merge de múltiples colecciones,
+  // no admite `skip` directo — por eso se usa cap + slice.
+  if (isPageMode(req)) {
+    const { page, limit, offset } = parsePageParams(req, 10, FEED_MAX_LIMIT);
+    try {
+      const { activities } = await FeedService.getFeed(currentUserId, null, FEED_OFFSET_CAP);
+      const total = activities.length;
+      const sliced = activities.slice(offset, offset + limit);
+      const info = buildPageInfo({ req, page, limit, total });
+      return res.status(200).json({ info: { ...info, total }, activities: sliced });
+    } catch (err) {
+      return next(err) as any;
+    }
   }
 
   const rawCursor = (req.query.cursor as string) || null;

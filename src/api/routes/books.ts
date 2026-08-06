@@ -27,6 +27,7 @@ import {
 import { upload, uploadOriginal } from '../middlewares/multer';
 import { optionalAuth } from '../middlewares/optionalAuth';
 import { verifyToken } from '../middlewares/verifyToken';
+import { mutationLimiter } from '../middlewares/rateLimit';
 import { reportBook } from '../controllers/reportController';
 
 const router: Router = express.Router();
@@ -40,41 +41,41 @@ router.get('/', (req, res: Response) => {
  * /api/books:
  *   get:
  *     tags: [Books]
- *     summary: Lista paginada de libros (cursor pagination).
+ *     summary: Lista paginada de libros (cursor o page).
  *     description: |
- *       Paginación keyset. Sin `cursor` devuelve la primera página y
- *       `totalBooks`. Con `cursor` devuelve la siguiente página (sin
- *       `totalBooks` para ahorrar la query de count).
+ *       Soporta dos modos de paginación en la misma ruta:
+ *
+ *       - **Cursor** (default, pensado para infinite scroll): sin `page`.
+ *         Sin `cursor` devuelve la primera página con `totalBooks`. Con
+ *         `cursor` devuelve la siguiente sin `totalBooks` para ahorrar la
+ *         query de count.
+ *       - **Page** (pensado para backoffice / tabla numerada): con `page=N`.
+ *         Devuelve siempre `total`, `totalPages`, `currentPage`, `nextPage`,
+ *         `prevPage`, `nextPageLink`, `prevPageLink`.
  *     parameters:
  *       - in: query
  *         name: cursor
  *         schema: { type: string }
- *         description: Cursor opaco devuelto por la request anterior. Omitir para primera página.
+ *         description: Modo cursor. Cursor opaco devuelto por la request anterior. Omitir para primera página.
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, minimum: 1 }
+ *         description: Modo page. Número de página (1-based). Mutuamente excluyente con `cursor`.
  *       - in: query
  *         name: limit
  *         schema: { type: integer, default: 10, maximum: 50 }
  *     responses:
  *       200:
- *         description: Página de libros.
+ *         description: Página de libros. Shape depende del modo (`?cursor` vs `?page`).
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
  *                 info:
- *                   type: object
- *                   properties:
- *                     nextCursor:
- *                       type: string
- *                       nullable: true
- *                       description: Cursor para la próxima página. Null si no hay más.
- *                     nextUrl:
- *                       type: string
- *                       nullable: true
- *                       description: URL absoluta para la próxima página.
- *                     totalBooks:
- *                       type: integer
- *                       description: Total de libros. Solo en la primera página.
+ *                   oneOf:
+ *                     - $ref: '#/components/schemas/CursorInfo'
+ *                     - $ref: '#/components/schemas/PageInfo'
  *                 results:
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Book' }
@@ -308,8 +309,8 @@ router.get('/books/:id', getOneBooks);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.get('/books/:id/rating/me', verifyToken, getMyRating);
-router.put('/books/:id/rating/me', verifyToken, setMyRating);
-router.delete('/books/:id/rating/me', verifyToken, deleteMyRating);
+router.put('/books/:id/rating/me', mutationLimiter, verifyToken, setMyRating);
+router.delete('/books/:id/rating/me', mutationLimiter, verifyToken, deleteMyRating);
 
 /**
  * @openapi
@@ -365,7 +366,7 @@ router.get('/books/:id/rating/stats', getRatingStats);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post('/books', verifyToken, upload.single('image'), postBooks);
+router.post('/books', mutationLimiter, verifyToken, upload.single('image'), postBooks);
 
 /**
  * @openapi
@@ -402,7 +403,7 @@ router.post('/books', verifyToken, upload.single('image'), postBooks);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post('/books/original', verifyToken, uploadOriginal, postOriginalBook);
+router.post('/books/original', mutationLimiter, verifyToken, uploadOriginal, postOriginalBook);
 
 /**
  * @openapi
@@ -482,7 +483,7 @@ router.get('/books/:id/read', verifyToken, getBookReadUrl);
  *       429:
  *         description: Demasiados reportes en las últimas 24 h.
  */
-router.post('/books/:id/report', verifyToken, reportBook);
+router.post('/books/:id/report', mutationLimiter, verifyToken, reportBook);
 
 /**
  * @openapi
@@ -527,7 +528,7 @@ router.post('/books/:id/report', verifyToken, reportBook);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.patch('/books/:id', verifyToken, uploadOriginal, putBooks);
+router.patch('/books/:id', mutationLimiter, verifyToken, uploadOriginal, putBooks);
 
 /**
  * @openapi
@@ -548,6 +549,6 @@ router.patch('/books/:id', verifyToken, uploadOriginal, putBooks);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.delete('/books/:id', verifyToken, deleteBook);
+router.delete('/books/:id', mutationLimiter, verifyToken, deleteBook);
 
 export default router;

@@ -3,6 +3,7 @@ import { Request, Response, NextFunction } from 'express';
 import { NotificationService } from '../../services/notificationService';
 import { BadRequest } from '../../utils/errors';
 import { encodeCompositeCursor, decodeCompositeCursor } from '../../utils/cursor';
+import { buildPageInfo, isPageMode, parsePageParams } from '../../utils/paginate';
 
 const NOTIFICATIONS_PAGE_SIZE = 20;
 const NOTIFICATIONS_MAX_LIMIT = 50;
@@ -12,6 +13,22 @@ async function listNotifications(req: Request, res: Response, next: NextFunction
 
   if (!userId) {
     throw BadRequest('Usuario no autenticado');
+  }
+
+  // Modo offset (`?page=N`) — para backoffice / tablas numeradas.
+  if (isPageMode(req)) {
+    const { page, limit, offset } = parsePageParams(
+      req,
+      NOTIFICATIONS_PAGE_SIZE,
+      NOTIFICATIONS_MAX_LIMIT
+    );
+    try {
+      const { notifications, total } = await NotificationService.listForUser(userId, limit, offset);
+      const info = buildPageInfo({ req, page, limit, total });
+      return res.status(200).json({ info: { ...info, total }, notifications });
+    } catch (err) {
+      return next(err) as any;
+    }
   }
 
   const rawCursor = (req.query.cursor as string) || null;

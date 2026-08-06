@@ -62,6 +62,33 @@ const options: swaggerJsdoc.Options = {
             prevPageLink: { type: 'string', nullable: true },
           },
         },
+        CursorInfo: {
+          type: 'object',
+          description:
+            'Metadata del modo cursor (infinite scroll). `total` sólo viene en la primera página.',
+          properties: {
+            nextCursor: { type: 'string', nullable: true },
+            nextUrl: { type: 'string', nullable: true },
+            total: { type: 'integer' },
+            totalBooks: { type: 'integer' },
+            totalComments: { type: 'integer' },
+          },
+        },
+        PageInfo: {
+          type: 'object',
+          description: 'Metadata del modo page (paginación numerada, pensado para backoffice).',
+          properties: {
+            total: { type: 'integer' },
+            totalBooks: { type: 'integer' },
+            totalComments: { type: 'integer' },
+            totalPages: { type: 'integer' },
+            currentPage: { type: 'integer' },
+            nextPage: { type: 'integer', nullable: true },
+            prevPage: { type: 'integer', nullable: true },
+            nextPageLink: { type: 'string', nullable: true },
+            prevPageLink: { type: 'string', nullable: true },
+          },
+        },
         Book: {
           type: 'object',
           properties: {
