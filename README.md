@@ -20,9 +20,15 @@ Esta interfaz permite a los usuarios gestionar una colección de libros mediante
 * **Feed de actividad social**: Genera un feed paginado y cronológico para el usuario autenticado, combinando libros publicados, comentarios, ratings, cambios de reading status, follows y eventos de favoritos/colecciones de los usuarios que sigue (y los del propio usuario). Las actividades del mismo usuario sobre el mismo libro en un mismo día se agrupan en una sola entrada.
 * **Notificaciones in-app**: El usuario recibe notificaciones por follows, comentarios en sus libros, respuestas a sus comentarios, calificaciones recibidas y reacciones (like/dislike) sobre sus comentarios. Soporta marcar como leídas, marcar como no leídas, eliminar y obtener el conteo de no leídas para el badge.
 * **Reportes de libros**: Los usuarios pueden reportar libros por copyright, contenido inapropiado, spam u otro motivo. Los reportes son anónimos entre usuarios y disparan un email al administrador vía Resend con la información del libro, el reportante y el titular. Rate limit de 5 reportes por día por usuario.
-* **Perfil editable**: El usuario puede actualizar su `name`, `username` y `bio`, y subir/reemplazar su avatar a Cloudinary.
+* **Perfil editable**: El usuario puede actualizar su `name`, `username` y `bio`, y subir/reemplazar su avatar a Cloudinary. Los cambios de perfil se propagan a los snapshots denormalizados en cada comentario del usuario (fire-and-forget) para que las vistas de comentarios reflejen los datos actualizados.
+* **Búsqueda de usuarios**: Endpoint dedicado (`/users/search?q=...`) que devuelve un listado de usuarios que matchean por `name` o `username`, con `isFollowing` calculado para el usuario autenticado en la misma respuesta.
 * **Sitemap dinámico**: Endpoint `/sitemap.xml` con cache que enumera todas las páginas públicas para SEO.
 * **Cacheo con Redis**: Endpoints de lectura frecuentes cacheados con TTL e invalidación selectiva. Las cache keys llevan un namespace por commit (`RENDER_GIT_COMMIT`) — cada deploy invalida automáticamente las entradas viejas, evitando servir respuestas con formato obsoleto.
+* **Rate limiting tiered con Redis**: Tres limiters distintos (auth restrictivo, mutations medio, global de safety net) con store compartido en Redis y key híbrido `uid → IP` (fallback normalizado con `ipKeyGenerator` para IPv6). Detalle en la sección [Rate limiting](#rate-limiting).
+* **Validación con Zod**: Todos los endpoints con payload validan el body contra un schema Zod y devuelven un `400 BadRequest` con el primer mensaje de error si no valida. Los schemas están en [`utils/validation.ts`](src/utils/validation.ts) y son reusables entre back y front.
+* **Paginación dual (cursor + page)**: Los endpoints de listado más pesados (`/books`, `/notifications`, `/users/me/feed`, `/users/profile/:username/books`, `/comments/book-comments/:bookId`) soportan dos modos en la misma ruta:
+  * **Cursor** (default, infinite scroll): usa `?cursor=<opaco>`. Response con `info.nextCursor`, `info.nextUrl`, y `total` sólo en la primera página.
+  * **Page** (backoffice / tabla numerada): usa `?page=N`. Response con `info.currentPage`, `info.totalPages`, `info.nextPage`, `info.prevPage`, `info.nextPageLink`, `info.prevPageLink`.
 * **Autenticación con Firebase**: Sesión basada en cookie firmada por Firebase Admin (14 días), validación local sin round-trip por request. Soporta login con Google (popup OAuth) y con enlace de correo electrónico (passwordless email link).
 
 ## Arquitectura de la API
@@ -226,6 +232,23 @@ erDiagram
     }
 ```
 
+## Rate limiting
+
+Tres limiters con store compartido en **Redis** y key híbrido `req.user?.uid ?? ipKeyGenerator(req.ip)`. Cuando hay sesión se agrupa por uid (el user comparte cupo entre todos sus devices, semántica correcta). Sin sesión se cae a IP normalizada — `ipKeyGenerator` normaliza IPv6 al prefix `/64` para que un atacante no pueda rotar el sufijo dentro de su bloque y bypasear el límite.
+
+| Limiter | Cupo | Aplicado en |
+| --- | --- | --- |
+| **authLimiter** | 10 / 15 min | `/auth/login`, `/auth/register`, `/auth/refresh` |
+| **mutationLimiter** | 100 / hora | POST/PATCH/DELETE de libros (crear, editar, borrar, original, report), ratings, comments (crear/editar/borrar/reacción), favorites (toggle), collections (crear/editar/borrar/toggle), follow/unfollow, patch profile, delete account, book-status |
+| **globalLimiter** | 500 / 15 min | Aplicado como `app.use(limiter)` en el loader — cubre todo lo que no encaja en los anteriores |
+
+Endpoints excluidos intencionalmente del `mutationLimiter` (siguen bajo el `globalLimiter`):
+
+* `book-progress` PATCH/DELETE — se dispara en cada cambio de página del reader; el cap de 100/hora lo saturaría un lector veloz.
+* `notifications` mark-as-read / status / delete — alto uso legítimo (marcar 20 notifs seguidas), bajo riesgo.
+
+Además de estos limiters, el service de reportes tiene su propia protección en código: **máximo 5 reportes por día por usuario**, calculado en `ReportService.reportBook` con un query contra la colección `reports`.
+
 ## Esquema de la API
 
 > **Nota sobre la columna "Protegido"**: las rutas montadas bajo `/api/users`, `/api/users/favorites` y `/api/users/collections` pasan por `authMiddleware` global — todas requieren cookie de sesión. Las que además llevan `verifyToken` validan que el `userId` del path coincida con el del token.
@@ -270,10 +293,11 @@ erDiagram
 | Ruta | Método | `verifyToken` | Descripción |
 | --- | --- | --- | --- |
 | `/users` | GET | No | Lista de usuarios. |
+| `/users/search` | GET | Opcional¹ | Busca usuarios por `name` o `username` (mínimo 2 caracteres). Devuelve `[{ uid, name, username, picture, isFollowing }]` — `isFollowing` se calcula si hay sesión. Excluye al usuario autenticado del resultado. |
 | `/users/me` | GET | Sí | Datos del usuario autenticado. Cacheada 5 min per-user. Devuelve 404 si el usuario está autenticado en Firebase pero aún no completó el registro. |
-| `/users/me` | PATCH | Sí | Actualiza nombre, username, bio. Acepta multipart con `image` (avatar). Sube/reemplaza imagen en Cloudinary. |
+| `/users/me` | PATCH | Sí | Actualiza nombre, username, bio. Acepta multipart con `image` (avatar). Sube/reemplaza imagen en Cloudinary. Propaga los cambios de nombre / username / avatar a los snapshots denormalizados en los comentarios del usuario (fire-and-forget). |
 | `/users/check-username` | GET | Sí | Verifica si un `username` está disponible (formato, reservado, ocupado). |
-| `/users/me/feed` | GET | Sí | Feed paginado cronológico: libros, comentarios, ratings, reading status, follows y eventos de favoritos/colecciones. Las actividades del mismo (user + libro + día) se agrupan en `type: 'group'`. Los libros originales se marcan con `kind: 'original'` para el chip del cliente. |
+| `/users/me/feed` | GET | Sí | Feed paginado cronológico (cursor o `page`): libros, comentarios, ratings, reading status, follows y eventos de favoritos/colecciones. Las actividades del mismo (user + libro + día) se agrupan en `type: 'group'`. Los libros originales se marcan con `kind: 'original'` para el chip del cliente. |
 | `/users/me/book-status/:bookId` | GET | Sí | Estado de lectura del usuario para un libro. |
 | `/users/me/book-status` | GET | Sí | Lista paginada de libros del usuario filtrados por estado (`status` query). |
 | `/users/me/book-status/:bookId` | PATCH | Sí | Setea/actualiza el estado (`read` \| `reading` \| `want_to_read`). |
@@ -354,7 +378,7 @@ erDiagram
 | Variable | Uso |
 | --- | --- |
 | `MONGODB_URI` | Conexión a MongoDB. |
-| `REDIS_URL` | Conexión a Redis para cache. |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASS` | Conexión a Redis (cache, rate limit store). |
 | `RENDER_GIT_COMMIT` | SHA usado como namespace de las cache keys. |
 | `FIREBASE_*` | Credenciales de Firebase Admin (project id, client email, private key). |
 | `CLOUDINARY_*` | Credenciales de Cloudinary y `CLOUDINARY_FOLDER` para el path. |
