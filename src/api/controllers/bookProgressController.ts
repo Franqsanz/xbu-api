@@ -2,9 +2,9 @@ import { Request, Response, NextFunction } from 'express';
 
 import { BookProgressRepository } from '../../repositories/bookProgressRepository';
 import { BadRequest } from '../../utils/errors';
+import { bookProgressSchema, parseOrThrow } from '../../utils/validation';
 
-const VALID_TYPES = ['pdf', 'epub'] as const;
-type BookFileType = (typeof VALID_TYPES)[number];
+type BookFileType = 'pdf' | 'epub';
 
 async function getBookProgress(req: Request, res: Response, next: NextFunction): Promise<any> {
   const userId = req.user?.uid;
@@ -33,32 +33,18 @@ async function getBookProgress(req: Request, res: Response, next: NextFunction):
 async function setBookProgress(req: Request, res: Response, next: NextFunction): Promise<any> {
   const userId = req.user?.uid;
   const { bookId } = req.params;
-  const { position, type, percentage } = req.body as {
-    position?: number | string;
-    type?: string;
-    percentage?: number;
-  };
 
   if (!userId) {
     throw BadRequest('Usuario no autenticado');
   }
 
-  if (position === undefined || position === null || position === '') {
-    throw BadRequest('Falta la posición.');
-  }
-
-  if (!type || !VALID_TYPES.includes(type as BookFileType)) {
-    throw BadRequest('Tipo inválido (debe ser pdf o epub).');
-  }
-
-  const validPercentage =
-    typeof percentage === 'number' && percentage >= 0 && percentage <= 100 ? percentage : undefined;
+  const { position, type, percentage } = parseOrThrow(bookProgressSchema, req.body);
 
   try {
     const record = await BookProgressRepository.upsertProgress(userId, bookId, {
       position,
       type: type as BookFileType,
-      percentage: validPercentage,
+      percentage,
     });
     return res.status(200).json({
       progress: {

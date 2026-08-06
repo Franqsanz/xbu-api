@@ -4,6 +4,7 @@ import { NotificationService } from '../../services/notificationService';
 import { BadRequest } from '../../utils/errors';
 import { encodeCompositeCursor, decodeCompositeCursor } from '../../utils/cursor';
 import { buildPageInfo, isPageMode, parsePageParams } from '../../utils/paginate';
+import { notificationReadStatusSchema, parseOrThrow } from '../../utils/validation';
 
 const NOTIFICATIONS_PAGE_SIZE = 20;
 const NOTIFICATIONS_MAX_LIMIT = 50;
@@ -110,14 +111,12 @@ async function markRead(req: Request, res: Response, next: NextFunction): Promis
 async function setReadStatus(req: Request, res: Response, next: NextFunction): Promise<any> {
   const userId = req.user?.uid;
   const { notificationId } = req.params;
-  const { read } = req.body as { read?: boolean };
 
   if (!userId) {
     throw BadRequest('Usuario no autenticado');
   }
-  if (typeof read !== 'boolean') {
-    throw BadRequest('Campo "read" requerido (boolean)');
-  }
+
+  const { read } = parseOrThrow(notificationReadStatusSchema, req.body);
 
   try {
     const updated = await NotificationService.setReadStatus(notificationId, userId, read);

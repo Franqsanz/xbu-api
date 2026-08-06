@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 import { UserService } from '../../../services/userService';
 import { AuthService } from '../../../services/authService';
+import { registerSchema, idTokenSchema, parseOrThrow } from '../../../utils/validation';
 
 const isProduction = process.env.NODE_ENV === 'production';
 const DOMAIN = process.env.COOKIE_DOMAIN;
@@ -14,7 +15,7 @@ const cookieConfig = {
 };
 
 async function createUser(req: Request, res: Response, next: NextFunction) {
-  const { username } = req.body;
+  const { username } = parseOrThrow(registerSchema, req.body);
 
   try {
     const { existingUser, saveUser } = await UserService.saveUser(req.user, username);
@@ -36,11 +37,7 @@ async function createUser(req: Request, res: Response, next: NextFunction) {
 
 async function login(req: Request, res: Response, next: NextFunction) {
   try {
-    const { idToken } = req.body;
-
-    if (!idToken) {
-      return res.status(400).json({ message: 'Token requerido' });
-    }
+    const { idToken } = parseOrThrow(idTokenSchema, req.body);
 
     const sessionCookie = await AuthService.createSessionCookie(idToken);
 
@@ -83,11 +80,7 @@ async function logoutUser(req: Request, res: Response, next: NextFunction) {
 
 async function refreshSession(req: Request, res: Response, next: NextFunction) {
   try {
-    const { idToken } = req.body;
-
-    if (!idToken) {
-      return res.status(400).json({ message: 'Token requerido' });
-    }
+    const { idToken } = parseOrThrow(idTokenSchema, req.body);
 
     try {
       const sessionCookie = await AuthService.createSessionCookie(idToken);

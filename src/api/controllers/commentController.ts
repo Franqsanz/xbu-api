@@ -7,6 +7,7 @@ import { IComment, ICommentStats } from '../../types/types';
 import { BadRequest } from '../../utils/errors';
 import { encodeCompositeCursor, decodeCompositeCursor } from '../../utils/cursor';
 import { buildPageInfo, isPageMode, parsePageParams } from '../../utils/paginate';
+import { commentUpdateSchema, commentReactionSchema, parseOrThrow } from '../../utils/validation';
 
 async function findAll(req: Request, res: Response, next: NextFunction): Promise<any> {
   const { bookId } = req.params;
@@ -192,10 +193,10 @@ async function update(
   next: NextFunction
 ): Promise<Response<IComment>> {
   const { commentId, userId } = req.params;
-  const { text } = req.body;
+  const { text } = parseOrThrow(commentUpdateSchema, req.body);
 
   try {
-    const updatedComment = await commentService.update(commentId, userId, text.trim());
+    const updatedComment = await commentService.update(commentId, userId, text);
 
     if (!updatedComment) {
       return res.status(404).json({
@@ -253,18 +254,9 @@ async function addReaction(
   next: NextFunction
 ): Promise<Response<IComment>> {
   const { commentId, userId } = req.params;
-  const { type } = req.body;
+  const { type } = parseOrThrow(commentReactionSchema, req.body);
 
   try {
-    if (!['like', 'dislike'].includes(type)) {
-      return res.status(400).json({
-        error: {
-          status: 400,
-          message: 'Tipo de reacción inválido. Debe ser "like" o "dislike"',
-        },
-      });
-    }
-
     const updatedComment = await commentService.addReaction(commentId, userId, type);
 
     if (!updatedComment) {

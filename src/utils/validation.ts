@@ -1,4 +1,19 @@
-import { z } from 'zod';
+import { z, ZodSchema } from 'zod';
+import { BadRequest } from './errors';
+
+/**
+ * Parseo de un payload contra un schema Zod. Tira BadRequest con el primer
+ * mensaje de error si no valida — mantiene el shape de errores consistente
+ * con el resto del backend.
+ */
+export function parseOrThrow<T>(schema: ZodSchema<T>, data: unknown): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    const message = result.error.issues[0]?.message ?? 'Datos inválidos';
+    throw BadRequest(message);
+  }
+  return result.data;
+}
 
 const bookSchema = z.object({
   title: z.string().min(1, 'title es requerido.'),
@@ -58,4 +73,81 @@ const commentSchema = z.object({
   bookId: z.string().min(1, 'El ID del libro no puede estar vacío'),
 });
 
-export { bookSchema, bookOriginalSchema, commentSchema };
+const bookRatingSchema = z.object({
+  rating: z
+    .number({ message: 'rating debe ser un número entre 1 y 5.' })
+    .int({ message: 'rating debe ser entero.' })
+    .min(1, 'rating mínimo 1.')
+    .max(5, 'rating máximo 5.'),
+});
+
+const bookStatusValueSchema = z.enum(['read', 'reading', 'want_to_read'], {
+  message: 'status debe ser read, reading o want_to_read.',
+});
+
+const bookStatusSchema = z.object({
+  status: bookStatusValueSchema,
+});
+
+const bookProgressSchema = z.object({
+  position: z.union([z.number().int().min(0), z.string().min(1)], {
+    message: 'position debe ser un número (PDF) o string CFI (EPUB).',
+  }),
+  type: z.enum(['pdf', 'epub'], {
+    message: 'type debe ser pdf o epub.',
+  }),
+  percentage: z.number().min(0).max(100).optional(),
+});
+
+const commentUpdateSchema = z.object({
+  text: z
+    .string()
+    .min(1, 'El comentario es obligatorio')
+    .max(1500, 'El comentario no puede exceder los 1500 caracteres')
+    .trim(),
+});
+
+const commentReactionSchema = z.object({
+  type: z.enum(['like', 'dislike'], {
+    message: 'type debe ser like o dislike.',
+  }),
+});
+
+const reportBookSchema = z.object({
+  type: z.enum(['copyright', 'inappropriate', 'spam', 'other'], {
+    message: 'Tipo de reporte inválido.',
+  }),
+  description: z.string().max(2000).optional(),
+  contactEmail: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Ingresá un email válido.'),
+});
+
+const notificationReadStatusSchema = z.object({
+  read: z.boolean({ message: 'Campo "read" requerido (boolean).' }),
+});
+
+const registerSchema = z.object({
+  username: z
+    .string()
+    .min(3, 'Username entre 3 y 20 caracteres.')
+    .max(20, 'Username entre 3 y 20 caracteres.'),
+});
+
+const idTokenSchema = z.object({
+  idToken: z.string().min(1, 'Token requerido.'),
+});
+
+export {
+  bookSchema,
+  bookOriginalSchema,
+  commentSchema,
+  bookRatingSchema,
+  bookStatusSchema,
+  bookStatusValueSchema,
+  bookProgressSchema,
+  commentUpdateSchema,
+  commentReactionSchema,
+  reportBookSchema,
+  notificationReadStatusSchema,
+  registerSchema,
+  idTokenSchema,
+};

@@ -4,6 +4,7 @@ import { BookRatingService } from '../../services/bookRatingService';
 import { BookService } from '../../services/bookService';
 import { NotificationService } from '../../services/notificationService';
 import { BadRequest } from '../../utils/errors';
+import { bookRatingSchema, parseOrThrow } from '../../utils/validation';
 
 async function getMyRating(req: Request, res: Response, next: NextFunction): Promise<any> {
   const userId = req.user?.uid;
@@ -35,15 +36,12 @@ async function getRatingStats(req: Request, res: Response, next: NextFunction): 
 async function setMyRating(req: Request, res: Response, next: NextFunction): Promise<any> {
   const userId = req.user?.uid;
   const { id: bookId } = req.params;
-  const { rating } = req.body as { rating?: number };
 
   if (!userId) {
     throw BadRequest('Usuario no autenticado');
   }
 
-  if (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5) {
-    throw BadRequest('Rating inválido (debe ser un entero entre 1 y 5)');
-  }
+  const { rating } = parseOrThrow(bookRatingSchema, req.body);
 
   try {
     await BookRatingService.setRating(userId, bookId, rating);

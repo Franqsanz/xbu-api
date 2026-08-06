@@ -4,6 +4,7 @@ import { BookStatusService } from '../../services/bookStatusService';
 import { BookStatusValue } from '../../types/types';
 import { BookStatusResponse } from '../../types/responses';
 import { BadRequest } from '../../utils/errors';
+import { bookStatusSchema, parseOrThrow } from '../../utils/validation';
 
 const VALID_STATUSES: BookStatusValue[] = ['read', 'reading', 'want_to_read'];
 
@@ -34,15 +35,12 @@ async function setBookStatus(
 ): Promise<Response<BookStatusResponse>> {
   const userId = req.user?.uid;
   const { bookId } = req.params;
-  const { status } = req.body as { status?: string };
 
   if (!userId) {
     throw BadRequest('Usuario no autenticado');
   }
 
-  if (!status || !VALID_STATUSES.includes(status as BookStatusValue)) {
-    throw BadRequest('Estado inválido');
-  }
+  const { status } = parseOrThrow(bookStatusSchema, req.body);
 
   try {
     const record = await BookStatusService.setStatus(userId, bookId, status as BookStatusValue);
