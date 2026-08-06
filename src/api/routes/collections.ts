@@ -11,6 +11,7 @@ import {
   patchRemoveBookFromCollection,
   deleteUserCollections,
 } from '../controllers/collectionController';
+import { mutationLimiter } from '../middlewares/rateLimit';
 
 const router: Router = express.Router();
 
@@ -76,7 +77,7 @@ router.get('/:userId', getAllCollections);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post('/:userId', postCreateCollections);
+router.post('/:userId', mutationLimiter, postCreateCollections);
 
 /**
  * @openapi
@@ -95,7 +96,7 @@ router.post('/:userId', postCreateCollections);
  *       200:
  *         description: Colecciones eliminadas.
  */
-router.delete('/:userId', deleteUserCollections);
+router.delete('/:userId', mutationLimiter, deleteUserCollections);
 
 /**
  * @openapi
@@ -147,7 +148,7 @@ router.get('/collection/:collectionId', getOneCollection);
  *       200:
  *         description: Nombre actualizado.
  */
-router.patch('/collection/:collectionId', patchCollectionName);
+router.patch('/collection/:collectionId', mutationLimiter, patchCollectionName);
 
 /**
  * @openapi
@@ -170,7 +171,7 @@ router.patch('/collection/:collectionId', patchCollectionName);
  *       200:
  *         description: Colección eliminada.
  */
-router.delete('/:userId/collection/:collectionId', deleteCollections);
+router.delete('/:userId/collection/:collectionId', mutationLimiter, deleteCollections);
 
 /**
  * @openapi
@@ -236,7 +237,7 @@ router.get('/:userId/summary/:bookId', getCollectionsForUser);
  *       200:
  *         description: Toggle aplicado a las colecciones indicadas.
  */
-router.patch('/books/toggle', patchToggleBookInCollection);
+router.patch('/books/toggle', mutationLimiter, patchToggleBookInCollection);
 
 /**
  * @openapi
@@ -265,6 +266,6 @@ router.patch('/books/toggle', patchToggleBookInCollection);
  *       200:
  *         description: Libro removido de la(s) colección(es).
  */
-router.patch('/remove', patchRemoveBookFromCollection);
+router.patch('/remove', mutationLimiter, patchRemoveBookFromCollection);
 
 export default router;

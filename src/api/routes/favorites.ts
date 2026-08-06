@@ -6,6 +6,7 @@ import {
   deleteUserFavorites,
 } from '../controllers/favoriteController';
 import { pagination } from '../middlewares/pagination';
+import { mutationLimiter } from '../middlewares/rateLimit';
 
 const router: Router = express.Router();
 
@@ -78,7 +79,7 @@ router.get('/:userId', pagination, getFindAllBookFavoriteByUser);
  *       404:
  *         $ref: '#/components/responses/NotFound'
  */
-router.patch('/', patchToggleFavorite);
+router.patch('/', mutationLimiter, patchToggleFavorite);
 
 /**
  * @openapi
@@ -97,6 +98,6 @@ router.patch('/', patchToggleFavorite);
  *       200:
  *         description: Favoritos eliminados.
  */
-router.delete('/:userId', deleteUserFavorites);
+router.delete('/:userId', mutationLimiter, deleteUserFavorites);
 
 export default router;

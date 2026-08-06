@@ -2,6 +2,7 @@ import express, { Router } from 'express';
 
 import { createUser, login, logoutUser, refreshSession } from '../controllers/auth/authController';
 import { authMiddleware } from '../middlewares/authMiddleware';
+import { authLimiter } from '../middlewares/rateLimit';
 
 const router: Router = express.Router();
 
@@ -42,7 +43,7 @@ const router: Router = express.Router();
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.post('/register', authMiddleware, createUser);
+router.post('/register', authLimiter, authMiddleware, createUser);
 
 /**
  * @openapi
@@ -76,7 +77,7 @@ router.post('/register', authMiddleware, createUser);
  *       400:
  *         $ref: '#/components/responses/BadRequest'
  */
-router.post('/login', login);
+router.post('/login', authLimiter, login);
 
 /**
  * @openapi
@@ -126,6 +127,6 @@ router.post('/logout', authMiddleware, logoutUser);
  *       401:
  *         $ref: '#/components/responses/Unauthorized'
  */
-router.post('/refresh', refreshSession);
+router.post('/refresh', authLimiter, refreshSession);
 
 export default router;
