@@ -1,11 +1,6 @@
 import favoritesModel from '../models/favorites';
 import booksModel from '../models/books';
-import {
-  qyAddFavorite,
-  qyFindAllBookFavorite,
-  qyPathUrlBooksFavorite,
-  qyRemoveFavorite,
-} from '../db/userQueries';
+import { qyFindAllBookFavorite, qyPathUrlBooksFavorite, qyRemoveFavorite } from '../db/userQueries';
 import { IFavoriteOperations } from '../types/repositories/IFavoriteRepository';
 
 export const FavoriteRepository: IFavoriteOperations = {
@@ -34,8 +29,24 @@ export const FavoriteRepository: IFavoriteOperations = {
   },
 
   async addFavorite(userId, id) {
-    const query = qyAddFavorite(userId, id);
-    return await favoritesModel.findOneAndUpdate(...query);
+    // Dos pasos para evitar duplicados sin perder el `$position: 0` (más
+    // reciente primero). `$push` no dedupea y `$addToSet` no soporta
+    // `$position`, así que:
+    //   1) upsert del doc del user si no existía (sin mutar `favoriteBooks`).
+    //   2) push con filter compuesto `favoriteBooks: { $ne: id }` — solo se
+    //      agrega si el libro aún no está.
+    // Si ya estaba, devolvemos el doc actual (idempotente, no rompe la UI).
+    await favoritesModel.updateOne(
+      { userId },
+      { $setOnInsert: { userId, favoriteBooks: [] } },
+      { upsert: true }
+    );
+    const updated = await favoritesModel.findOneAndUpdate(
+      { userId, favoriteBooks: { $ne: id } },
+      { $push: { favoriteBooks: { $each: [id], $position: 0 } } },
+      { new: true }
+    );
+    return (updated ?? (await favoritesModel.findOne({ userId }))) as any;
   },
 
   async removeFavorite(userId, id) {
