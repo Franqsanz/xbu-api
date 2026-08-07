@@ -19,8 +19,13 @@ function keyGenerator(prefix: string) {
  * Store compartido en Redis: sobrevive restarts y funciona con múltiples
  * instancias (Render autoscale, blue/green deploys). Sin esto un atacante
  * podría alternar instancias para multiplicar su cupo.
+ *
+ * En NODE_ENV=test devolvemos `undefined` para que express-rate-limit use
+ * el store en memoria por default — evita depender de un mock exacto de la
+ * API de ioredis en los tests.
  */
 function redisStore(prefix: string) {
+  if (process.env.NODE_ENV === 'test') return undefined;
   return new RedisStore({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sendCommand: (...args: string[]) => (redis as any).call(...args),
@@ -39,6 +44,12 @@ const baseOptions: Partial<Options> = {
   legacyHeaders: false,
 };
 
+// En NODE_ENV=test relajamos los cupos para que los tests que ejercitan
+// múltiples requests seguidos no se disparen accidentalmente. Los tests
+// que necesiten verificar el comportamiento del limiter deben instanciar
+// uno propio con `max` bajo en su suite.
+const isTest = process.env.NODE_ENV === 'test';
+
 /**
  * Limiter para endpoints de autenticación (login, register, refresh).
  * Muy restrictivo para bloquear brute force.
@@ -46,7 +57,7 @@ const baseOptions: Partial<Options> = {
 export const authLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 10,
+  max: isTest ? 10_000 : 10,
   keyGenerator: keyGenerator('auth'),
   store: redisStore('auth'),
   handler: handler('Demasiados intentos de autenticación. Esperá 15 minutos antes de reintentar.'),
@@ -59,7 +70,7 @@ export const authLimiter = rateLimit({
 export const mutationLimiter = rateLimit({
   ...baseOptions,
   windowMs: 60 * 60 * 1000, // 1 hora
-  max: 100,
+  max: isTest ? 10_000 : 100,
   keyGenerator: keyGenerator('mut'),
   store: redisStore('mut'),
   handler: handler('Demasiadas acciones de escritura. Esperá antes de reintentar.'),
@@ -73,7 +84,7 @@ export const mutationLimiter = rateLimit({
 export const globalLimiter = rateLimit({
   ...baseOptions,
   windowMs: 15 * 60 * 1000, // 15 min
-  max: 500,
+  max: isTest ? 100_000 : 500,
   keyGenerator: keyGenerator('all'),
   store: redisStore('all'),
   handler: handler('Demasiadas peticiones. Esperá unos minutos antes de reintentar.'),
