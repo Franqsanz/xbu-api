@@ -65,10 +65,11 @@ const options: swaggerJsdoc.Options = {
         CursorInfo: {
           type: 'object',
           description:
-            'Metadata del modo cursor (infinite scroll). `total` sólo viene en la primera página.',
+            'Metadata del modo cursor (infinite scroll). `total`/`totalBooks`/`totalComments` sólo vienen en la primera página. `hasMore` lo expone únicamente el feed — el resto de endpoints se guía por `nextCursor`.',
           properties: {
             nextCursor: { type: 'string', nullable: true },
             nextUrl: { type: 'string', nullable: true },
+            hasMore: { type: 'boolean' },
             total: { type: 'integer' },
             totalBooks: { type: 'integer' },
             totalComments: { type: 'integer' },

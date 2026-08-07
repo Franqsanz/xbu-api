@@ -486,7 +486,7 @@ async function getFeed(req: Request, res: Response, next: NextFunction): Promise
   }
 
   try {
-    const { activities, total, hasMore } = await FeedService.getFeed(currentUserId, cursor, limit);
+    const { activities, hasMore } = await FeedService.getFeed(currentUserId, cursor, limit);
 
     const last = activities[activities.length - 1];
     const nextCursor = hasMore && last ? encodeDateCursor(new Date(last.createdAt)) : null;
@@ -494,14 +494,13 @@ async function getFeed(req: Request, res: Response, next: NextFunction): Promise
       ? `${req.protocol}://${req.hostname}${req.baseUrl}${req.path}?cursor=${nextCursor}&limit=${limit}`
       : null;
 
-    const info: {
-      nextCursor: string | null;
-      nextUrl: string | null;
-      total?: number;
-    } = { nextCursor, nextUrl };
-    if (total !== null) info.total = total;
-
-    return res.status(200).json({ info, activities });
+    // Exponemos `hasMore` explícito en modo cursor. No devolvemos `total`
+    // porque el feed es un merge y el conteo real solo se puede calcular
+    // trayendo hasta FEED_OFFSET_CAP — usá `?page=N` si necesitás el total.
+    return res.status(200).json({
+      info: { nextCursor, nextUrl, hasMore },
+      activities,
+    });
   } catch (err) {
     return next(err) as any;
   }

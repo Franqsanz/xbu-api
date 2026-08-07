@@ -41,7 +41,7 @@ export const FeedRepository = {
     userId: string,
     cursor: { date: Date } | null,
     limit: number = 10
-  ): Promise<{ activities: FeedActivity[]; total: number | null; hasMore: boolean }> {
+  ): Promise<{ activities: FeedActivity[]; hasMore: boolean }> {
     const followingRecords = await followsModel
       .find({ follower: userId })
       .select('following')
@@ -303,9 +303,6 @@ export const FeedRepository = {
     const hasMore = grouped.length > limit;
     const activities = hasMore ? grouped.slice(0, limit) : grouped;
 
-    // Total solo en la primera página. Evita recomputar en cada scroll.
-    const total = cursor ? null : grouped.length;
-
-    return { activities, total, hasMore };
+    return { activities, hasMore };
   },
 };
