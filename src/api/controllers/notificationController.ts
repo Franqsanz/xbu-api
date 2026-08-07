@@ -116,9 +116,8 @@ async function setReadStatus(req: Request, res: Response, next: NextFunction): P
     throw BadRequest('Usuario no autenticado');
   }
 
-  const { read } = parseOrThrow(notificationReadStatusSchema, req.body);
-
   try {
+    const { read } = parseOrThrow(notificationReadStatusSchema, req.body);
     const updated = await NotificationService.setReadStatus(notificationId, userId, read);
     if (!updated) {
       return res.status(404).json({

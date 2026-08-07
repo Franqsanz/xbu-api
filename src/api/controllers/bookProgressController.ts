@@ -38,9 +38,8 @@ async function setBookProgress(req: Request, res: Response, next: NextFunction):
     throw BadRequest('Usuario no autenticado');
   }
 
-  const { position, type, percentage } = parseOrThrow(bookProgressSchema, req.body);
-
   try {
+    const { position, type, percentage } = parseOrThrow(bookProgressSchema, req.body);
     const record = await BookProgressRepository.upsertProgress(userId, bookId, {
       position,
       type: type as BookFileType,

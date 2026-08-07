@@ -10,9 +10,8 @@ async function reportBook(req: Request, res: Response, next: NextFunction): Prom
 
   if (!reporterId) throw BadRequest('Usuario no autenticado.');
 
-  const { type, description, contactEmail } = parseOrThrow(reportBookSchema, req.body);
-
   try {
+    const { type, description, contactEmail } = parseOrThrow(reportBookSchema, req.body);
     await ReportService.reportBook({
       bookId: id,
       reporterId,

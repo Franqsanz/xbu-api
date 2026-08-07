@@ -41,9 +41,8 @@ async function setMyRating(req: Request, res: Response, next: NextFunction): Pro
     throw BadRequest('Usuario no autenticado');
   }
 
-  const { rating } = parseOrThrow(bookRatingSchema, req.body);
-
   try {
+    const { rating } = parseOrThrow(bookRatingSchema, req.body);
     await BookRatingService.setRating(userId, bookId, rating);
 
     (async () => {

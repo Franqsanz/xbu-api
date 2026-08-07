@@ -40,9 +40,8 @@ async function setBookStatus(
     throw BadRequest('Usuario no autenticado');
   }
 
-  const { status } = parseOrThrow(bookStatusSchema, req.body);
-
   try {
+    const { status } = parseOrThrow(bookStatusSchema, req.body);
     const record = await BookStatusService.setStatus(userId, bookId, status as BookStatusValue);
     return res.status(200).json({ status: record?.status ?? null });
   } catch (err) {

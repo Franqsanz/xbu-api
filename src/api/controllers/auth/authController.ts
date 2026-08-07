@@ -15,9 +15,8 @@ const cookieConfig = {
 };
 
 async function createUser(req: Request, res: Response, next: NextFunction) {
-  const { username } = parseOrThrow(registerSchema, req.body);
-
   try {
+    const { username } = parseOrThrow(registerSchema, req.body);
     const { existingUser, saveUser } = await UserService.saveUser(req.user, username);
 
     if (existingUser) {

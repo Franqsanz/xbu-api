@@ -193,9 +193,9 @@ async function update(
   next: NextFunction
 ): Promise<Response<IComment>> {
   const { commentId, userId } = req.params;
-  const { text } = parseOrThrow(commentUpdateSchema, req.body);
 
   try {
+    const { text } = parseOrThrow(commentUpdateSchema, req.body);
     const updatedComment = await commentService.update(commentId, userId, text);
 
     if (!updatedComment) {
@@ -254,9 +254,9 @@ async function addReaction(
   next: NextFunction
 ): Promise<Response<IComment>> {
   const { commentId, userId } = req.params;
-  const { type } = parseOrThrow(commentReactionSchema, req.body);
 
   try {
+    const { type } = parseOrThrow(commentReactionSchema, req.body);
     const updatedComment = await commentService.addReaction(commentId, userId, type);
 
     if (!updatedComment) {
