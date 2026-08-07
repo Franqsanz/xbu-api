@@ -124,6 +124,11 @@ export const UserService: IFullRepositoryUser = {
   },
 
   async saveUser(decodedToken, username) {
+    const existingUser = await UserRepository.findByUid!(decodedToken.uid);
+    if (existingUser) {
+      return { existingUser, saveUser: existingUser };
+    }
+
     const fallbackName = (decodedToken as any).email?.split('@')[0] ?? 'usuario';
     const userToSave = {
       ...decodedToken,
@@ -132,10 +137,8 @@ export const UserService: IFullRepositoryUser = {
       createdAt: new Date(),
     };
 
-    const existingUser = await UserRepository.findByUid!(decodedToken.uid);
     const saveUser = await UserRepository.createUser(userToSave);
-
-    return { existingUser, saveUser };
+    return { existingUser: null, saveUser };
   },
 
   async deleteAccount(userId) {
