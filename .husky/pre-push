@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+# Corre ts-check + suite de tests antes de cada push.
+# Los tests tardan ~80s — es la red final antes de subir a remoto.
+# Bypasseable puntualmente con `git push --no-verify` si hace falta.
+
+echo "→ ts-check…"
+npm run ts-lint || exit 1
+
+echo "→ tests…"
+npm test || exit 1
+
+echo "✔ pre-push ok"
