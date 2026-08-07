@@ -133,7 +133,7 @@ const registerSchema = z.object({
 });
 
 const idTokenSchema = z.object({
-  idToken: z.string().min(1, 'Token requerido.'),
+  idToken: z.string({ message: 'Token requerido.' }).min(1, 'Token requerido.'),
 });
 
 export {
