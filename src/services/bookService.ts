@@ -56,6 +56,25 @@ type IBookService = IRepositoryBook & {
     cursorId: string | null,
     limit: number
   ): Promise<{ results: IBook[]; totalBooks: number | null }>;
+  findFilteredBooksByCursor(
+    filters: {
+      category?: string;
+      authors?: string;
+      languages?: string[];
+      years?: string[];
+      minPages?: number;
+      maxPages?: number;
+    },
+    cursorId: string | null,
+    limit: number
+  ): Promise<{
+    results: IBook[];
+    totalBooks?: number;
+    languageCounts?: Array<{ language: string; count: number }>;
+    yearCounts?: Array<{ year: number; count: number }>;
+    pagesCounts?: Array<{ numberPages: number; count: number }>;
+    authorsCounts?: Array<{ authors: string; count: number }>;
+  }>;
   findStatsByUser(userId: string): Promise<{
     totalViews: number;
     mostViewed: { id: string; title: string; pathUrl: string; views: number } | null;
@@ -81,6 +100,10 @@ export const BookService: IBookService = {
 
   async findBooksByCursor(cursorId: string | null, limit: number) {
     return await BookRepository.findBooksByCursor!(cursorId, limit);
+  },
+
+  async findFilteredBooksByCursor(filters, cursorId, limit) {
+    return await (BookRepository as any).findFilteredBooksByCursor(filters, cursorId, limit);
   },
 
   async findById(id) {

@@ -6,6 +6,25 @@ export interface IReadBook {
     cursorId: string | null,
     limit: number
   ): Promise<{ results: IBook[]; totalBooks: number | null }>;
+  findFilteredBooksByCursor?(
+    filters: {
+      category?: string;
+      authors?: string;
+      languages?: string[];
+      years?: string[];
+      minPages?: number;
+      maxPages?: number;
+    },
+    cursorId: string | null,
+    limit: number
+  ): Promise<{
+    results: IBook[];
+    totalBooks?: number;
+    languageCounts?: Array<{ language: string; count: number }>;
+    yearCounts?: Array<{ year: number; count: number }>;
+    pagesCounts?: Array<{ numberPages: number; count: number }>;
+    authorsCounts?: Array<{ authors: string; count: number }>;
+  }>;
   findById(id: string): Promise<IBook | null>;
   findByIdRaw(id: string): Promise<IBook | null>;
   findBySlug(slug: string): Promise<IBook | null>;

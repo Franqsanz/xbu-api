@@ -10,7 +10,6 @@ import {
   addReaction,
   findStats,
 } from '../controllers/commentController';
-import { query } from '../middlewares/query';
 import { pagination } from '../middlewares/pagination';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { mutationLimiter } from '../middlewares/rateLimit';

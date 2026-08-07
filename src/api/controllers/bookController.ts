@@ -82,6 +82,112 @@ async function getBooks(req: Request, res: Response, next: NextFunction): Promis
   }
 }
 
+/**
+ * Filtros con cursor + facet counts. Endpoint separado de `/books` para no
+ * mezclar shapes de response: `/books` es listado cronológico puro,
+ * `/books/filter` es filtro + agregaciones para sidebar.
+ *
+ * Counts (`*Counts`) se computan sobre TODOS los docs que matchean el filtro
+ * y solo viajan en la 1ra página. En páginas subsiguientes (con `?cursor=...`)
+ * la respuesta trae solo `{ info: { nextCursor, nextUrl }, results }`.
+ */
+async function getFilteredBooks(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<any>> {
+  const q = req.query as Record<string, string | undefined>;
+
+  // Filtros principales (single, típicamente vienen del URL path del front)
+  const category = q.category;
+  const authors = q.authors;
+
+  // Compat: si el URL trae `year=2020` o `language=Español` como filtro principal,
+  // los tratamos como multi de 1 elemento — pattern legacy del router del front.
+  const yearsRaw = q.years ?? q.year;
+  const languagesRaw = q.languages ?? q.language;
+
+  const years = yearsRaw ? yearsRaw.split(',').filter(Boolean) : undefined;
+  const languages = languagesRaw ? languagesRaw.split(',').filter(Boolean) : undefined;
+  const minPages = q.minPages !== undefined ? Number(q.minPages) : undefined;
+  const maxPages = q.maxPages !== undefined ? Number(q.maxPages) : undefined;
+
+  const hasAny =
+    !!category ||
+    !!authors ||
+    (years && years.length > 0) ||
+    (languages && languages.length > 0) ||
+    minPages !== undefined ||
+    maxPages !== undefined;
+
+  if (!hasAny) {
+    return next(
+      BadRequest(
+        'Se requiere al menos un filtro (category, authors, years, languages, minPages, maxPages).'
+      )
+    ) as any;
+  }
+
+  const rawCursor = (req.query.cursor as string) || null;
+  const rawLimit = Number(req.query.limit ?? BOOKS_PAGE_SIZE);
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(Math.max(rawLimit, 1), BOOKS_MAX_LIMIT)
+    : BOOKS_PAGE_SIZE;
+
+  const cursorId = rawCursor ? decodeIdCursor(rawCursor) : null;
+  if (rawCursor && !cursorId) {
+    return next(BadRequest('Cursor inválido.')) as any;
+  }
+
+  try {
+    const filters = { category, authors, years, languages, minPages, maxPages };
+    const cacheKey = `books:filter:${JSON.stringify(filters)}:c${cursorId ?? 'first'}:l${limit}`;
+
+    const cached = await CacheService.get<any>(cacheKey);
+    if (cached) return res.status(200).json(cached);
+
+    const result = await BookService.findFilteredBooksByCursor(filters, cursorId, limit);
+    const results = result.results ?? [];
+
+    if (cursorId === null && results.length < 1) {
+      throw NotFound(`No se han encontrado datos para ${req.originalUrl}.`);
+    }
+
+    const last = results[results.length - 1] as { _id?: unknown } | undefined;
+    const nextCursor =
+      results.length === limit && last?._id ? encodeIdCursor(String(last._id)) : null;
+
+    // Serializamos los filtros al nextUrl para que sea auto-navegable
+    const nextParams = new URLSearchParams();
+    if (category) nextParams.set('category', category);
+    if (authors) nextParams.set('authors', authors);
+    if (years && years.length) nextParams.set('years', years.join(','));
+    if (languages && languages.length) nextParams.set('languages', languages.join(','));
+    if (minPages !== undefined) nextParams.set('minPages', String(minPages));
+    if (maxPages !== undefined) nextParams.set('maxPages', String(maxPages));
+    nextParams.set('limit', String(limit));
+    const nextUrl = nextCursor
+      ? `${req.protocol}://${req.hostname}${req.baseUrl}${req.path}?${nextParams.toString()}&cursor=${nextCursor}`
+      : null;
+
+    // 1ra página: incluye counts + totalBooks. Páginas siguientes: solo cursor.
+    const info: Record<string, unknown> = { nextCursor, nextUrl };
+    if (cursorId === null) {
+      info.totalBooks = result.totalBooks;
+      info.languageCounts = result.languageCounts;
+      info.yearCounts = result.yearCounts;
+      info.pagesCounts = result.pagesCounts;
+      info.authorsCounts = result.authorsCounts;
+    }
+
+    const response = { info, results };
+    await CacheService.set(cacheKey, response, BOOKS_CACHE_TTL);
+    return res.status(200).json(response);
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function getSearchBooks(
   req: Request,
   res: Response,
@@ -444,6 +550,7 @@ async function deleteBook(
 
 export {
   getBooks,
+  getFilteredBooks,
   getSearchBooks,
   getAllOptions,
   getBooksRandom,

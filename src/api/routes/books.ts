@@ -2,6 +2,7 @@ import express, { Response, Router } from 'express';
 
 import {
   getBooks,
+  getFilteredBooks,
   getSearchBooks,
   getAllOptions,
   getBooksRandom,
@@ -16,8 +17,6 @@ import {
   putBooks,
   deleteBook,
 } from '../controllers/bookController';
-import { query } from '../middlewares/query';
-import { pagination } from '../middlewares/pagination';
 import {
   getMyRating,
   getRatingStats,
@@ -80,7 +79,69 @@ router.get('/', (req, res: Response) => {
  *                   type: array
  *                   items: { $ref: '#/components/schemas/Book' }
  */
+// Listado plano de libros: cursor (default) o page (`?page=N` para backoffice).
+// Los filtros (`?category=X`, `?year=Y`, etc.) van a `/books/filter` — endpoint
+// separado con su propio shape que incluye counts para el sidebar del front.
 router.get('/books', getBooks);
+
+/**
+ * @openapi
+ * /api/books/filter:
+ *   get:
+ *     tags: [Books]
+ *     summary: Filtro de libros por category / language / year / authors con cursor + counts.
+ *     description: |
+ *       Endpoint dedicado a listar libros filtrados. Se necesita al menos un
+ *       filtro (`authors`, `category`, `year` o `language`) — sin filtros
+ *       devuelve `400`.
+ *
+ *       Paginación por cursor. La **primera página** (sin `?cursor`) incluye
+ *       en `info`: `totalBooks` + `languageCounts`, `yearCounts`, `pagesCounts`,
+ *       `authorsCounts` (agregados sobre TODOS los docs que matchean el filtro,
+ *       usados por el sidebar del front). Páginas siguientes (con `?cursor`)
+ *       traen solo `nextCursor`/`nextUrl` + `results`, ahorrando las
+ *       agregaciones. El cliente debe cachear los counts de la 1ra respuesta.
+ *     parameters:
+ *       - in: query
+ *         name: authors
+ *         schema: { type: string }
+ *         description: Regex parcial case-insensitive sobre el array `authors`.
+ *       - in: query
+ *         name: category
+ *         schema: { type: string }
+ *         description: Match exacto contra un valor del array `category`.
+ *       - in: query
+ *         name: year
+ *         schema: { type: string, pattern: '^[0-9]{4}$' }
+ *       - in: query
+ *         name: language
+ *         schema: { type: string }
+ *         description: Regex case-insensitive.
+ *       - in: query
+ *         name: cursor
+ *         schema: { type: string }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10, maximum: 50 }
+ *     responses:
+ *       200:
+ *         description: Libros que matchean el filtro. Counts solo en la 1ra página.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 info:
+ *                   $ref: '#/components/schemas/CursorInfo'
+ *                 results:
+ *                   type: array
+ *                   items: { $ref: '#/components/schemas/Book' }
+ *       400:
+ *         description: No se pasó ningún filtro.
+ *       404:
+ *         description: No hay libros que matcheen el filtro.
+ */
+router.get('/books/filter', getFilteredBooks);
 
 /**
  * @openapi

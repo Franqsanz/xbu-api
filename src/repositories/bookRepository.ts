@@ -3,6 +3,7 @@ import { IRepositoryBook } from '../types/repositories/IBookRepository';
 import {
   qyGroupOptions,
   qyBooksFiltering,
+  qyBooksFilteringByCursor,
   qyOneBooks,
   qyPathUrlBooks,
   qySearch,
@@ -234,6 +235,71 @@ export const BookRepository: IRepositoryBook = {
       yearCounts: [],
       pagesCounts: [],
       authorsCounts: [],
+    };
+  },
+
+  async findFilteredBooksByCursor(
+    filters: {
+      // Filtros principales (del URL path, single value)
+      category?: string;
+      authors?: string;
+      // Sub-filtros del sidebar (multi-value / range)
+      languages?: string[];
+      years?: string[];
+      minPages?: number;
+      maxPages?: number;
+    },
+    cursorId: string | null,
+    limit: number
+  ) {
+    const hasAny =
+      !!filters.category ||
+      !!filters.authors ||
+      (filters.languages && filters.languages.length > 0) ||
+      (filters.years && filters.years.length > 0) ||
+      filters.minPages !== undefined ||
+      filters.maxPages !== undefined;
+
+    if (!hasAny) {
+      return {
+        results: [],
+        totalBooks: 0,
+        languageCounts: [],
+        yearCounts: [],
+        pagesCounts: [],
+        authorsCounts: [],
+      };
+    }
+
+    // Counts solo en la 1ra página. Al scrollear (con cursor) traemos solo results.
+    const includeCounts = cursorId === null;
+    const pipeline = qyBooksFilteringByCursor(filters, cursorId, limit, includeCounts);
+    const [result] = await booksModel.aggregate(pipeline).exec();
+
+    if (!result) {
+      return includeCounts
+        ? {
+            results: [],
+            totalBooks: 0,
+            languageCounts: [],
+            yearCounts: [],
+            pagesCounts: [],
+            authorsCounts: [],
+          }
+        : { results: [] };
+    }
+
+    if (!includeCounts) {
+      return { results: result.results };
+    }
+
+    return {
+      results: result.results,
+      totalBooks: result.totalBooks ?? 0,
+      languageCounts: result.languageCounts,
+      yearCounts: result.yearCounts,
+      pagesCounts: result.pagesCounts,
+      authorsCounts: result.authorsCounts,
     };
   },
 
