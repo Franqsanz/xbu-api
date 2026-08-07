@@ -2,7 +2,13 @@ import { cloudinary } from '../config/cloudinary';
 import { BookRepository } from '../repositories/bookRepository';
 import { BookRatingRepository } from '../repositories/bookRatingRepository';
 import { BookProgressRepository } from '../repositories/bookProgressRepository';
+import { BookStatusRepository } from '../repositories/bookStatusRepository';
+import { ActivityLogRepository } from '../repositories/activityLogRepository';
+import { CollectionRepository } from '../repositories/collectionRepository';
+import { FavoriteRepository } from '../repositories/favoriteRepository';
+import { NotificationRepository } from '../repositories/notificationRepository';
 import { ReportRepository } from '../repositories/reportRepository';
+import { commentRepository } from '../repositories/commentRepository';
 import { bookSchema, bookOriginalSchema } from '../utils/validation';
 import { parseBookFile } from '../utils/parseBookFile';
 import { NotFound, BadRequest } from '../utils/errors';
@@ -221,11 +227,22 @@ export const BookService: IBookService = {
       }
     }
 
-    // Borrar ratings, progreso y reportes huérfanos del libro borrado
+    // Cascade completo: al borrar un libro se limpian todas las referencias
+    // en el resto del dominio para no dejar huérfanos.
+    //   - comments del libro
+    //   - referencias en favoriteBooks / collections.books (arrays en otros docs)
+    //   - book-statuses, book-progress, ratings, activity-log, reports, notifications
+    const ids = [id];
     await Promise.all([
-      BookRatingRepository.deleteAllByBookIds([id]),
-      BookProgressRepository.deleteAllByBookIds([id]),
-      ReportRepository.deleteAllByBookIds([id]),
+      commentRepository.deleteAllByBookIds(ids),
+      FavoriteRepository.removeBookRefsFromAll(ids),
+      CollectionRepository.removeBookRefsFromAll(ids),
+      BookStatusRepository.deleteAllByBookIds(ids),
+      BookProgressRepository.deleteAllByBookIds(ids),
+      ActivityLogRepository.deleteAllByBookIds(ids),
+      BookRatingRepository.deleteAllByBookIds(ids),
+      NotificationRepository.deleteAllByBookIds(ids),
+      ReportRepository.deleteAllByBookIds(ids),
     ]);
 
     return deleteOne;
