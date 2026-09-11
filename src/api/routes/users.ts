@@ -12,6 +12,7 @@ import {
   getFollowers,
   getFollowing,
   getFollowStats,
+  getSuggestions,
   getFeed,
   getCheckUsername,
   patchMe,
@@ -199,6 +200,45 @@ router.get('/check-username', verifyToken, getCheckUsername);
  *         $ref: '#/components/responses/Unauthorized'
  */
 router.get('/me/feed', verifyToken, getFeed);
+
+/**
+ * @openapi
+ * /api/users/me/suggestions:
+ *   get:
+ *     tags: [Follows]
+ *     summary: Usuarios sugeridos para seguir.
+ *     description: >
+ *       Segundo grado (a quién siguen los que sigo) ordenado por cantidad de
+ *       seguidos en común, completado con los usuarios que más libros publicaron.
+ *       Excluye al propio usuario y a quienes ya sigue.
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 3, maximum: 10 }
+ *     responses:
+ *       200:
+ *         description: Lista de sugerencias.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 suggestions:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       uid: { type: string }
+ *                       username: { type: string }
+ *                       name: { type: string }
+ *                       picture: { type: string }
+ *                       bio: { type: string }
+ *       401:
+ *         $ref: '#/components/responses/Unauthorized'
+ */
+router.get('/me/suggestions', verifyToken, getSuggestions);
 
 /**
  * @openapi

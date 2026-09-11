@@ -1,6 +1,7 @@
 import followsModel from '../models/follows';
 import usersModel from '../models/users';
-import { IFollowData, IFollowingData, IFollowStats } from '../types/types';
+import booksModel from '../models/books';
+import { IFollowData, IFollowingData, IFollowStats, ISuggestedUser } from '../types/types';
 
 export async function findFollowingSet(
   currentUserId: string | null,
@@ -106,6 +107,82 @@ export const FollowRepository = {
       following,
       totalFollowing,
     };
+  },
+
+  /**
+   * A quién seguir: primero la gente que siguen los que yo sigo, ordenada por
+   * cuántos de mis seguidos la siguen (segundo grado). Si no alcanza para
+   * llenar el cupo, completamos con quienes más libros publicaron.
+   */
+  async getSuggestions(userId: string, limit: number = 5): Promise<ISuggestedUser[]> {
+    const followingRecords = await followsModel
+      .find({ follower: userId })
+      .select('following')
+      .lean()
+      .exec();
+
+    const followingUids = followingRecords.map((f: any) => f.following);
+    // Nunca sugerimos al propio usuario ni a quien ya sigue.
+    const excluded = new Set<string>([userId, ...followingUids]);
+    const candidateUids: string[] = [];
+
+    // Juntamos más candidatos que el cupo a propósito: recortamos recién después
+    // de resolverlos contra `users`, así un uid que no corresponde a ningún
+    // usuario real (libros viejos sin `userId`) no se queda con un lugar.
+    const addCandidate = (uid: unknown) => {
+      if (typeof uid !== 'string' || uid.length === 0) return;
+      if (excluded.has(uid) || candidateUids.includes(uid)) return;
+      candidateUids.push(uid);
+    };
+
+    if (followingUids.length > 0) {
+      const secondDegree = await followsModel.aggregate([
+        { $match: { follower: { $in: followingUids } } },
+        { $group: { _id: '$following', score: { $sum: 1 } } },
+        { $sort: { score: -1 } },
+        { $limit: limit + excluded.size },
+      ]);
+
+      secondDegree.forEach((row: any) => addCandidate(row._id));
+    }
+
+    if (candidateUids.length < limit) {
+      const topPublishers = await booksModel.aggregate([
+        { $match: { userId: { $nin: [null, ''] } } },
+        { $group: { _id: '$userId', total: { $sum: 1 } } },
+        { $sort: { total: -1 } },
+        { $limit: limit + excluded.size },
+      ]);
+
+      topPublishers.forEach((row: any) => addCandidate(row._id));
+    }
+
+    // Último recurso: los más nuevos. En una comunidad chica la mayoría todavía
+    // no publicó nada, y sin esto nunca aparecerían como sugerencia.
+    if (candidateUids.length < limit) {
+      const recentUsers = await usersModel
+        .find({ uid: { $nin: Array.from(excluded) } }, 'uid')
+        .sort({ createdAt: -1 })
+        .limit(limit + candidateUids.length)
+        .lean()
+        .exec();
+
+      recentUsers.forEach((u: any) => addCandidate(u.uid));
+    }
+
+    if (candidateUids.length === 0) return [];
+
+    const users = await usersModel
+      .find({ uid: { $in: candidateUids } }, 'uid username name picture bio')
+      .lean()
+      .exec();
+
+    // `$in` devuelve en orden de índice, no en el del array: reordenamos por ranking.
+    const userByUid = new Map(users.map((u: any) => [u.uid, u]));
+    return candidateUids
+      .map((uid) => userByUid.get(uid))
+      .filter(Boolean)
+      .slice(0, limit) as unknown as ISuggestedUser[];
   },
 
   async getFollowStats(userId: string): Promise<IFollowStats> {

@@ -1,4 +1,4 @@
-import { IFollowStats, IFollowData, IFollowingData } from '../types';
+import { IFollowStats, IFollowData, IFollowingData, ISuggestedUser } from '../types';
 
 export interface IFollowOperations {
   followUser(followerId: string, followingId: string): Promise<any>;
@@ -17,4 +17,5 @@ export interface IFollowOperations {
     currentUserId?: string | null
   ): Promise<IFollowingData>;
   getFollowStats(userId: string): Promise<IFollowStats>;
+  getSuggestions(userId: string, limit?: number): Promise<ISuggestedUser[]>;
 }

@@ -163,6 +163,14 @@ interface IFollowUser {
   isFollowing: boolean;
 }
 
+interface ISuggestedUser {
+  uid: string;
+  username: string;
+  name: string;
+  picture?: string;
+  bio?: string;
+}
+
 interface IFollowData {
   followers: IFollowUser[];
   totalFollowers: number;
@@ -203,6 +211,7 @@ export {
   IFollowStats,
   IFollowData,
   IFollowingData,
+  ISuggestedUser,
   IBookStatus,
   BookStatusValue,
 };

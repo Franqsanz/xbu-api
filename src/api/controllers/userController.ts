@@ -308,6 +308,27 @@ async function getFollowing(
   }
 }
 
+async function getSuggestions(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<Response<void>> {
+  const userId = req.user?.uid;
+  const limit = Math.min(Number(req.query.limit) || 3, 10);
+
+  if (!userId) {
+    throw BadRequest('Usuario no autenticado');
+  }
+
+  try {
+    const suggestions = await UserService.getSuggestions(userId, limit);
+
+    return res.status(200).json({ suggestions });
+  } catch (err) {
+    return next(err) as any;
+  }
+}
+
 async function getFollowStats(
   req: Request,
   res: Response,
@@ -576,6 +597,7 @@ export {
   getFollowers,
   getFollowing,
   getFollowStats,
+  getSuggestions,
   getFeed,
   getCheckUsername,
   patchMe,

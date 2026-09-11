@@ -14,7 +14,7 @@ import { ReportRepository } from './../repositories/reportRepository';
 import { cloudinary } from '../config/cloudinary';
 import { authFirebase } from '../config/firebase';
 import { IFullRepositoryUser } from '../types/repositories/IUserRepository';
-import { IFollowData, IFollowingData, IFollowStats, IUser } from '../types/types';
+import { IFollowData, IFollowingData, IFollowStats, ISuggestedUser, IUser } from '../types/types';
 
 const USERNAME_REGEX = /^[a-z0-9_]{3,20}$/;
 const RESERVED_USERNAMES = new Set([
@@ -246,6 +246,10 @@ export const UserService: IFullRepositoryUser = {
 
   async getFollowStats(userId: string): Promise<IFollowStats> {
     return await FollowRepository.getFollowStats(userId);
+  },
+
+  async getSuggestions(userId: string, limit = 5): Promise<ISuggestedUser[]> {
+    return await FollowRepository.getSuggestions(userId, limit);
   },
 
   async checkUsernameAvailability(
