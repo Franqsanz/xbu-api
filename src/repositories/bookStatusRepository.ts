@@ -1,5 +1,6 @@
 import bookStatusesModel from '../models/bookStatuses';
 import booksModel from '../models/books';
+import bookProgressModel from '../models/bookProgress';
 import { IBook, IBookStatus, BookStatusValue } from '../types/types';
 import { IBookStatusOperations } from '../types/repositories/IBookStatusRepository';
 
@@ -78,19 +79,31 @@ export const BookStatusRepository: IBookStatusOperations = {
     if (statuses.length === 0) return { results: [], totalBooks };
 
     const bookIds = statuses.map((s: any) => s.bookId);
-    const books = await booksModel
-      .find(
-        { _id: { $in: bookIds } },
-        'title authors category language synopsis sourceLink pathUrl image'
-      )
-      .lean()
-      .exec();
+    const [books, progressDocs] = await Promise.all([
+      booksModel
+        .find(
+          { _id: { $in: bookIds } },
+          'title authors category language synopsis sourceLink pathUrl image kind'
+        )
+        .lean()
+        .exec(),
+      bookProgressModel
+        .find({ userId, bookId: { $in: bookIds } })
+        .select('bookId percentage')
+        .lean()
+        .exec(),
+    ]);
 
     const bookMap = new Map(books.map((b: any) => [b._id.toString(), b]));
+    const percentageByBookId = new Map(progressDocs.map((p: any) => [p.bookId, p.percentage]));
     const results = statuses
       .map((s: any) => bookMap.get(s.bookId))
       .filter(Boolean)
-      .map((b: any) => ({ ...b, id: b._id })) as unknown as IBook[];
+      .map((b: any) => ({
+        ...b,
+        id: b._id,
+        percentage: percentageByBookId.get(b._id.toString()),
+      })) as unknown as IBook[];
 
     return { results, totalBooks };
   },

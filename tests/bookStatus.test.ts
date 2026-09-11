@@ -5,6 +5,7 @@ import { buildApp } from './helpers/buildApp';
 import { mockSession } from './helpers/session';
 import { seedBook } from './helpers/seedBook';
 import bookStatusesModel from '../src/models/bookStatuses';
+import bookProgressModel from '../src/models/bookProgress';
 
 const app = buildApp();
 
@@ -89,5 +90,75 @@ describe('DELETE /api/users/me/book-status/:bookId', () => {
 
     const doc = await bookStatusesModel.findOne({ userId: 'user-d1', bookId: book.id }).lean();
     expect(doc).toBeNull();
+  });
+});
+
+describe('GET /api/users/me/book-status (listado por estado)', () => {
+  it('devuelve los libros del estado pedido con kind y el progreso', async () => {
+    const cookie = mockSession({ uid: 'user-s5' });
+    const conProgreso = await seedBook({ userId: 'a', pathUrl: 'con-progreso' });
+    const sinProgreso = await seedBook({ userId: 'a', pathUrl: 'sin-progreso' });
+
+    await bookStatusesModel.create({
+      userId: 'user-s5',
+      bookId: conProgreso.id,
+      status: 'reading',
+    });
+    await bookStatusesModel.create({
+      userId: 'user-s5',
+      bookId: sinProgreso.id,
+      status: 'reading',
+    });
+    // El visor de EPUB no guarda porcentaje, así que tiene que poder faltar.
+    await bookProgressModel.create({
+      userId: 'user-s5',
+      bookId: conProgreso.id,
+      position: 42,
+      type: 'pdf',
+      percentage: 37,
+    });
+
+    const res = await request(app)
+      .get('/api/users/me/book-status?status=reading')
+      .set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.info.totalBooks).toBe(2);
+
+    const byPath = Object.fromEntries(res.body.results.map((b: any) => [b.pathUrl, b]));
+    expect(byPath['con-progreso'].percentage).toBe(37);
+    expect(byPath['sin-progreso'].percentage).toBeUndefined();
+    // `kind` alimenta el link del rail: original va al visor, reference a la ficha.
+    expect(byPath['con-progreso'].kind).toBe('reference');
+  });
+
+  it('no mezcla los libros de otros usuarios ni de otros estados', async () => {
+    const cookie = mockSession({ uid: 'user-s6' });
+    const propio = await seedBook({ userId: 'a', pathUrl: 'propio' });
+    const ajeno = await seedBook({ userId: 'a', pathUrl: 'ajeno' });
+    const otroEstado = await seedBook({ userId: 'a', pathUrl: 'otro-estado' });
+
+    await bookStatusesModel.create({
+      userId: 'user-s6',
+      bookId: propio.id,
+      status: 'reading',
+    });
+    await bookStatusesModel.create({
+      userId: 'otro-user',
+      bookId: ajeno.id,
+      status: 'reading',
+    });
+    await bookStatusesModel.create({
+      userId: 'user-s6',
+      bookId: otroEstado.id,
+      status: 'want_to_read',
+    });
+
+    const res = await request(app)
+      .get('/api/users/me/book-status?status=reading')
+      .set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.results.map((b: any) => b.pathUrl)).toEqual(['propio']);
   });
 });
