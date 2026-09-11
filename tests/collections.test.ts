@@ -144,3 +144,33 @@ describe('DELETE /api/users/collections/:userId/collection/:collectionId', () =>
     expect(after?.collections?.[0]?.name).toBe('Dos');
   });
 });
+
+describe('GET /api/users/collections/:userId', () => {
+  it('lista las colecciones del usuario', async () => {
+    const cookie = mockSession({ uid: 'col-user-7' });
+    const book = await seedBook({ userId: 'author-d' });
+    await collectionsModel.create({
+      userId: 'col-user-7',
+      collections: [
+        { name: 'Con libros', books: [{ bookId: book._id, checked: true }] },
+        { name: 'Vacía', books: [] },
+      ],
+    });
+
+    const res = await request(app).get('/api/users/collections/col-user-7').set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+
+    expect(res.body.totalCollections).toBe(2);
+    expect(res.body.collections.map((c: any) => c.name).sort()).toEqual(['Con libros', 'Vacía']);
+  });
+
+  it('devuelve una lista vacía para un usuario sin colecciones', async () => {
+    const cookie = mockSession({ uid: 'col-user-8' });
+
+    const res = await request(app).get('/api/users/collections/col-user-8').set('Cookie', cookie);
+
+    expect(res.status).toBe(200);
+    expect(res.body.collections).toEqual([]);
+  });
+});
